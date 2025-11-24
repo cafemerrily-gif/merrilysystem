@@ -65,59 +65,8 @@ export default function Home() {
           </div>
         </div>
 
+        {/* 3枚構成：会計部 / 開発部 / 広報部 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <Link
-            href="/admin/menu"
-            className="group relative overflow-hidden rounded-2xl bg-card border border-border p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-accent"
-          >
-            <div className="relative">
-              <div className="flex items-center mb-6">
-                <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mr-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="text-3xl" aria-hidden>
-                    🍽
-                  </span>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-1">メニュー管理</h2>
-                  <p className="text-sm text-muted-foreground">商品登録</p>
-                </div>
-              </div>
-              <p className="text-foreground mb-4">カテゴリー・商品追加、変更、削除を管理</p>
-              <div className="flex items-center text-accent text-sm font-medium">
-                <span>管理画面へ進む</span>
-                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/accounting/sales"
-            className="group relative overflow-hidden rounded-2xl bg-card border border-border p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-accent"
-          >
-            <div className="relative">
-              <div className="flex items-center mb-6">
-                <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mr-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="text-3xl" aria-hidden>
-                    💰
-                  </span>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-1">売上管理</h2>
-                  <p className="text-sm text-muted-foreground">手動入力</p>
-                </div>
-              </div>
-              <p className="text-foreground mb-4">POS連携なしで金額と日時を記録</p>
-              <div className="flex items-center text-accent text-sm font-medium">
-                <span>入力画面へ進む</span>
-                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-
           <Link
             href="/dashboard/accounting"
             className="group relative overflow-hidden rounded-2xl bg-card border border-border p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-accent"
@@ -134,7 +83,7 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground">会計部</p>
                 </div>
               </div>
-              <p className="text-foreground mb-4">日次・月次推移、時間帯、ランキングを確認</p>
+              <p className="text-foreground mb-4">売上入力と分析（日次・月次推移、時間帯、ランキング）</p>
               <div className="flex items-center text-accent text-sm font-medium">
                 <span>ダッシュボードを見る</span>
                 <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,12 +106,12 @@ export default function Home() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-1">開発部ダッシュボード</h2>
-                  <p className="text-sm text-muted-foreground">準備中</p>
+                  <p className="text-sm text-muted-foreground">メニュー管理</p>
                 </div>
               </div>
-              <p className="text-foreground mb-4">開発KPI・進捗のためのスペースを確保</p>
+              <p className="text-foreground mb-4">カテゴリー・商品管理への導線と開発KPIのスペース</p>
               <div className="flex items-center text-accent text-sm font-medium">
-                <span>開発部用</span>
+                <span>ダッシュボードを見る</span>
                 <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -186,9 +135,9 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground">準備中</p>
                 </div>
               </div>
-              <p className="text-foreground mb-4">SNS/キャンペーン指標を置くスペースを確保</p>
+              <p className="text-foreground mb-4">SNS/キャンペーン指標の配置スペース（後日追加）</p>
               <div className="flex items-center text-accent text-sm font-medium">
-                <span>広報部用</span>
+                <span>ダッシュボードを見る</span>
                 <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
