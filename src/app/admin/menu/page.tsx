@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface Category {
@@ -19,9 +19,18 @@ interface Product {
   cost_price: number;
 }
 
+interface Collection {
+  id: number;
+  name: string;
+  description?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
 export default function MenuManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [categoryForm, setCategoryForm] = useState({
@@ -37,93 +46,117 @@ export default function MenuManagementPage() {
     cost_price: '',
   });
 
+  const [collectionForm, setCollectionForm] = useState({
+    name: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+  });
+
+  const [assignForm, setAssignForm] = useState({
+    collectionId: '',
+    productId: '',
+  });
+
   useEffect(() => {
-    fetchCategories();
-    fetchProducts();
+    fetchAll();
   }, []);
 
+  const fetchAll = async () => {
+    await Promise.all([fetchCategories(), fetchProducts(), fetchCollections()]);
+    setLoading(false);
+  };
+
   const fetchCategories = async () => {
-    try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
-      setCategories(data);
-    } catch (error) {
-      console.error('カテゴリー取得エラー:', error);
-      alert('カテゴリーの取得に失敗しました');
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch('/api/categories');
+    const data = await res.json();
+    setCategories(data || []);
   };
 
   const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('商品取得エラー:', error);
-      alert('商品の取得に失敗しました');
-    }
+    const res = await fetch('/api/products');
+    const data = await res.json();
+    setProducts(data || []);
+  };
+
+  const fetchCollections = async () => {
+    const res = await fetch('/api/collections');
+    const data = await res.json();
+    setCollections(data.collections || []);
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryForm.name.trim()) {
-      alert('カテゴリー名を入力してください');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(categoryForm),
-      });
-
-      if (res.ok) {
-        alert('カテゴリーを追加しました');
-        setCategoryForm({ name: '', description: '', display_order: 0 });
-        fetchCategories();
-      } else {
-        const error = await res.json();
-        alert(`エラー: ${error.error}`);
-      }
-    } catch (error) {
-      console.error('カテゴリー追加エラー:', error);
-      alert('カテゴリーの追加に失敗しました');
+    if (!categoryForm.name.trim()) return alert('カテゴリー名を入力してください');
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryForm),
+    });
+    if (res.ok) {
+      setCategoryForm({ name: '', description: '', display_order: 0 });
+      fetchCategories();
+    } else {
+      const error = await res.json();
+      alert(error.error || 'カテゴリー追加に失敗しました');
     }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productForm.name.trim() || !productForm.category_id) {
-      alert('必須項目を入力してください');
-      return;
+      return alert('必須項目を入力してください');
     }
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category_id: parseInt(productForm.category_id),
+        name: productForm.name,
+        selling_price: parseFloat(productForm.selling_price),
+        cost_price: parseFloat(productForm.cost_price),
+      }),
+    });
+    if (res.ok) {
+      setProductForm({ category_id: '', name: '', selling_price: '', cost_price: '' });
+      fetchProducts();
+    } else {
+      const error = await res.json();
+      alert(error.error || '商品追加に失敗しました');
+    }
+  };
 
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category_id: parseInt(productForm.category_id),
-          name: productForm.name,
-          selling_price: parseFloat(productForm.selling_price),
-          cost_price: parseFloat(productForm.cost_price),
-        }),
-      });
+  const handleAddCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!collectionForm.name.trim()) return alert('フォルダ名を入力してください');
+    const res = await fetch('/api/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(collectionForm),
+    });
+    if (res.ok) {
+      setCollectionForm({ name: '', description: '', startDate: '', endDate: '' });
+      fetchCollections();
+    } else {
+      const error = await res.json();
+      alert(error.error || 'フォルダ作成に失敗しました');
+    }
+  };
 
-      if (res.ok) {
-        alert('商品を追加しました');
-        setProductForm({ category_id: '', name: '', selling_price: '', cost_price: '' });
-        fetchProducts();
-      } else {
-        const error = await res.json();
-        alert(`エラー: ${error.error}`);
-      }
-    } catch (error) {
-      console.error('商品追加エラー:', error);
-      alert('商品の追加に失敗しました');
+  const handleAssignProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignForm.collectionId || !assignForm.productId) return alert('フォルダと商品を選択してください');
+    const res = await fetch(`/api/collections/${assignForm.collectionId}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: Number(assignForm.productId) }),
+    });
+    if (res.ok) {
+      setAssignForm({ collectionId: '', productId: '' });
+      // 任意: 成功時のメッセージ
+    } else {
+      const error = await res.json();
+      alert(error.error || 'フォルダへの追加に失敗しました');
     }
   };
 
@@ -149,192 +182,286 @@ export default function MenuManagementPage() {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">メニュー管理</h1>
-              <p className="text-sm text-muted-foreground">商品カテゴリと商品リストの編集</p>
+              <h1 className="text-3xl font-bold">メニュー管理（開発部）</h1>
+              <p className="text-sm text-muted-foreground">商品フォルダと販売期間を設定して、売上入力を効率化</p>
             </div>
           </div>
           <Link
-            href="/"
-            className="px-6 py-3 bg-card border border-border hover:border-accent hover:shadow-lg rounded-xl transition-all duration-200 flex items-center gap-2 text-foreground"
+            href="/dashboard/accounting"
+            className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            ホームへ戻る
+            会計部ダッシュボードへ
           </Link>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-12">
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
-            <h2 className="text-2xl font-bold">カテゴリー管理</h2>
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-10">
+        {/* フォルダ（コレクション）作成 */}
+        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">商品フォルダ（販売期間）</h2>
+            <span className="text-sm text-muted-foreground">販売期間を設定してフォルダ作成</span>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                カテゴリー一覧
-              </h3>
-              <div className="overflow-x-auto scrollbar-thin">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">名前</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">説明</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">表示順</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {categories.map((cat) => (
-                      <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-4 text-sm text-foreground">{cat.id}</td>
-                        <td className="px-4 py-4 text-sm font-medium">{cat.name}</td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">{cat.description}</td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">{cat.display_order}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <form onSubmit={handleAddCollection} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">フォルダ名</label>
+              <input
+                type="text"
+                value={collectionForm.name}
+                onChange={(e) => setCollectionForm({ ...collectionForm, name: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                placeholder="例: 春メニュー"
+                required
+              />
             </div>
-
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                新規カテゴリー追加
-              </h3>
-              <form onSubmit={handleAddCategory} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    カテゴリー名 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={categoryForm.name}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="例: ドリンク"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">説明</label>
-                  <textarea
-                    value={categoryForm.description}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                    rows={3}
-                    placeholder="カテゴリーの補足説明"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">表示順</label>
-                  <input
-                    type="number"
-                    value={categoryForm.display_order}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  カテゴリーを追加
-                </button>
-              </form>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">説明（任意）</label>
+              <input
+                type="text"
+                value={collectionForm.description}
+                onChange={(e) => setCollectionForm({ ...collectionForm, description: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                placeholder="例: 春限定ドリンク"
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">開始日</label>
+              <input
+                type="date"
+                value={collectionForm.startDate}
+                onChange={(e) => setCollectionForm({ ...collectionForm, startDate: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">終了日</label>
+              <input
+                type="date"
+                value={collectionForm.endDate}
+                onChange={(e) => setCollectionForm({ ...collectionForm, endDate: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+            <div className="md:col-span-2 lg:col-span-4">
+              <button
+                type="submit"
+                className="w-full md:w-auto bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                フォルダを作成
+              </button>
+            </div>
+          </form>
+
+          <div className="overflow-x-auto border border-border rounded-xl">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-4 py-3">フォルダ名</th>
+                  <th className="px-4 py-3">期間</th>
+                  <th className="px-4 py-3">説明</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {collections.map((c) => (
+                  <tr key={c.id}>
+                    <td className="px-4 py-3 font-semibold">{c.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {c.start_date || '未設定'} ～ {c.end_date || '未設定'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.description || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-accent to-primary rounded-full"></div>
-            <h2 className="text-2xl font-bold">商品管理</h2>
+        {/* フォルダへ商品を追加 */}
+        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">フォルダに商品を登録</h2>
+            <span className="text-sm text-muted-foreground">販売期間と紐づけて売上入力を効率化</span>
+          </div>
+          <form onSubmit={handleAssignProduct} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">フォルダ</label>
+              <select
+                value={assignForm.collectionId}
+                onChange={(e) => setAssignForm({ ...assignForm, collectionId: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                required
+              >
+                <option value="">選択してください</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.start_date || '未設定'}~{c.end_date || '未設定'})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">商品</label>
+              <select
+                value={assignForm.productId}
+                onChange={(e) => setAssignForm({ ...assignForm, productId: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                required
+              >
+                <option value="">選択してください</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.category_name})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <button
+                type="submit"
+                className="w-full md:w-auto bg-gradient-to-r from-accent to-primary text-primary-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                追加
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* 既存カテゴリー & 商品管理（簡易表示） */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">カテゴリー一覧</h3>
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">名前</th>
+                    <th className="px-4 py-3">説明</th>
+                    <th className="px-4 py-3">表示順</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {categories.map((cat) => (
+                    <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">{cat.id}</td>
+                      <td className="px-4 py-3 font-medium">{cat.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{cat.description}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{cat.display_order}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-                商品一覧
-              </h3>
-              <div className="overflow-x-auto scrollbar-thin">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">商品名</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">カテゴリー</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">売価</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">原価</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">粗利率</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {products.map((product) => {
-                      const profitRate = ((product.selling_price - product.cost_price) / product.selling_price) * 100;
-                      return (
-                        <tr key={product.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-4 text-sm text-foreground">{product.id}</td>
-                          <td className="px-4 py-4 text-sm font-medium">{product.name}</td>
-                          <td className="px-4 py-4 text-sm">
-                            <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium border border-accent/30">
-                              {product.category_name}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-sm font-medium text-foreground">\{product.selling_price.toLocaleString()}</td>
-                          <td className="px-4 py-4 text-sm text-muted-foreground">\{product.cost_price.toLocaleString()}</td>
-                          <td className="px-4 py-4 text-sm text-green-500 font-semibold">{profitRate.toFixed(1)}%</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">新規カテゴリー追加</h3>
+            <form onSubmit={handleAddCategory} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  カテゴリー名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  placeholder="例: ドリンク"
+                />
               </div>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">説明</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                  rows={3}
+                  placeholder="カテゴリーの補足説明"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">表示順</label>
+                <input
+                  type="number"
+                  value={categoryForm.display_order}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                カテゴリーを追加
+              </button>
+            </form>
+          </div>
+        </section>
 
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </h3>
-              <form onSubmit={handleAddProduct} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    カテゴリー <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={productForm.category_id}
-                    onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                  >
-                    <option value="">選択してください</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    商品名 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={productForm.name}
-                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                    placeholder="例: アイスコーヒー"
-                  />
-                </div>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">商品一覧</h3>
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">商品名</th>
+                    <th className="px-4 py-3">カテゴリー</th>
+                    <th className="px-4 py-3">売価</th>
+                    <th className="px-4 py-3">原価</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {products.map((p) => (
+                    <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">{p.id}</td>
+                      <td className="px-4 py-3 font-medium">{p.name}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 bg-muted rounded-full text-xs border border-border">{p.category_name}</span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold">¥{p.selling_price.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-muted-foreground">¥{p.cost_price.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">新規商品追加</h3>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  カテゴリー <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={productForm.category_id}
+                  onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                >
+                  <option value="">選択してください</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  商品名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  placeholder="例: アイスコーヒー"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     売価(円) <span className="text-red-500">*</span>
@@ -361,14 +488,14 @@ export default function MenuManagementPage() {
                     placeholder="200"
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-accent to-primary text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  商品を追加
-                </button>
-              </form>
-            </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-accent to-primary text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                商品を追加
+              </button>
+            </form>
           </div>
         </section>
       </div>
