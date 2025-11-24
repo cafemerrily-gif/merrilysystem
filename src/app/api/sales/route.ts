@@ -78,9 +78,36 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('売上サマリ取得エラー:', error);
     return NextResponse.json(
-      { error: '売上の取得に失敗しました' },
-      { status: 500 }
+        { error: '売上の取得に失敗しました' },
+        { status: 500 }
     );
+  }
+}
+
+/**
+ * DELETE /api/sales?saleId=123
+ * 売上データを削除（sale_items は ON DELETE CASCADE）
+ */
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const saleId = searchParams.get('saleId');
+
+  if (!saleId) {
+    return NextResponse.json({ error: 'saleId が必要です' }, { status: 400 });
+  }
+
+  try {
+    const { error } = await supabaseAdmin.from('sales').delete().eq('id', Number(saleId));
+
+    if (error) {
+      console.error('売上削除エラー:', error);
+      return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: '削除しました', saleId: Number(saleId) });
+  } catch (error) {
+    console.error('売上削除エラー:', error);
+    return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
   }
 }
 
