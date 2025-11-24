@@ -13,10 +13,8 @@ type SaleItemRow = {
   product_id: number;
   quantity: number;
   unit_price: number;
-  product: {
-    name: string;
-    cost_price: number;
-  } | null;
+  // Supabase returns either an object or an array for the joined relation depending on config
+  product: { name: string; cost_price: number } | { name: string; cost_price: number }[] | null;
 };
 
 // Build YYYY-MM keys (e.g. 2025-03)
@@ -82,12 +80,13 @@ export async function GET(_req: NextRequest) {
 
     (items || []).forEach((row: SaleItemRow) => {
       const revenue = Number(row.unit_price) * Number(row.quantity);
-      const costUnit = Number(row.product?.cost_price) || 0;
+      const productInfo = Array.isArray(row.product) ? row.product[0] : row.product;
+      const costUnit = Number(productInfo?.cost_price) || 0;
       const cost = costUnit * Number(row.quantity);
       const key = row.product_id;
       if (!productMap[key]) {
         productMap[key] = {
-          name: row.product?.name || `ID:${key}`,
+          name: productInfo?.name || `ID:${key}`,
           revenue: 0,
           cost: 0,
           quantity: 0,
