@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 背景円 -->
+  <circle cx="50" cy="50" r="48" fill="#22c55e" stroke="#16a34a" stroke-width="2"/>
+  
+  <!-- コーヒーカップ -->
+  <g transform="translate(50, 50)">
+    <!-- カップ本体 -->
+    <path d="M -15 -5 L -12 15 L 12 15 L 15 -5 Z" fill="white" stroke="white" stroke-width="1.5"/>
+    
+    <!-- ハンドル -->
+    <path d="M 15 0 Q 25 0 25 8 Q 25 15 15 15" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- 湯気 -->
+    <path d="M -8 -8 Q -8 -15 -5 -15 Q -5 -12 -5 -8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 0 -8 Q 0 -16 3 -16 Q 3 -12 3 -8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 8 -8 Q 8 -15 11 -15 Q 11 -12 11 -8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+  </g>
+</svg>
