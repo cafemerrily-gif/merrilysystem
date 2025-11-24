@@ -1,9 +1,36 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
+
+const navItems = [
+  {
+    href: '/dashboard/accounting',
+    icon: '📊',
+    title: '会計部',
+    subtitle: '売上管理・分析',
+    desc: '売上入力と日次・月次推移、時間帯、ランキングを確認',
+    accent: 'ダッシュボードを見る',
+  },
+  {
+    href: '/dashboard/dev',
+    icon: '🛠',
+    title: '開発部',
+    subtitle: 'メニュー管理',
+    desc: 'カテゴリー・商品管理への導線と開発KPIのスペース',
+    accent: 'ダッシュボードを見る',
+  },
+  {
+    href: '/dashboard/pr',
+    icon: '📣',
+    title: '広報部',
+    subtitle: '準備中',
+    desc: 'SNS/キャンペーン指標の配置スペース（後日追加）',
+    accent: 'ダッシュボードを見る',
+  },
+];
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
@@ -18,36 +45,9 @@ export default function Home() {
     document.documentElement.classList.toggle('dark', next);
   };
 
-  const navItems = [
-    {
-      href: '/dashboard/accounting',
-      icon: '📊',
-      title: '会計部',
-      subtitle: '売上管理・分析',
-      desc: '売上入力と日次・月次推移、時間帯、ランキングを確認',
-      accent: 'ダッシュボードを見る',
-    },
-    {
-      href: '/dashboard/dev',
-      icon: '🛠',
-      title: '開発部',
-      subtitle: 'メニュー管理',
-      desc: 'カテゴリー・商品管理への導線と開発KPIのスペース',
-      accent: 'ダッシュボードを見る',
-    },
-    {
-      href: '/dashboard/pr',
-      icon: '📣',
-      title: '広報部',
-      subtitle: '準備中',
-      desc: 'SNS/キャンペーン指標の配置スペース（後日追加）',
-      accent: 'ダッシュボードを見る',
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
-      <div className="fixed top-4 left-0 right-0 z-50 px-4">
+      <header className="fixed top-4 left-0 right-0 z-50 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <LogoutButton />
           <button
@@ -66,10 +66,10 @@ export default function Home() {
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 sm:mb-16 animate-fadeIn">
+      <main className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <section className="text-center mb-12 sm:mb-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 mb-4 sm:mb-6">
             <Image
               src="/MERRILY_Simbol.png"
@@ -80,9 +80,7 @@ export default function Home() {
               priority
             />
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-2 tracking-tight">
-            MERRILY
-          </h1>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-2 tracking-tight">MERRILY</h1>
           <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-6 uppercase tracking-widest">
             Cafe Management System
           </p>
@@ -90,12 +88,12 @@ export default function Home() {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span>Powered by Supabase</span>
           </div>
-        </div>
+        </section>
 
-        {/* レイアウト: 左メニュー（ダッシュボード） + 右情報 */}
+        {/* 左メニュー / 右情報 */}
         <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-8">
-          {/* 左メニュー: 縦並び、モバイルはカードグリッド */}
-          <div className="space-y-4">
+          {/* 左: ダッシュボードメニュー（モバイルはカードグリッド） */}
+          <aside className="space-y-4">
             <div className="hidden lg:block text-sm text-muted-foreground mb-2">ダッシュボードメニュー</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               {navItems.map((item) => (
@@ -123,10 +121,10 @@ export default function Home() {
                 </Link>
               ))}
             </div>
-          </div>
+          </aside>
 
-          {/* 右側: 補足情報 */}
-          <div className="space-y-6">
+          {/* 右: 補足情報 / KPI */}
+          <section className="space-y-6">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-3">概要</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -149,9 +147,9 @@ export default function Home() {
                 <div className="text-xs sm:text-sm text-muted-foreground">運用準備完了</div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

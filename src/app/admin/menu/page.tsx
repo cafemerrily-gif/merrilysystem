@@ -33,30 +33,10 @@ export default function MenuManagementPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [categoryForm, setCategoryForm] = useState({
-    name: '',
-    description: '',
-    display_order: 0,
-  });
-
-  const [productForm, setProductForm] = useState({
-    category_id: '',
-    name: '',
-    selling_price: '',
-    cost_price: '',
-  });
-
-  const [collectionForm, setCollectionForm] = useState({
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-  });
-
-  const [assignForm, setAssignForm] = useState({
-    collectionId: '',
-    productId: '',
-  });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', display_order: 0 });
+  const [productForm, setProductForm] = useState({ category_id: '', name: '', selling_price: '', cost_price: '' });
+  const [collectionForm, setCollectionForm] = useState({ name: '', description: '', startDate: '', endDate: '' });
+  const [assignForm, setAssignForm] = useState({ collectionId: '', productId: '' });
 
   useEffect(() => {
     fetchAll();
@@ -69,14 +49,12 @@ export default function MenuManagementPage() {
 
   const fetchCategories = async () => {
     const res = await fetch('/api/categories');
-    const data = await res.json();
-    setCategories(data || []);
+    setCategories(await res.json());
   };
 
   const fetchProducts = async () => {
     const res = await fetch('/api/products');
-    const data = await res.json();
-    setProducts(data || []);
+    setProducts(await res.json());
   };
 
   const fetchCollections = async () => {
@@ -104,9 +82,7 @@ export default function MenuManagementPage() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productForm.name.trim() || !productForm.category_id) {
-      return alert('必須項目を入力してください');
-    }
+    if (!productForm.name.trim() || !productForm.category_id) return alert('必須項目を入力してください');
     const res = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -153,7 +129,6 @@ export default function MenuManagementPage() {
     });
     if (res.ok) {
       setAssignForm({ collectionId: '', productId: '' });
-      // 任意: 成功時のメッセージ
     } else {
       const error = await res.json();
       alert(error.error || 'フォルダへの追加に失敗しました');
@@ -174,7 +149,7 @@ export default function MenuManagementPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
               <span className="text-2xl" aria-hidden>
@@ -182,13 +157,13 @@ export default function MenuManagementPage() {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">メニュー管理（開発部）</h1>
-              <p className="text-sm text-muted-foreground">商品フォルダと販売期間を設定して、売上入力を効率化</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">メニュー管理（開発部）</h1>
+              <p className="text-sm text-muted-foreground">商品フォルダと販売期間を設定し、売上入力を効率化</p>
             </div>
           </div>
           <Link
             href="/dashboard/accounting"
-            className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold"
+            className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold text-center"
           >
             会計部ダッシュボードへ
           </Link>
@@ -196,13 +171,13 @@ export default function MenuManagementPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-10">
-        {/* フォルダ（コレクション）作成 */}
-        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
+        {/* フォルダ作成 */}
+        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h2 className="text-xl font-semibold">商品フォルダ（販売期間）</h2>
             <span className="text-sm text-muted-foreground">販売期間を設定してフォルダ作成</span>
           </div>
-          <form onSubmit={handleAddCollection} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <form onSubmit={handleAddCollection} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">フォルダ名</label>
               <input
@@ -277,8 +252,8 @@ export default function MenuManagementPage() {
         </section>
 
         {/* フォルダへ商品を追加 */}
-        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
+        <section className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h2 className="text-xl font-semibold">フォルダに商品を登録</h2>
             <span className="text-sm text-muted-foreground">販売期間と紐づけて売上入力を効率化</span>
           </div>
@@ -326,7 +301,7 @@ export default function MenuManagementPage() {
           </form>
         </section>
 
-        {/* 既存カテゴリー & 商品管理（簡易表示） */}
+        {/* カテゴリー・商品管理 */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <h3 className="text-lg font-semibold mb-4">カテゴリー一覧</h3>
@@ -384,7 +359,7 @@ export default function MenuManagementPage() {
                 <input
                   type="number"
                   value={categoryForm.display_order}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) })}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) || 0 })}
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
               </div>

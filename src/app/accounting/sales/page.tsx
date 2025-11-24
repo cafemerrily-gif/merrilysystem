@@ -10,6 +10,13 @@ type Product = {
   selling_price: number;
 };
 
+type Collection = {
+  id: number;
+  name: string;
+  start_date?: string | null;
+  end_date?: string | null;
+};
+
 type RecentSale = {
   id: number;
   sale_date: string;
@@ -18,7 +25,10 @@ type RecentSale = {
 };
 
 export default function SalesInputPage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState<string>('');
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [saleTime, setSaleTime] = useState(() => new Date().toTimeString().split(' ')[0].substring(0, 5));
@@ -27,31 +37,55 @@ export default function SalesInputPage() {
   const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
 
   useEffect(() => {
-    fetchProducts();
+    fetchCollections();
+    fetchAllProducts();
     fetchRecent();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
+  useEffect(() => {
+    if (collections.length === 0) return;
+    const today = new Date().toISOString().split('T')[0];
+    const active = collections.find((c) => {
+      const startOk = !c.start_date || c.start_date <= today;
+      const endOk = !c.end_date || c.end_date >= today;
+      return startOk && endOk;
+    });
+    const defaultId = (active || collections[0]).id.toString();
+    setSelectedCollection(defaultId);
+    fetchCollectionProducts(defaultId);
+  }, [collections]);
+
+  const fetchAllProducts = async () => {
+    const res = await fetch('/api/products');
+    const data = await res.json();
+    setAllProducts(data || []);
+    setProducts(data || []);
+  };
+
+  const fetchCollections = async () => {
+    const res = await fetch('/api/collections');
+    const data = await res.json();
+    setCollections(data.collections || []);
+  };
+
+  const fetchCollectionProducts = async (collectionId: string) => {
+    if (!collectionId) {
+      setProducts(allProducts);
+      return;
+    }
+    const res = await fetch(`/api/collections/${collectionId}/products`);
+    if (res.ok) {
       const data = await res.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('商品取得エラー:', error);
-      alert('商品を取得できませんでした');
+      setProducts(data.products || []);
+    } else {
+      setProducts(allProducts);
     }
   };
 
   const fetchRecent = async () => {
-    try {
-      const res = await fetch('/api/sales');
-      const data = await res.json();
-      if (!data.error) {
-        setRecentSales(data.recentSales || []);
-      }
-    } catch (error) {
-      console.error('最近の売上取得エラー:', error);
-    }
+    const res = await fetch('/api/sales');
+    const data = await res.json();
+    if (!data.error) setRecentSales(data.recentSales || []);
   };
 
   const items = useMemo(() => {
@@ -70,18 +104,12 @@ export default function SalesInputPage() {
   }, [items]);
 
   const handleQuantity = (id: number, value: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max(0, value),
-    }));
+    setQuantities((prev) => ({ ...prev, [id]: Math.max(0, value) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) {
-      alert('数量を1つ以上入力してください');
-      return;
-    }
+    if (items.length === 0) return alert('数量を1つ以上入力してください');
     setLoading(true);
     try {
       const res = await fetch('/api/sales', {
@@ -92,14 +120,9 @@ export default function SalesInputPage() {
           saleTime,
           staffId: 1,
           paymentMethod,
-          items: items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-          })),
+          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })),
         }),
       });
-
       if (res.ok) {
         alert('売上を登録しました');
         setQuantities({});
@@ -135,7 +158,7 @@ export default function SalesInputPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
               <span className="text-2xl" aria-hidden>
@@ -143,14 +166,14 @@ export default function SalesInputPage() {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">売上入力</h1>
-              <p className="text-sm text-muted-foreground">券売機のレシートを集計して数量入力</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">売上入力</h1>
+              <p className="text-sm text-muted-foreground">販売期間フォルダを選んで、券売機レシートを集計</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/dashboard/accounting"
-              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold"
+              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold text-center"
             >
               会計部ダッシュボード
             </Link>
@@ -168,93 +191,121 @@ export default function SalesInputPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">売上を入力</h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">日付</label>
-                <input
-                  type="date"
-                  value={saleDate}
-                  onChange={(e) => setSaleDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">時間</label>
-                <input
-                  type="time"
-                  value={saleTime}
-                  onChange={(e) => setSaleTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">支払い方法</label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                >
-                  <option value="cash">現金</option>
-                  <option value="card">クレジット/デビット</option>
-                  <option value="qr">QR/電子マネー</option>
-                  <option value="other">その他</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto border border-border rounded-xl">
-              <table className="min-w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-4 py-3">商品名</th>
-                    <th className="px-4 py-3">カテゴリ</th>
-                    <th className="px-4 py-3">単価</th>
-                    <th className="px-4 py-3">数量</th>
-                    <th className="px-4 py-3">小計</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {products.map((p) => {
-                    const qty = quantities[p.id] || 0;
-                    const subtotal = qty * p.selling_price;
-                    return (
-                      <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3">{p.name}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{p.category_name}</td>
-                        <td className="px-4 py-3 font-semibold">¥{p.selling_price.toLocaleString()}</td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="number"
-                            min={0}
-                            value={qty}
-                            onChange={(e) => handleQuantity(p.id, Number(e.target.value))}
-                            className="w-full max-w-[100px] px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                          />
-                        </td>
-                        <td className="px-4 py-3 font-semibold">¥{subtotal.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-muted-foreground">
-                選択中の商品数: {items.length} 件 / 合計金額: ¥{totalAmount.toLocaleString()}
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+          <h2 className="text-xl font-semibold">販売期間（フォルダ）を選択</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">フォルダ</label>
+              <select
+                value={selectedCollection}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedCollection(val);
+                  fetchCollectionProducts(val);
+                  setQuantities({});
+                }}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
               >
-                {loading ? '登録中...' : '売上を登録'}
-              </button>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.start_date || '未設定'}~{c.end_date || '未設定'})
+                  </option>
+                ))}
+              </select>
             </div>
-          </form>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">日付</label>
+              <input
+                type="date"
+                value={saleDate}
+                onChange={(e) => setSaleDate(e.target.value)}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">時間</label>
+              <input
+                type="time"
+                value={saleTime}
+                onChange={(e) => setSaleTime(e.target.value)}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">支払い方法</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+              >
+                <option value="cash">現金</option>
+                <option value="card">クレジット/デビット</option>
+                <option value="qr">QR/電子マネー</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h2 className="text-xl font-semibold">商品一覧（フォルダに紐づくものを表示）</h2>
+            <div className="text-sm text-muted-foreground">
+              選択中の商品数: {items.length} / 合計 ¥{totalAmount.toLocaleString()}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto border border-border rounded-xl">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-4 py-3">商品名</th>
+                  <th className="px-4 py-3">カテゴリ</th>
+                  <th className="px-4 py-3">単価</th>
+                  <th className="px-4 py-3">数量</th>
+                  <th className="px-4 py-3">小計</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {products.map((p) => {
+                  const qty = quantities[p.id] || 0;
+                  const subtotal = qty * p.selling_price;
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">{p.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{p.category_name}</td>
+                      <td className="px-4 py-3 font-semibold">¥{p.selling_price.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min={0}
+                          value={qty}
+                          onChange={(e) => handleQuantity(p.id, Number(e.target.value))}
+                          className="w-full max-w-[100px] px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-semibold">¥{subtotal.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-sm text-muted-foreground">
+              選択中の商品数: {items.length} 件 / 合計金額: ¥{totalAmount.toLocaleString()}
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
+            >
+              {loading ? '登録中...' : '売上を登録'}
+            </button>
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
