@@ -1,44 +1,85 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
-type Summary = {
-  totalAmount: number;
-  todayTotal: number;
+type Product = {
+  id: number;
+  name: string;
+  category_name: string;
+  selling_price: number;
+};
+
+type RecentSale = {
+  id: number;
+  sale_date: string;
+  sale_time: string;
+  total_amount: number;
 };
 
 export default function SalesInputPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [saleTime, setSaleTime] = useState(() => new Date().toTimeString().split(' ')[0].substring(0, 5));
-  const [totalAmount, setTotalAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState<Summary | null>(null);
+  const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
 
   useEffect(() => {
-    fetchSummary();
+    fetchProducts();
+    fetchRecent();
   }, []);
 
-  const fetchSummary = async () => {
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('商品取得エラー:', error);
+      alert('商品を取得できませんでした');
+    }
+  };
+
+  const fetchRecent = async () => {
     try {
       const res = await fetch('/api/sales');
       const data = await res.json();
       if (!data.error) {
-        setSummary({
-          totalAmount: data.totalAmount || 0,
-          todayTotal: data.todayTotal || 0,
-        });
+        setRecentSales(data.recentSales || []);
       }
     } catch (error) {
-      console.error('売上取得エラー:', error);
+      console.error('最近の売上取得エラー:', error);
     }
+  };
+
+  const items = useMemo(() => {
+    return products
+      .filter((p) => quantities[p.id] > 0)
+      .map((p) => ({
+        productId: p.id,
+        name: p.name,
+        quantity: quantities[p.id],
+        unitPrice: p.selling_price,
+      }));
+  }, [products, quantities]);
+
+  const totalAmount = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  }, [items]);
+
+  const handleQuantity = (id: number, value: number) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [id]: Math.max(0, value),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!totalAmount) {
-      alert('売上金額を入力してください');
+    if (items.length === 0) {
+      alert('数量を1つ以上入力してください');
       return;
     }
     setLoading(true);
@@ -50,15 +91,19 @@ export default function SalesInputPage() {
           saleDate,
           saleTime,
           staffId: 1,
-          totalAmount: Number(totalAmount),
           paymentMethod,
+          items: items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+          })),
         }),
       });
 
       if (res.ok) {
         alert('売上を登録しました');
-        setTotalAmount('');
-        fetchSummary();
+        setQuantities({});
+        fetchRecent();
       } else {
         const error = await res.json();
         alert(error.error || '登録に失敗しました');
@@ -71,19 +116,35 @@ export default function SalesInputPage() {
     }
   };
 
+  const handleDelete = async (saleId: number) => {
+    if (!confirm('この売上を削除しますか？')) return;
+    try {
+      const res = await fetch(`/api/sales?saleId=${saleId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setRecentSales((prev) => prev.filter((s) => s.id !== saleId));
+      } else {
+        const error = await res.json();
+        alert(error.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
               <span className="text-2xl" aria-hidden>
-                ✍️
+                📥
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">売上入力（手動）</h1>
-              <p className="text-sm text-muted-foreground">POS連携なしで1件ずつ記録します</p>
+              <h1 className="text-3xl font-bold">売上入力</h1>
+              <p className="text-sm text-muted-foreground">券売機のレシートを集計して数量入力</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -91,7 +152,7 @@ export default function SalesInputPage() {
               href="/dashboard/accounting"
               className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm font-semibold"
             >
-              ダッシュボードへ
+              会計部ダッシュボード
             </Link>
             <Link
               href="/"
@@ -106,24 +167,11 @@ export default function SalesInputPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        {summary && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">本日の売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.todayTotal.toLocaleString()}</div>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">累計売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.totalAmount.toLocaleString()}</div>
-            </div>
-          </div>
-        )}
-
+      <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
           <h2 className="text-xl font-semibold mb-4">売上を入力</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">日付</label>
                 <input
@@ -142,23 +190,6 @@ export default function SalesInputPage() {
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  金額(円) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                  placeholder="例: 12000"
-                  min={0}
-                  step="1"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">支払い方法</label>
                 <select
@@ -174,14 +205,96 @@ export default function SalesInputPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold py-4 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
-            >
-              {loading ? '登録中...' : '売上を登録'}
-            </button>
+            <div className="overflow-x-auto border border-border rounded-xl">
+              <table className="min-w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr className="text-left">
+                    <th className="px-4 py-3">商品名</th>
+                    <th className="px-4 py-3">カテゴリ</th>
+                    <th className="px-4 py-3">単価</th>
+                    <th className="px-4 py-3">数量</th>
+                    <th className="px-4 py-3">小計</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {products.map((p) => {
+                    const qty = quantities[p.id] || 0;
+                    const subtotal = qty * p.selling_price;
+                    return (
+                      <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3">{p.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{p.category_name}</td>
+                        <td className="px-4 py-3 font-semibold">¥{p.selling_price.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="number"
+                            min={0}
+                            value={qty}
+                            onChange={(e) => handleQuantity(p.id, Number(e.target.value))}
+                            className="w-full max-w-[100px] px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-semibold">¥{subtotal.toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                選択中の商品数: {items.length} 件 / 合計金額: ¥{totalAmount.toLocaleString()}
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold py-3 px-5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
+              >
+                {loading ? '登録中...' : '売上を登録'}
+              </button>
+            </div>
           </form>
+        </div>
+
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">最近の登録</h2>
+            <span className="text-sm text-muted-foreground">直近15件</span>
+          </div>
+          {recentSales.length === 0 ? (
+            <p className="text-muted-foreground text-sm">データがありません</p>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground uppercase tracking-wider">
+                    <th className="px-3 py-2">日付</th>
+                    <th className="px-3 py-2">時間</th>
+                    <th className="px-3 py-2">金額</th>
+                    <th className="px-3 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {recentSales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-3">{sale.sale_date}</td>
+                      <td className="px-3 py-3">{sale.sale_time}</td>
+                      <td className="px-3 py-3 font-semibold">¥{Number(sale.total_amount || 0).toLocaleString()}</td>
+                      <td className="px-3 py-3 text-right">
+                        <button
+                          onClick={() => handleDelete(sale.id)}
+                          className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
