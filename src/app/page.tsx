@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
     icon: '📈',
     title: '会計部',
     subtitle: '売上ダッシュボード',
-    desc: '売上推移・時間帯別・ランキングを確認',
+    desc: '日次・月次推移やランキングを確認',
     accent: 'ダッシュボードを開く',
     requiredTags: ['会計部'],
   },
@@ -48,8 +48,8 @@ const navItems: NavItem[] = [
     href: '/dashboard/pr',
     icon: '📣',
     title: '広報部',
-    subtitle: 'キャンペーン枠',
-    desc: 'SNSやキャンペーン指標を置くスペース（準備中）',
+    subtitle: 'ホームページ・キャンペーン',
+    desc: '公式サイト編集や宣伝用コンテンツを管理',
     accent: '広報部へ',
     requiredTags: ['広報部'],
   },
@@ -72,7 +72,7 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const supabase = createClientComponentClient();
 
-  // デバイス設定に従ってライト/ダークを適用。PCのみ手動トグルを表示し、押した場合は手動優先。
+  // デバイス設定＋PCのみ手動トグル
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -89,6 +89,7 @@ export default function Home() {
     return () => media.removeEventListener('change', handleChange);
   }, [hasManualPreference]);
 
+  // ユーザー情報取得
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
@@ -152,7 +153,6 @@ export default function Home() {
               </div>
             )}
           </div>
-          {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
           <button
             onClick={toggleTheme}
             className="hidden md:inline-flex p-3 rounded-xl bg-card border border-border shadow-lg hover:shadow-xl transition-all duration-200 group"
@@ -228,7 +228,7 @@ export default function Home() {
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-3">概要</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                会計・開発・広報の3つのダッシュボードで業務をまとめています。右のメニューから各部のダッシュボードへ進めます。
+                会計・開発・広報・スタッフの各ダッシュボードで業務をまとめています。右のメニューから該当部門へ進んでください。
                 スマホではカードが2列→1列に崩れ、タップしやすいスペースを確保しています。
               </p>
             </div>
@@ -236,13 +236,16 @@ export default function Home() {
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">操作ログ</h3>
-                <span className="text-xs text-muted-foreground">直近（ログインユーザー）</span>
+                <span className="text-xs text-muted-foreground">直近（共通表示）</span>
               </div>
-              <div className="space-y-3 text-sm">
+              <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1">
                 {[
                   { user: '管理者', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
                   { user: '店舗スタッフA', time: '本日 09:05', msg: '勤怠ダッシュボードで出勤を登録しました' },
                   { user: '広報部B', time: '本日 08:55', msg: 'ホームページ編集を更新しました' },
+                  { user: '開発部C', time: '本日 08:40', msg: 'メニュー管理で商品を一括追加しました' },
+                  { user: '会計部D', time: '昨日 18:20', msg: '売上データをエクスポートしました' },
+                  { user: 'エンジニアチーム', time: '昨日 17:50', msg: 'デバッグツールでAPIテストを実施しました' },
                 ].map((log, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
@@ -255,9 +258,32 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                ※ログイン機能実装後は実ユーザー情報で置き換えます。
-              </p>
+              <p className="mt-3 text-xs text-muted-foreground">実運用では実ログと連携してください（現在はサンプル）。</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">通知（共通）</h3>
+                <span className="text-xs text-muted-foreground">未読/既読は未実装</span>
+              </div>
+              <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1">
+                {[
+                  { title: 'ホームページ編集', detail: '広報部Bが公式サイトのトップを更新しました', time: '本日 09:12' },
+                  { title: '勤怠登録', detail: '店舗スタッフAが出勤を登録しました', time: '本日 09:05' },
+                  { title: 'メニュー更新', detail: '開発部Cが新メニューを追加しました', time: '本日 08:45' },
+                  { title: 'デバッグ', detail: 'エンジニアチームがAPIテストを実施しました', time: '昨日 17:50' },
+                ].map((n, idx) => (
+                  <div key={idx} className="border border-border rounded-lg p-3 bg-muted/30">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>{n.time}</span>
+                      <span>通知</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{n.title}</p>
+                    <p className="text-muted-foreground">{n.detail}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">通知はダミーです。必要に応じて実データと連携してください。</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
