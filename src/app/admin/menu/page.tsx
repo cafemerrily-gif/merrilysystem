@@ -102,6 +102,17 @@ export default function MenuManagementPage() {
     }
   };
 
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm('この商品を削除しますか？（関連する売上明細がある場合はエラーになります）')) return;
+    const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      const error = await res.json();
+      alert(error.error || '商品の削除に失敗しました');
+    }
+  };
+
   const handleAddCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!collectionForm.name.trim()) return alert('フォルダ名を入力してください');
@@ -425,6 +436,7 @@ export default function MenuManagementPage() {
                     <th className="px-4 py-3">カテゴリー</th>
                     <th className="px-4 py-3">売価</th>
                     <th className="px-4 py-3">原価</th>
+                    <th className="px-4 py-3 w-16"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -437,6 +449,14 @@ export default function MenuManagementPage() {
                       </td>
                       <td className="px-4 py-3 font-semibold">¥{p.selling_price.toLocaleString()}</td>
                       <td className="px-4 py-3 text-muted-foreground">¥{p.cost_price.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                        >
+                          削除
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
