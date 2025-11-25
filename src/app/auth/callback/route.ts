@@ -11,8 +11,8 @@ export async function POST(request: Request) {
   if (event === 'SIGNED_IN' && session) {
     await supabase.auth.setSession(session);
     const meta = session.user.user_metadata || {};
-    const name = meta.full_name || session.user.email || 'ログインユーザー';
-    await logActivity('ログイン', name, session.user.id);
+    const resolvedName = meta.full_name || session.user.email || session.user.id || 'ログインユーザー';
+    await logActivity('ログイン', resolvedName, session.user.id);
   }
 
   if (event === 'SIGNED_OUT') {
