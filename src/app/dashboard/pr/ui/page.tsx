@@ -21,6 +21,7 @@ export default function UiEditor() {
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [headerBg, setHeaderBg] = useState('#0b1220');
   const [headerFg, setHeaderFg] = useState('#e5e7eb');
+  const [mutedColor, setMutedColor] = useState('#6b7280');
   const [colors, setColors] = useState<UiColors>(defaultColors);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,6 +41,7 @@ export default function UiEditor() {
         setAppTitle(ui.appTitle || 'MERRILY');
         setHeaderBg(ui.headerBackground || '#0b1220');
         setHeaderFg(ui.headerForeground || '#e5e7eb');
+        setMutedColor(ui.mutedColor || '#6b7280');
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -74,6 +76,7 @@ export default function UiEditor() {
           appIconUrl,
           headerBackground: headerBg,
           headerForeground: headerFg,
+          mutedColor,
           lightBackground: colors.light.background,
           lightBorder: colors.light.border,
           lightForeground: colors.light.foreground,
@@ -240,6 +243,14 @@ export default function UiEditor() {
             <label className="text-sm text-muted-foreground space-y-1 block">
               文字色
               <input type="color" value={headerFg} onChange={(e) => setHeaderFg(e.target.value)} />
+            </label>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="font-semibold">小さい文字（mutedテキスト）</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              色
+              <input type="color" value={mutedColor} onChange={(e) => setMutedColor(e.target.value)} />
             </label>
           </div>
 

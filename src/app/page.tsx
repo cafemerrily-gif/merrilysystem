@@ -32,6 +32,7 @@ type UiColors = {
   dark: { background: string; border: string; foreground: string };
 };
 type UiHeader = { background: string; foreground: string };
+type UiMuted = { color: string };
 
 const normalizeColorValue = (value: string) => {
   // Tailwindのhsl(var(--background))形式に合わせるため、hexをH S L三要素に変換
@@ -80,6 +81,7 @@ export default function Home() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [themeColors, setThemeColors] = useState<UiColors | null>(null);
   const [headerColors, setHeaderColors] = useState<UiHeader>({ background: '', foreground: '' });
+  const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -182,6 +184,9 @@ export default function Home() {
             foreground: ui.headerForeground || '',
           });
         }
+        if (ui.mutedColor) {
+          setMutedColor({ color: ui.mutedColor });
+        }
         setThemeColors({
           light: {
             background: ui.lightBackground || '#f8fafc',
@@ -252,8 +257,8 @@ export default function Home() {
           style={{
             backgroundColor: headerColors.background || undefined,
             color: headerColors.foreground || undefined,
-            borderRadius: '12px',
             paddingInline: headerColors.background ? '12px' : undefined,
+            marginBottom: '18px',
           }}
         >
           <div className="flex items-center gap-3">
@@ -261,7 +266,12 @@ export default function Home() {
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cafe Management System</p>
+              <p
+                className="text-xs uppercase tracking-[0.2em]"
+                style={{ color: mutedColor.color || undefined }}
+              >
+                Cafe Management System
+              </p>
               <h1 className="text-2xl font-bold">{appTitle}</h1>
               <p className="text-sm text-muted-foreground">
                 {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
@@ -340,7 +350,7 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl">
+        <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl mt-4">
           <div className="rounded-2xl bg-background px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
             <div className="col-span-2 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Welcome</p>

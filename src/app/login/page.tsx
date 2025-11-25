@@ -28,6 +28,7 @@ function LoginPageInner() {
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [headerColors, setHeaderColors] = useState<{ background: string; foreground: string }>({ background: '', foreground: '' });
+  const [mutedColor, setMutedColor] = useState<string>('');
   const [themeColors, setThemeColors] = useState<{
     light: { background: string; border: string; foreground: string };
     dark: { background: string; border: string; foreground: string };
@@ -124,6 +125,9 @@ function LoginPageInner() {
             background: ui.headerBackground || '',
             foreground: ui.headerForeground || '',
           });
+        }
+        if (ui?.mutedColor) {
+          setMutedColor(ui.mutedColor);
         }
         if (ui) {
           setThemeColors({
@@ -265,10 +269,24 @@ function LoginPageInner() {
       >
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Image src={loginIconUrl || '/MERRILY_Simbol.png'} alt="MERRILY" width={120} height={120} className="object-contain" priority />
+            <div className="w-28 h-28 rounded-full border-2 border-border bg-white overflow-hidden flex items-center justify-center shadow-md">
+              <Image
+                src={loginIconUrl || '/MERRILY_Simbol.png'}
+                alt="MERRILY"
+                width={112}
+                height={112}
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">{appTitle}</h1>
-          <p className="text-xs uppercase text-muted-foreground tracking-[0.2em]">Cafe Management System</p>
+          <p
+            className="text-xs uppercase tracking-[0.2em]"
+            style={{ color: mutedColor || undefined }}
+          >
+            Cafe Management System
+          </p>
           <p className="text-sm text-muted-foreground">
             {mode === 'login' ? 'メールアドレスとパスワードでサインイン' : '初回のみユーザー登録してください'}
           </p>
