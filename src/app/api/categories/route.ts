@@ -74,6 +74,24 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    // まず該当カテゴリに紐づく商品がないか確認
+    const { count, error: countError } = await supabaseAdmin
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('category_id', Number(id));
+
+    if (countError) {
+      console.error('カテゴリ削除前チェックエラー:', countError);
+      return NextResponse.json({ error: '削除前の確認に失敗しました' }, { status: 500 });
+    }
+
+    if ((count || 0) > 0) {
+      return NextResponse.json(
+        { error: 'このカテゴリに商品が存在するため削除できません。商品を移動・削除してください。' },
+        { status: 400 }
+      );
+    }
+
     const { error } = await supabaseAdmin.from('categories').delete().eq('id', Number(id));
     if (error) {
       console.error('カテゴリ削除エラー:', error);
