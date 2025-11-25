@@ -34,8 +34,9 @@ const navItems = [
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
+  const [hasManualPreference, setHasManualPreference] = useState(false);
 
-  // デバイス設定に従ってライト/ダークを適用（手動トグルなし）
+  // デバイス設定に従ってライト/ダークを適用。PCのみ手動トグルを表示し、押した場合は手動優先。
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -44,17 +45,42 @@ export default function Home() {
       document.documentElement.classList.toggle('dark', next);
     };
     applyTheme(media.matches);
-    const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches);
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (hasManualPreference) return;
+      applyTheme(event.matches);
+    };
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, []);
+  }, [hasManualPreference]);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setHasManualPreference(true);
+    setIsDark(next);
+    document.documentElement.classList.toggle('dark', next);
+  };
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <header className="fixed top-4 left-0 right-0 z-50 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <LogoutButton />
-          {/* テーマはデバイス設定に従うため切り替えボタンなし */}
+          {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
+          <button
+            onClick={toggleTheme}
+            className="hidden md:inline-flex p-3 rounded-xl bg-card border border-border shadow-lg hover:shadow-xl transition-all duration-200 group"
+            aria-label="テーマを切り替え"
+          >
+            {isDark ? (
+              <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
         </div>
       </header>
 

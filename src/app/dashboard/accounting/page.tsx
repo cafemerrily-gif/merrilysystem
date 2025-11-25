@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 type Daily = { date: string; total: number };
@@ -45,17 +45,14 @@ const formatRatio = (current: number, previous: number) => {
   return `${sign}${diff.toFixed(1)}%`;
 };
 
-const buildSmoothPath = (points: [number, number][]) => {
+const buildLinePath = (points: [number, number][]) => {
   if (points.length < 2) return '';
-  const d: string[] = [];
-  d.push(`M ${points[0][0]} ${points[0][1]}`);
-  for (let i = 0; i < points.length - 1; i++) {
-    const [x0, y0] = points[i];
-    const [x1, y1] = points[i + 1];
-    const cx = (x0 + x1) / 2;
-    d.push(`Q ${cx} ${y0}, ${x1} ${y1}`);
+  const cmds = [`M ${points[0][0]} ${points[0][1]}`];
+  for (let i = 1; i < points.length; i++) {
+    const [x, y] = points[i];
+    cmds.push(`L ${x} ${y}`);
   }
-  return d.join(' ');
+  return cmds.join(' ');
 };
 
 function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: number }) {
@@ -68,7 +65,7 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
     const y = max ? height - (d.total / max) * height : height;
     return [x, y] as [number, number];
   });
-  const path = buildSmoothPath(points);
+  const path = buildLinePath(points);
 
   const formatLabel = (raw: string) => {
     if (!raw) return '';
@@ -105,11 +102,12 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 export default function AccountingDashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | null = null;
-
-    const load = async () => {
+  const load = useCallback(
+    async (isInitial = false) => {
+      if (isInitial) setLoading(true);
+      else setRefreshing(true);
       try {
         const res = await fetch('/api/analytics/sales');
         const data = await res.json();
@@ -117,16 +115,21 @@ export default function AccountingDashboard() {
       } catch (error) {
         console.error('売上サマリー取得エラー:', error);
       } finally {
-        setLoading(false);
+        if (isInitial) setLoading(false);
+        else setRefreshing(false);
       }
-    };
+    },
+    []
+  );
 
-    load();
-    timer = setInterval(load, 30000); // 定期リフレッシュでグラフを自動反映
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    load(true);
+    timer = setInterval(() => load(false), 30000); // 定期リフレッシュでグラフを自動反映
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, []);
+  }, [load]);
 
   const timeSlotTotal = useMemo(() => {
     if (!summary?.timeSlots) return 0;
@@ -159,12 +162,21 @@ export default function AccountingDashboard() {
               <p className="text-sm text-muted-foreground">売上・時間帯別やランキングを確認</p>
             </div>
           </div>
-          <Link
-            href="/accounting/sales"
-            className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 flex items-center gap-2 text-sm"
-          >
-            <span>売上を入力</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => load(false)}
+              disabled={refreshing}
+              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-60"
+            >
+              {refreshing ? 'リロード中…' : '最新データを再読込'}
+            </button>
+            <Link
+              href="/accounting/sales"
+              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 flex items-center gap-2 text-sm"
+            >
+              <span>売上を入力</span>
+            </Link>
+          </div>
         </div>
       </div>
 
