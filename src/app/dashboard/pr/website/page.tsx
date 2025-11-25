@@ -3,21 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-type Section = {
-  id: string;
-  title: string;
-  body: string;
-};
+type Section = { id: string; title: string; body: string };
 type MenuItem = { id: string; name: string; price: string; desc: string };
 type BlogPost = { id: string; title: string; body: string; date: string };
 
 export default function PrWebsiteEditor() {
   const [heroTitle, setHeroTitle] = useState('MERRILY CAFE');
   const [heroSubtitle, setHeroSubtitle] = useState('季節のこだわりメニューとくつろぎの空間');
-  const [ctaLabel, setCtaLabel] = useState('オンラインで予約する');
+  const [ctaLabel, setCtaLabel] = useState('ご来店をお待ちしています');
   const [sections, setSections] = useState<Section[]>([
     { id: 'about', title: 'お店について', body: '丁寧に淹れたコーヒーと手作りスイーツでお待ちしています。' },
-    { id: 'news', title: 'お知らせ', body: '春の新作スイーツが登場しました。数量限定です。' },
+    { id: 'news', title: 'お知らせ', body: '春の新作スイーツが登場。数量限定です。' },
   ]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
     { id: 'm1', name: '本日のコーヒー', price: '¥500', desc: '淹れたてのスペシャルティコーヒー' },
@@ -30,37 +26,36 @@ export default function PrWebsiteEditor() {
   const [headerColor, setHeaderColor] = useState('#0f172a');
   const [headerTextColor, setHeaderTextColor] = useState('#ffffff');
   const [heroImage, setHeroImage] = useState('/MERRILY_Simbol.png');
-
-  const updateSection = (id: string, field: 'title' | 'body', value: string) => {
-    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
-  };
+  const [info, setInfo] = useState<string | null>(null);
 
   const addSection = () => {
     const newId = `sec-${sections.length + 1}`;
     setSections([...sections, { id: newId, title: '新しいセクション', body: 'ここに本文を入力' }]);
   };
-
-  const removeSection = (id: string) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
-  };
+  const updateSection = (id: string, field: 'title' | 'body', value: string) =>
+    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  const removeSection = (id: string) => setSections((prev) => prev.filter((s) => s.id !== id));
 
   const addMenuItem = () => {
     const newId = `m-${menuItems.length + 1}`;
     setMenuItems([...menuItems, { id: newId, name: '新しいメニュー', price: '¥0', desc: '' }]);
   };
-  const updateMenuItem = (id: string, field: keyof MenuItem, value: string) => {
+  const updateMenuItem = (id: string, field: keyof MenuItem, value: string) =>
     setMenuItems((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
-  };
   const removeMenuItem = (id: string) => setMenuItems((prev) => prev.filter((m) => m.id !== id));
 
   const addBlogPost = () => {
     const newId = `b-${blogPosts.length + 1}`;
     setBlogPosts([...blogPosts, { id: newId, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10) }]);
   };
-  const updateBlogPost = (id: string, field: keyof BlogPost, value: string) => {
+  const updateBlogPost = (id: string, field: keyof BlogPost, value: string) =>
     setBlogPosts((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
-  };
   const removeBlogPost = (id: string) => setBlogPosts((prev) => prev.filter((b) => b.id !== id));
+
+  const mockSave = () => {
+    setInfo('保存しました（プレビュー用）。本番保存する場合はAPI連携を追加してください。');
+    setTimeout(() => setInfo(null), 3000);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -70,12 +65,20 @@ export default function PrWebsiteEditor() {
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📰</div>
             <div>
               <h1 className="text-2xl font-bold">公式ホームページ編集</h1>
-              <p className="text-sm text-muted-foreground">広報部向け簡易CMS（プレビューのみ、保存は未実装）</p>
+              <p className="text-sm text-muted-foreground">広報向けの宣伝ページを素早く編集・プレビュー</p>
             </div>
           </div>
-          <Link href="/dashboard/pr" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
-            広報部トップへ戻る
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={mockSave}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+            >
+              保存（モック）
+            </button>
+            <Link href="/dashboard/pr" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
+              広報部トップへ
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -100,7 +103,7 @@ export default function PrWebsiteEditor() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2"
               placeholder="/MERRILY_Simbol.png"
             />
-            <span className="text-xs text-muted-foreground">公開ディレクトリのパスか、完全URLを指定してください。</span>
+            <span className="text-xs text-muted-foreground">public配下のパスか、完全URLを指定してください。</span>
           </label>
           <label className="text-sm text-muted-foreground flex flex-col gap-2">
             ヒーロータイトル
@@ -126,17 +129,15 @@ export default function PrWebsiteEditor() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2"
             />
           </label>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground flex-1">
-              プレビューURL（任意）
-              <input
-                value={previewUrl}
-                onChange={(e) => setPreviewUrl(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2"
-                placeholder="https://example.com"
-              />
-            </label>
-          </div>
+          <label className="text-sm text-muted-foreground flex flex-col gap-2">
+            現行サイトURL（任意）
+            <input
+              value={previewUrl}
+              onChange={(e) => setPreviewUrl(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2"
+              placeholder="https://example.com"
+            />
+          </label>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -171,10 +172,6 @@ export default function PrWebsiteEditor() {
               ))}
             </div>
           </div>
-
-          <p className="text-xs text-muted-foreground">
-            ※ 現在はプレビューのみで保存機能は未実装です。必要に応じて API と連携してください。
-          </p>
 
           <div className="pt-4 space-y-2">
             <div className="flex items-center justify-between">
@@ -253,6 +250,11 @@ export default function PrWebsiteEditor() {
               ))}
             </div>
           </div>
+
+          {info && <p className="text-green-600 text-sm">{info}</p>}
+          <p className="text-xs text-muted-foreground">
+            ※ 現在はプレビューのみで保存機能はモックです。必要に応じて API と連携してください。
+          </p>
         </div>
 
         <div className="space-y-4 bg-card border border-border rounded-2xl p-6 shadow-lg">
@@ -317,7 +319,6 @@ export default function PrWebsiteEditor() {
                   </div>
                 </div>
               )}
-
             </div>
           </div>
           {previewUrl && (
