@@ -11,6 +11,7 @@ export default function PrBlogsEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cooldown, setCooldown] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
@@ -64,6 +65,30 @@ export default function PrBlogsEditor() {
   const updateBlogPost = (id: string, field: keyof BlogPost, value: string) =>
     setBlogPosts((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
   const removeBlogPost = (id: string) => setBlogPosts((prev) => prev.filter((b) => b.id !== id));
+
+  const handleUpload = async (postId: string, file?: File | null) => {
+    if (!file) return;
+    try {
+      setUploading(true);
+      setError(null);
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `blog-${postId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('blog-images').upload(fileName, file, { upsert: true });
+      if (uploadError) {
+        setError(uploadError.message || 'アップロードに失敗しました');
+        return;
+      }
+      const { data: publicUrlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
+      const url = publicUrlData.publicUrl;
+      updateBlogPost(postId, 'image', url);
+      setInfo('画像をアップロードしました');
+    } catch (e: any) {
+      setError(e?.message || 'アップロードに失敗しました');
+    } finally {
+      setUploading(false);
+      setTimeout(() => setInfo(null), 3000);
+    }
+  };
 
   const handleSave = async () => {
     if (saving || cooldown) return;
@@ -170,6 +195,19 @@ export default function PrBlogsEditor() {
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                   placeholder="画像URL（任意）"
                 />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-accent">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleUpload(post.id, e.target.files?.[0])}
+                      disabled={uploading}
+                    />
+                    <span>画像をアップロード</span>
+                  </label>
+                  {uploading && <span>アップロード中...</span>}
+                </div>
                 <textarea
                   value={post.body}
                   onChange={(e) => updateBlogPost(post.id, 'body', e.target.value)}
