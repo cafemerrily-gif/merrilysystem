@@ -40,6 +40,7 @@ export default function Home() {
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
   const supabase = createClientComponentClient();
 
   // テーマ: デバイス設定 → PCのみ手動トグル
@@ -171,23 +172,64 @@ export default function Home() {
               <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
               <span className="text-sm">{isDark ? 'ダーク' : 'ライト'}</span>
             </button>
-            {isAdmin && (
-              <>
-                <Link
-                  href="/profile"
-                  className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
-                >
-                  プロフィール
-                </Link>
-                <Link
-                  href="/admin/users"
-                  className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
-                >
-                  メンバー管理
-                </Link>
-              </>
-            )}
-            <LogoutButton />
+            <div className="hidden sm:flex items-center gap-2">
+              {isAdmin && (
+                <>
+                  <Link
+                    href="/profile"
+                    className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+                  >
+                    プロフィール
+                  </Link>
+                  <Link
+                    href="/admin/users"
+                    className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+                  >
+                    メンバー管理
+                  </Link>
+                </>
+              )}
+              <LogoutButton />
+            </div>
+            <div className="relative sm:hidden">
+              <button
+                onClick={() => setShowMenu((v) => !v)}
+                className="px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition text-sm"
+              >
+                メニュー
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-border bg-card shadow-lg p-2 space-y-1 z-10">
+                  <button
+                    onClick={toggleTheme}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                  >
+                    テーマ切替
+                  </button>
+                  {isAdmin && (
+                    <>
+                      <Link
+                        href="/profile"
+                        className="block px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                        onClick={() => setShowMenu(false)}
+                      >
+                        プロフィール
+                      </Link>
+                      <Link
+                        href="/admin/users"
+                        className="block px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                        onClick={() => setShowMenu(false)}
+                      >
+                        メンバー管理
+                      </Link>
+                    </>
+                  )}
+                  <div className="px-3 py-2">
+                    <LogoutButton />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
