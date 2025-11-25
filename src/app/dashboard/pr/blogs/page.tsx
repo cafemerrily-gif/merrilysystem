@@ -81,7 +81,7 @@ export default function PrBlogsEditor() {
       const { data: publicUrlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
       const url = publicUrlData.publicUrl;
       updateBlogPost(postId, 'image', url);
-      setInfo('画像をアップロードしました');
+      setInfo('画像をアップロードしました（保存して反映）');
     } catch (e: any) {
       setError(e?.message || 'アップロードに失敗しました');
     } finally {
@@ -206,7 +206,7 @@ export default function PrBlogsEditor() {
                     />
                     <span>画像をアップロード</span>
                   </label>
-                  {uploading && <span>アップロード中...</span>}
+                {uploading && <span>アップロード中...</span>}
                 </div>
                 <textarea
                   value={post.body}
