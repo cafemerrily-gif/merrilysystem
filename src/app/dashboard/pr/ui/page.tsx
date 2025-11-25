@@ -67,6 +67,8 @@ export default function UiEditor() {
   const [error, setError] = useState<string | null>(null);
   const [basePayload, setBasePayload] = useState<any>({});
   const [uploading, setUploading] = useState(false);
+  const [presets, setPresets] = useState<any[]>([]);
+  const [presetName, setPresetName] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -79,6 +81,7 @@ export default function UiEditor() {
         setAppTitle(ui.appTitle || 'MERRILY');
         setWelcomeTitleText(ui.welcomeTitleText || welcomeTitleText);
         setWelcomeBodyText(ui.welcomeBodyText || welcomeBodyText);
+        setPresets(ui.presets || []);
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -181,6 +184,7 @@ export default function UiEditor() {
           cardBgDark: modeValues.dark.cardBg,
           cardFgDark: modeValues.dark.cardFg,
           cardBorderDark: modeValues.dark.cardBorder,
+          presets,
         },
       };
       const res = await fetch('/api/pr/website', {
@@ -217,6 +221,112 @@ export default function UiEditor() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const snapshotSettings = () => ({
+    appTitle,
+    welcomeTitleText,
+    welcomeBodyText,
+    loginIconUrl,
+    appIconUrl,
+    lightBackground: colors.light.background,
+    lightBorder: colors.light.border,
+    lightForeground: colors.light.foreground,
+    darkBackground: colors.dark.background,
+    darkBorder: colors.dark.border,
+    darkForeground: colors.dark.foreground,
+    headerBgLight: modeValues.light.headerBg,
+    headerFgLight: modeValues.light.headerFg,
+    headerBgDark: modeValues.dark.headerBg,
+    headerFgDark: modeValues.dark.headerFg,
+    headerTitleColorLight: modeValues.light.headerTitle,
+    headerSubtitleColorLight: modeValues.light.headerSubtitle,
+    headerUserColorLight: modeValues.light.headerUser,
+    headerTitleColorDark: modeValues.dark.headerTitle,
+    headerSubtitleColorDark: modeValues.dark.headerSubtitle,
+    headerUserColorDark: modeValues.dark.headerUser,
+    mutedColorLight: modeValues.light.muted,
+    mutedColorDark: modeValues.dark.muted,
+    welcomeBgLight: modeValues.light.welcomeBg,
+    welcomeFgLight: modeValues.light.welcomeFg,
+    welcomeBorderLight: modeValues.light.welcomeBorder,
+    welcomeTitleColorLight: modeValues.light.welcomeTitle,
+    welcomeBodyColorLight: modeValues.light.welcomeBody,
+    welcomeBgDark: modeValues.dark.welcomeBg,
+    welcomeFgDark: modeValues.dark.welcomeFg,
+    welcomeBorderDark: modeValues.dark.welcomeBorder,
+    welcomeTitleColorDark: modeValues.dark.welcomeTitle,
+    welcomeBodyColorDark: modeValues.dark.welcomeBody,
+    cardBgLight: modeValues.light.cardBg,
+    cardFgLight: modeValues.light.cardFg,
+    cardBorderLight: modeValues.light.cardBorder,
+    cardBgDark: modeValues.dark.cardBg,
+    cardFgDark: modeValues.dark.cardFg,
+    cardBorderDark: modeValues.dark.cardBorder,
+  });
+
+  const applyPreset = (preset: any) => {
+    if (!preset) return;
+    setAppTitle(preset.appTitle || appTitle);
+    setWelcomeTitleText(preset.welcomeTitleText || welcomeTitleText);
+    setWelcomeBodyText(preset.welcomeBodyText || welcomeBodyText);
+    setLoginIconUrl(preset.loginIconUrl || loginIconUrl);
+    setAppIconUrl(preset.appIconUrl || appIconUrl);
+    setColors({
+      light: {
+        background: preset.lightBackground || colors.light.background,
+        border: preset.lightBorder || colors.light.border,
+        foreground: preset.lightForeground || colors.light.foreground,
+      },
+      dark: {
+        background: preset.darkBackground || colors.dark.background,
+        border: preset.darkBorder || colors.dark.border,
+        foreground: preset.darkForeground || colors.dark.foreground,
+      },
+    });
+    setModeValues({
+      light: {
+        headerBg: preset.headerBgLight || modeValues.light.headerBg,
+        headerFg: preset.headerFgLight || modeValues.light.headerFg,
+        headerTitle: preset.headerTitleColorLight || modeValues.light.headerTitle,
+        headerSubtitle: preset.headerSubtitleColorLight || modeValues.light.headerSubtitle,
+        headerUser: preset.headerUserColorLight || modeValues.light.headerUser,
+        muted: preset.mutedColorLight || modeValues.light.muted,
+        welcomeBg: preset.welcomeBgLight || modeValues.light.welcomeBg,
+        welcomeFg: preset.welcomeFgLight || modeValues.light.welcomeFg,
+        welcomeBorder: preset.welcomeBorderLight || modeValues.light.welcomeBorder,
+        welcomeTitle: preset.welcomeTitleColorLight || modeValues.light.welcomeTitle,
+        welcomeBody: preset.welcomeBodyColorLight || modeValues.light.welcomeBody,
+        cardBg: preset.cardBgLight || modeValues.light.cardBg,
+        cardFg: preset.cardFgLight || modeValues.light.cardFg,
+        cardBorder: preset.cardBorderLight || modeValues.light.cardBorder,
+      },
+      dark: {
+        headerBg: preset.headerBgDark || modeValues.dark.headerBg,
+        headerFg: preset.headerFgDark || modeValues.dark.headerFg,
+        headerTitle: preset.headerTitleColorDark || modeValues.dark.headerTitle,
+        headerSubtitle: preset.headerSubtitleColorDark || modeValues.dark.headerSubtitle,
+        headerUser: preset.headerUserColorDark || modeValues.dark.headerUser,
+        muted: preset.mutedColorDark || modeValues.dark.muted,
+        welcomeBg: preset.welcomeBgDark || modeValues.dark.welcomeBg,
+        welcomeFg: preset.welcomeFgDark || modeValues.dark.welcomeFg,
+        welcomeBorder: preset.welcomeBorderDark || modeValues.dark.welcomeBorder,
+        welcomeTitle: preset.welcomeTitleColorDark || modeValues.dark.welcomeTitle,
+        welcomeBody: preset.welcomeBodyColorDark || modeValues.dark.welcomeBody,
+        cardBg: preset.cardBgDark || modeValues.dark.cardBg,
+        cardFg: preset.cardFgDark || modeValues.dark.cardFg,
+        cardBorder: preset.cardBorderDark || modeValues.dark.cardBorder,
+      },
+    });
+  };
+
+  const savePresetSnapshot = () => {
+    if (!presetName.trim()) return;
+    const snapshot = snapshotSettings();
+    const next = [...presets.filter((p) => p.name !== presetName.trim()), { name: presetName.trim(), ...snapshot }];
+    setPresets(next);
+    setPresetName('');
+    setMessage('プリセットを保存しました（UI設定の保存も行ってください）');
   };
 
   const currentMode = modeValues[selectedMode];
@@ -270,6 +380,38 @@ export default function UiEditor() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground">選んだモードの色だけが変更されます。</p>
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+            <input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm w-full sm:w-48"
+              placeholder="プリセット名"
+            />
+            <div className="flex gap-2">
+              <button onClick={savePresetSnapshot} className="px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm">
+                プリセット保存
+              </button>
+              {presets.length > 0 && (
+                <select
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  onChange={(e) => {
+                    const p = presets.find((pr) => pr.name === e.target.value);
+                    applyPreset(p);
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    適用するプリセット
+                  </option>
+                  {presets.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

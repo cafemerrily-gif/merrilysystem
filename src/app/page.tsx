@@ -110,6 +110,12 @@ export default function Home() {
       root.style.setProperty('--background', normalizeColorValue(mode.background));
       root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
       root.style.setProperty('--border', normalizeColorValue(mode.border));
+      root.style.setProperty('--primary', normalizeColorValue(mode.foreground));
+      root.style.setProperty('--primary-foreground', normalizeColorValue(mode.background));
+      root.style.setProperty('--accent', normalizeColorValue(mode.foreground));
+      root.style.setProperty('--accent-foreground', normalizeColorValue(mode.background));
+      root.style.setProperty('--secondary', normalizeColorValue(mode.background));
+      root.style.setProperty('--secondary-foreground', normalizeColorValue(mode.foreground));
       // 併せてダーク側も上書き
       root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
       root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
