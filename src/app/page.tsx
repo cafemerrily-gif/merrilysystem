@@ -86,6 +86,7 @@ export default function Home() {
   const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
   const [cardColors, setCardColors] = useState<UiCard>({ background: '', foreground: '', border: '' });
   const [welcomeColors, setWelcomeColors] = useState<UiWelcome>({ background: '', foreground: '', border: '' });
+  const [uiSettingsRaw, setUiSettingsRaw] = useState<any>({});
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -180,6 +181,7 @@ export default function Home() {
       } else setBlogPosts([]);
       if (data?.uiSettings) {
         const ui = data.uiSettings;
+        setUiSettingsRaw(ui);
         if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
         if (ui.appTitle) setAppTitle(ui.appTitle);
         if (ui.headerBackground || ui.headerForeground) {
@@ -267,14 +269,39 @@ export default function Home() {
     }
   }, [themeColors, isDark, applyColors]);
 
+  const currentHeader = {
+    background: isDark
+      ? uiSettingsRaw.headerBgDark || uiSettingsRaw.headerBackground || headerColors.background
+      : uiSettingsRaw.headerBgLight || uiSettingsRaw.headerBackground || headerColors.background,
+    foreground: isDark
+      ? uiSettingsRaw.headerFgDark || uiSettingsRaw.headerForeground || headerColors.foreground
+      : uiSettingsRaw.headerFgLight || uiSettingsRaw.headerForeground || headerColors.foreground,
+  };
+
+  const currentMuted = {
+    color: isDark ? uiSettingsRaw.mutedColorDark || uiSettingsRaw.mutedColor || mutedColor.color : uiSettingsRaw.mutedColorLight || uiSettingsRaw.mutedColor || mutedColor.color,
+  };
+
+  const currentWelcome = {
+    background: isDark ? uiSettingsRaw.welcomeBgDark || welcomeColors.background : uiSettingsRaw.welcomeBgLight || welcomeColors.background,
+    foreground: isDark ? uiSettingsRaw.welcomeFgDark || welcomeColors.foreground : uiSettingsRaw.welcomeFgLight || welcomeColors.foreground,
+    border: isDark ? uiSettingsRaw.welcomeBorderDark || welcomeColors.border : uiSettingsRaw.welcomeBorderLight || welcomeColors.border,
+  };
+
+  const currentCard = {
+    background: isDark ? uiSettingsRaw.cardBgDark || cardColors.background : uiSettingsRaw.cardBgLight || cardColors.background,
+    foreground: isDark ? uiSettingsRaw.cardFgDark || cardColors.foreground : uiSettingsRaw.cardFgLight || cardColors.foreground,
+    border: isDark ? uiSettingsRaw.cardBorderDark || cardColors.border : uiSettingsRaw.cardBorderLight || cardColors.border,
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-16">
         <header
           className="flex items-center justify-between py-4 px-4 sm:px-0 sticky top-0 z-30"
           style={{
-            backgroundColor: headerColors.background || undefined,
-            color: headerColors.foreground || undefined,
+            backgroundColor: currentHeader.background || undefined,
+            color: currentHeader.foreground || undefined,
             marginBottom: '18px',
           }}
         >
