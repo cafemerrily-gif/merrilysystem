@@ -38,7 +38,7 @@ export default function PrBlogsEditor() {
         const meta = userRes.data.user?.user_metadata;
         if (meta?.full_name) setUserName(meta.full_name);
 
-        const res = await fetch('/api/pr/website');
+        const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const text = await res.text();
         const data = text ? JSON.parse(text) : null;
         if (data) {
@@ -117,6 +117,19 @@ export default function PrBlogsEditor() {
             image: b.image || '',
           }))
         );
+        // サーバーの最新を再取得してズレを防ぐ
+        const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
+        const refreshText = await refresh.text();
+        const refreshData = refreshText ? JSON.parse(refreshText) : null;
+        if (refreshData) {
+          setPayload(refreshData);
+          setBlogPosts(
+            (refreshData.blogPosts ?? []).map((b: any) => ({
+              ...b,
+              image: b.image || '',
+            }))
+          );
+        }
         await logClientActivity('広報: ブログを保存');
       }
     } catch (e: any) {

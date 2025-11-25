@@ -99,7 +99,7 @@ export default function Home() {
   const loadBlogs = useCallback(async () => {
     try {
       setLoadingBlogs(true);
-      const res = await fetch('/api/pr/website');
+      const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data = await res.json();
       if (data?.blogPosts) setBlogPosts(data.blogPosts);
       else setBlogPosts([]);
