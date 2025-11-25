@@ -60,3 +60,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'コレクションの作成に失敗しました' }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/collections?id=123
+ * コレクション（商品フォルダ）を削除
+ */
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'id が必要です' }, { status: 400 });
+  }
+
+  try {
+    const { error } = await supabaseAdmin.from('product_collections').delete().eq('id', Number(id));
+    if (error) {
+      console.error('コレクション削除エラー:', error);
+      return NextResponse.json({ error: 'コレクションの削除に失敗しました' }, { status: 500 });
+    }
+    return NextResponse.json({ message: '削除しました', id: Number(id) });
+  } catch (error) {
+    console.error('コレクション削除エラー:', error);
+    return NextResponse.json({ error: 'コレクションの削除に失敗しました' }, { status: 500 });
+  }
+}

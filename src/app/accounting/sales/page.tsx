@@ -193,7 +193,7 @@ export default function SalesInputPage() {
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
           <h2 className="text-xl font-semibold">販売期間（フォルダ）を選択</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">フォルダ</label>
               <select
@@ -232,7 +232,7 @@ export default function SalesInputPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">支払い方法</label>
               <select

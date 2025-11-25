@@ -135,6 +135,28 @@ export default function MenuManagementPage() {
     }
   };
 
+  const handleDeleteCollection = async (id: number) => {
+    if (!confirm('このフォルダを削除しますか？')) return;
+    const res = await fetch(`/api/collections?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setCollections((prev) => prev.filter((c) => c.id !== id));
+    } else {
+      const error = await res.json();
+      alert(error.error || 'フォルダの削除に失敗しました');
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm('このカテゴリーを削除しますか？')) return;
+    const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+    } else {
+      const error = await res.json();
+      alert(error.error || 'カテゴリーの削除に失敗しました');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -234,6 +256,7 @@ export default function MenuManagementPage() {
                   <th className="px-4 py-3">フォルダ名</th>
                   <th className="px-4 py-3">期間</th>
                   <th className="px-4 py-3">説明</th>
+                  <th className="px-4 py-3 w-20"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -244,6 +267,14 @@ export default function MenuManagementPage() {
                       {c.start_date || '未設定'} ～ {c.end_date || '未設定'}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{c.description || '-'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleDeleteCollection(c.id)}
+                        className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                      >
+                        削除
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -312,20 +343,29 @@ export default function MenuManagementPage() {
                     <th className="px-4 py-3">ID</th>
                     <th className="px-4 py-3">名前</th>
                     <th className="px-4 py-3">説明</th>
-                    <th className="px-4 py-3">表示順</th>
+                  <th className="px-4 py-3">表示順</th>
+                  <th className="px-4 py-3 w-16"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {categories.map((cat) => (
+                  <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">{cat.id}</td>
+                    <td className="px-4 py-3 font-medium">{cat.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{cat.description}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{cat.display_order}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id)}
+                        className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                      >
+                        削除
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {categories.map((cat) => (
-                    <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">{cat.id}</td>
-                      <td className="px-4 py-3 font-medium">{cat.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{cat.description}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{cat.display_order}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
           </div>
 
