@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import LogoutButton from '@/components/LogoutButton';
 
@@ -17,51 +17,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    href: '/dashboard/staff',
-    icon: '👥',
-    title: '店舗スタッフ',
-    subtitle: '勤怠管理',
-    desc: '出勤・退勤の登録と実績確認',
-    accent: 'スタッフダッシュボード',
-    requiredTags: ['店舗スタッフ'],
-  },
-  {
-    href: '/dashboard/accounting',
-    icon: '📊',
-    title: '会計部',
-    subtitle: '売上ダッシュボード',
-    desc: '売上・客数・ランキング・時間帯別を確認',
-    accent: 'ダッシュボードを開く',
-    requiredTags: ['会計部'],
-  },
-  {
-    href: '/dashboard/dev',
-    icon: '🛠️',
-    title: '開発部',
-    subtitle: 'メニュー管理',
-    desc: 'カテゴリー・フォルダ・商品を一括管理',
-    accent: '管理を開く',
-    requiredTags: ['開発部'],
-  },
-  {
-    href: '/dashboard/pr',
-    icon: '📣',
-    title: '広報部',
-    subtitle: 'ホームページ編集',
-    desc: '宣伝・告知・ブログとメニュー掲載',
-    accent: '編集画面へ',
-    requiredTags: ['広報部'],
-  },
-  {
-    href: '/dashboard/debug',
-    icon: '🐛',
-    title: 'デバッグ',
-    subtitle: 'エンジニアチーム',
-    desc: 'テスト・API動作確認・フラグ切替',
-    accent: 'デバッグツール',
-    requiredTags: ['エンジニアチーム'],
-  },
+  { href: '/dashboard/staff', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠管理', desc: '出勤・退勤を記録', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
+  { href: '/dashboard/accounting', icon: '📊', title: '会計部', subtitle: '売上ダッシュボード', desc: '売上/客数/ランキング/時間帯', accent: '会計', requiredTags: ['会計部'] },
+  { href: '/dashboard/dev', icon: '🛠️', title: '開発部', subtitle: 'メニュー管理', desc: 'カテゴリ・フォルダ・商品を管理', accent: '開発', requiredTags: ['開発部'] },
+  { href: '/dashboard/pr', icon: '📣', title: '広報部', subtitle: 'ホームページ編集', desc: '宣伝・ブログ・メニュー掲載', accent: '広報', requiredTags: ['広報部'] },
+  { href: '/dashboard/debug', icon: '🐛', title: 'デバッグ', subtitle: 'エンジニアチーム', desc: 'テスト・API・フラグ切替', accent: 'デバッグ', requiredTags: ['エンジニアチーム'] },
 ];
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
@@ -107,37 +67,47 @@ export default function Home() {
     })();
   }, [supabase]);
 
-  // 操作ログ取得
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoadingLogs(true);
-        const res = await fetch('/api/logs');
-        const data = await res.json();
-        if (!data.error) setLogs(data);
-      } catch (e) {
-        console.error('ログ取得エラー', e);
-      } finally {
-        setLoadingLogs(false);
-      }
-    })();
+  const loadLogs = useCallback(async () => {
+    try {
+      setLoadingLogs(true);
+      const res = await fetch('/api/logs');
+      const data = await res.json();
+      if (!data.error) setLogs(data);
+    } catch (e) {
+      console.error('ログ取得エラー', e);
+    } finally {
+      setLoadingLogs(false);
+    }
   }, []);
 
-  // 通知取得
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoadingNotifications(true);
-        const res = await fetch('/api/notifications');
-        const data = await res.json();
-        if (!data.error) setNotifications(data);
-      } catch (e) {
-        console.error('通知取得エラー', e);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    })();
+  const loadNotifications = useCallback(async () => {
+    try {
+      setLoadingNotifications(true);
+      const res = await fetch('/api/notifications');
+      const data = await res.json();
+      if (!data.error) setNotifications(data);
+    } catch (e) {
+      console.error('通知取得エラー', e);
+    } finally {
+      setLoadingNotifications(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadLogs();
+    loadNotifications();
+  }, [loadLogs, loadNotifications]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        loadLogs();
+        loadNotifications();
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [loadLogs, loadNotifications]);
 
   const privileged = ['職員', 'マネジメント部', 'エンジニアチーム'];
   const visibleNavItems = navItems.filter((item) => {
@@ -156,7 +126,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-16">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
@@ -200,7 +170,7 @@ export default function Home() {
         </header>
 
         <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-accent/60 to-secondary/60 shadow-2xl">
-          <div className="rounded-2xl bg-slate-950/80 px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
+          <div className="rounded-2xl bg-background px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
             <div className="col-span-2 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Welcome</p>
               <h2 className="text-2xl font-bold">バー形式で各ダッシュボードをまとめました</h2>
@@ -225,7 +195,7 @@ export default function Home() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center justify-between px-4 py-4 rounded-xl border border-border bg-gradient-to-r from-card via-card/70 to-muted hover:from-primary/10 hover:to-accent/10 transition-all duration-200 shadow-sm hover:shadow-lg"
+                  className="group flex items-center justify-between px-4 py-4 rounded-xl border border-border bg-card hover:bg-muted transition-all duration-200 shadow-sm hover:shadow-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/80 text-primary-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform">
@@ -249,7 +219,7 @@ export default function Home() {
           </aside>
 
           <section className="space-y-6">
-            <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 border border-border rounded-2xl p-6 shadow-lg">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-3">概要</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 会計・開発・広報・スタッフの各ダッシュボードをまとめています。エンジニアチームはデバッグツールで確認できます。
@@ -257,12 +227,12 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-card/80 backdrop-blur border border-border rounded-2xl p-6 shadow-lg">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">操作ログ</h3>
                 <span className="text-xs text-muted-foreground">最新50件</span>
               </div>
-              <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1">
+              <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1 scrollbar-thin">
                 {loadingLogs ? (
                   <p className="text-muted-foreground">読み込み中...</p>
                 ) : logs.length === 0 ? (
@@ -284,12 +254,12 @@ export default function Home() {
               <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
             </div>
 
-            <div className="bg-card/80 backdrop-blur border border-border rounded-2xl p-6 shadow-lg">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">通知</h3>
                 <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>
               </div>
-              <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1">
+              <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                 {loadingNotifications ? (
                   <p className="text-muted-foreground">読み込み中...</p>
                 ) : notifications.length === 0 ? (

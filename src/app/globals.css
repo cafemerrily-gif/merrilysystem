@@ -4,55 +4,53 @@
 
 @layer base {
   :root {
-    /* ライトモード：白ベース＋緑ボタン */
-    --background: 0 0% 100%; /* 背景：白 */
-    --foreground: 222.2 47.4% 11.2%; /* テキスト：濃いグレー */
-    
-    --card: 0 0% 100%; /* カード：白 */
-    --card-foreground: 222.2 47.4% 11.2%;
-    
-    /* ✅ ボタン：緑 */
-    --primary: 142 76% 36%; /* green-600 */
-    --primary-foreground: 0 0% 100%; /* ボタン文字：白 */
-    
-    --secondary: 210 40% 96.1%; /* 淡いグレー */
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    
-    --accent: 142 76% 36%; /* 緑 */
+    /* Light theme: high contrast, bright background */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 12%;
+
+    --primary: 172 66% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 216 33% 96%;
+    --secondary-foreground: 222 47% 12%;
+
+    --muted: 216 33% 94%;
+    --muted-foreground: 215 20% 35%;
+
+    --accent: 20 90% 55%;
     --accent-foreground: 0 0% 100%;
-    
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
+
+    --border: 214 32% 86%;
+    --input: 214 32% 86%;
+    --ring: 172 66% 38%;
   }
 
   .dark {
-    /* ダークモード：暗い色ベース＋白ボタン */
-    --background: 0 0% 10%; /* 背景：明るめの暗いグレー */
-    --foreground: 210 40% 98%; /* テキスト：白 */
-    
-    --card: 0 0% 15%; /* カード：少し明るいグレー */
-    --card-foreground: 210 40% 98%;
-    
-    /* ✅ ボタン：白 */
-    --primary: 0 0% 98%; /* ほぼ白 */
-    --primary-foreground: 222.2 47.4% 11.2%; /* ボタン文字：濃いグレー */
-    
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 0 0% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
-    
-    --accent: 142 76% 36%; /* 緑アクセント */
-    --accent-foreground: 0 0% 100%;
-    
-    --border: 0 0% 25%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 98%;
+    /* Dark theme: deep background, bright text */
+    --background: 220 30% 8%;
+    --foreground: 210 40% 96%;
+
+    --card: 222 30% 12%;
+    --card-foreground: 210 40% 96%;
+
+    --primary: 172 66% 48%;
+    --primary-foreground: 222 47% 12%;
+
+    --secondary: 220 25% 16%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 220 25% 14%;
+    --muted-foreground: 215 20% 75%;
+
+    --accent: 20 90% 55%;
+    --accent-foreground: 222 47% 12%;
+
+    --border: 220 22% 22%;
+    --input: 220 22% 20%;
+    --ring: 172 66% 48%;
   }
 }
 
@@ -66,28 +64,28 @@
   }
 }
 
-/* カスタムスクロールバー */
+/* Custom scrollbar */
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background-color: hsl(var(--secondary));
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.5);
     border-radius: 9999px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground));
   }
 }
 
-/* グラスモーフィズム効果 */
+/* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -100,7 +98,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* アニメーション */
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -116,7 +114,7 @@
   animation: fadeIn 0.5s ease-out;
 }
 
-/* グラデーション背景（緑系） */
+/* Gradient helper for sections */
 .gradient-bg {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }

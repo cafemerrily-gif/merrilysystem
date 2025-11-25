@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { logActivity } from '@/lib/logger';
 
-/**
- * GET /api/categories
- * カテゴリ一覧を取得
- */
+// GET: カテゴリー一覧取得
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
@@ -15,28 +13,25 @@ export async function GET() {
       .order('id', { ascending: true });
 
     if (error) {
-      console.error('Supabaseエラー:', error);
-      return NextResponse.json({ error: 'カテゴリの取得に失敗しました' }, { status: 500 });
+      console.error('Supabase error:', error);
+      return NextResponse.json({ error: 'カテゴリーの取得に失敗しました' }, { status: 500 });
     }
 
     return NextResponse.json(data || [], { status: 200 });
   } catch (error) {
-    console.error('カテゴリ取得エラー:', error);
-    return NextResponse.json({ error: 'カテゴリの取得に失敗しました' }, { status: 500 });
+    console.error('カテゴリー取得エラー:', error);
+    return NextResponse.json({ error: 'カテゴリーの取得に失敗しました' }, { status: 500 });
   }
 }
 
-/**
- * POST /api/categories
- * 新規カテゴリを作成
- */
+// POST: カテゴリー作成
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, description, display_order } = body;
 
     if (!name || name.trim() === '') {
-      return NextResponse.json({ error: 'カテゴリ名は必須です' }, { status: 400 });
+      return NextResponse.json({ error: 'カテゴリー名は必須です' }, { status: 400 });
     }
 
     const { data, error } = await supabaseAdmin
@@ -47,34 +42,33 @@ export async function POST(request: NextRequest) {
         display_order: display_order || 0,
         is_seasonal: false,
       })
-      .select('id')
+      .select('id, name')
       .single();
 
     if (error) {
-      console.error('Supabaseエラー:', error);
-      return NextResponse.json({ error: 'カテゴリの作成に失敗しました' }, { status: 500 });
+      console.error('Supabase error:', error);
+      return NextResponse.json({ error: 'カテゴリーの作成に失敗しました' }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'カテゴリを作成しました', categoryId: data.id }, { status: 201 });
+    await logActivity(`カテゴリ作成: ${data.name}`, null);
+
+    return NextResponse.json({ message: 'カテゴリーを作成しました', categoryId: data.id }, { status: 201 });
   } catch (error) {
-    console.error('カテゴリ作成エラー:', error);
-    return NextResponse.json({ error: 'カテゴリの作成に失敗しました' }, { status: 500 });
+    console.error('カテゴリー作成エラー:', error);
+    return NextResponse.json({ error: 'カテゴリーの作成に失敗しました' }, { status: 500 });
   }
 }
 
-/**
- * DELETE /api/categories?id=123
- * カテゴリを削除
- */
+// DELETE: カテゴリー削除
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   if (!id) {
-    return NextResponse.json({ error: 'id が必要です' }, { status: 400 });
+    return NextResponse.json({ error: 'id は必須です' }, { status: 400 });
   }
 
   try {
-    // まず該当カテゴリに紐づく商品がないか確認
+    // 関連商品がある場合はブロック
     const { count, error: countError } = await supabaseAdmin
       .from('products')
       .select('id', { count: 'exact', head: true })
@@ -87,7 +81,7 @@ export async function DELETE(request: NextRequest) {
 
     if ((count || 0) > 0) {
       return NextResponse.json(
-        { error: 'このカテゴリに商品が存在するため削除できません。商品を移動・削除してください。' },
+        { error: 'このカテゴリーに商品が紐づいているため削除できません。商品を移動・削除してください。' },
         { status: 400 }
       );
     }
@@ -95,11 +89,13 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabaseAdmin.from('categories').delete().eq('id', Number(id));
     if (error) {
       console.error('カテゴリ削除エラー:', error);
-      return NextResponse.json({ error: 'カテゴリの削除に失敗しました' }, { status: 500 });
+      return NextResponse.json({ error: 'カテゴリーの削除に失敗しました' }, { status: 500 });
     }
+
+    await logActivity(`カテゴリ削除: id=${id}`, null);
     return NextResponse.json({ message: '削除しました', id: Number(id) });
   } catch (error) {
-    console.error('カテゴリ削除エラー:', error);
-    return NextResponse.json({ error: 'カテゴリの削除に失敗しました' }, { status: 500 });
+    console.error('カテゴリー削除エラー:', error);
+    return NextResponse.json({ error: 'カテゴリーの削除に失敗しました' }, { status: 500 });
   }
 }

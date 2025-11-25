@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -17,18 +17,10 @@ export default function StaffDashboard() {
   const [records, setRecords] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    work_date: '',
-    clock_in: '',
-    clock_out: '',
-    note: '',
-  });
-  // ログイン実装までは固定名で保存（本来はログインユーザー名を使う）
   const [currentUserLabel, setCurrentUserLabel] = useState('ログインユーザー');
   const supabase = createClientComponentClient();
 
   const totalHours = useMemo(() => {
-    // 簡易集計（clock_out があるものだけ時間差を算出）
     const toMinutes = (time: string) => {
       const [h, m] = time.split(':').map(Number);
       return h * 60 + m;
@@ -42,7 +34,7 @@ export default function StaffDashboard() {
     return minutes / 60;
   }, [records]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch('/api/attendance');
       const data = await res.json();
@@ -52,36 +44,59 @@ export default function StaffDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const meta = data.user?.user_metadata;
-      if (meta?.full_name) setCurrentUserLabel(meta.full_name);
-    })();
-    load();
   }, []);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const nowDateTime = () => {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return { date, time: `${hh}:${mm}` };
+  };
+
+  const clockIn = async () => {
+    if (submitting) return;
     setSubmitting(true);
+    const { date, time } = nowDateTime();
     try {
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, staff_name: currentUserLabel }),
+        body: JSON.stringify({ staff_name: currentUserLabel, work_date: date, clock_in: time }),
       });
       const data = await res.json();
       if (data.error) {
         alert(data.error);
       } else {
-        setForm({ work_date: '', clock_in: '', clock_out: '', note: '' });
-        load();
+        await load();
       }
     } catch (error) {
-      console.error('勤怠登録エラー:', error);
-      alert('登録に失敗しました');
+      console.error('出勤登録エラー:', error);
+      alert('出勤の記録に失敗しました');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const clockOut = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const { time } = nowDateTime();
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_name: currentUserLabel, clock_out: time }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+      } else {
+        await load();
+      }
+    } catch (error) {
+      console.error('退勤登録エラー:', error);
+      alert('退勤の記録に失敗しました');
     } finally {
       setSubmitting(false);
     }
@@ -103,6 +118,23 @@ export default function StaffDashboard() {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const meta = data.user?.user_metadata;
+      if (meta?.full_name) setCurrentUserLabel(meta.full_name);
+    })();
+    load();
+  }, [load, supabase]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [load]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
@@ -110,7 +142,7 @@ export default function StaffDashboard() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
               <span className="text-2xl" aria-hidden>
-                🧑‍🍳
+                🕒
               </span>
             </div>
             <div>
@@ -129,9 +161,12 @@ export default function StaffDashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">勤怠を登録</h2>
+          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">勤怠を記録</h2>
+                <p className="text-sm text-muted-foreground">ログイン名: {currentUserLabel}</p>
+              </div>
               <button
                 onClick={load}
                 className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent"
@@ -139,59 +174,25 @@ export default function StaffDashboard() {
                 最新に更新
               </button>
             </div>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={submit}>
-              <label className="text-sm text-muted-foreground flex flex-col gap-2">
-                日付
-                <input
-                  required
-                  type="date"
-                  value={form.work_date}
-                  onChange={(e) => setForm((f) => ({ ...f, work_date: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2"
-                />
-              </label>
-              <label className="text-sm text-muted-foreground flex flex-col gap-2">
-                出勤
-                <input
-                  required
-                  type="time"
-                  value={form.clock_in}
-                  onChange={(e) => setForm((f) => ({ ...f, clock_in: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2"
-                />
-              </label>
-              <label className="text-sm text-muted-foreground flex flex-col gap-2">
-                退勤（任意）
-                <input
-                  type="time"
-                  value={form.clock_out}
-                  onChange={(e) => setForm((f) => ({ ...f, clock_out: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2"
-                />
-              </label>
-              <label className="text-sm text-muted-foreground flex flex-col gap-2 md:col-span-2">
-                メモ（任意）
-                <textarea
-                  value={form.note}
-                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2"
-                  rows={2}
-                  placeholder="引き継ぎ事項など"
-                />
-              </label>
-              <div className="md:col-span-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full md:w-auto px-5 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 disabled:opacity-60"
-                >
-                  {submitting ? '登録中…' : '勤怠を登録'}
-                </button>
-              </div>
-            </form>
-            <p className="mt-3 text-xs text-muted-foreground">
-              ※ 勤怠データを保存するには Supabase に attendance テーブル（id, staff_name, work_date, clock_in, clock_out, note）を作成してください。<br />
-              ※ スタッフ名はログイン実装後に自動でセットする前提です（現在は「ログインユーザー」で保存）。
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <button
+                disabled={submitting}
+                onClick={clockIn}
+                className="w-full px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:opacity-90 disabled:opacity-60"
+              >
+                {submitting ? '処理中...' : '出勤を記録'}
+              </button>
+              <button
+                disabled={submitting}
+                onClick={clockOut}
+                className="w-full px-5 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:opacity-90 disabled:opacity-60"
+              >
+                {submitting ? '処理中...' : '退勤を記録'}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              出勤: 今日の日付と現在時刻で新規レコードを作成します。退勤: 自分の未退勤レコードの「退勤時刻」を現在時刻で更新します。
             </p>
           </div>
 
@@ -199,16 +200,16 @@ export default function StaffDashboard() {
             <h3 className="text-lg font-semibold">サマリー</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-muted-foreground">登録件数</p>
+                <p className="text-muted-foreground">記録件数</p>
                 <p className="text-2xl font-bold">{records.length}</p>
               </div>
               <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-muted-foreground">合計時間（概算）</p>
+                <p className="text-muted-foreground">推定勤務時間</p>
                 <p className="text-2xl font-bold">{totalHours.toFixed(1)}h</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              時間計算は出勤・退勤の差分を合計した簡易値です。正確な集計が必要な場合は将来的に給与システムと連携してください。
+              勤務時間は出勤・退勤の差から算出しています。正確な管理が必要な場合は詳細確認をお願いします。
             </p>
           </div>
         </div>
@@ -236,7 +237,7 @@ export default function StaffDashboard() {
                     <th className="py-2 pr-3">日付</th>
                     <th className="py-2 pr-3">出勤</th>
                     <th className="py-2 pr-3">退勤</th>
-                    <th className="py-2 pr-3">メモ</th>
+                    <th className="py-2 pr-3">備考</th>
                     <th className="py-2 pr-3 text-right">操作</th>
                   </tr>
                 </thead>
