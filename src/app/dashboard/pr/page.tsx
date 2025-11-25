@@ -8,7 +8,7 @@ export default function PrDashboard() {
       <div className="max-w-2xl w-full p-8 bg-card border border-border rounded-2xl shadow-lg space-y-6 text-center">
         <h1 className="text-3xl font-bold">広報部ダッシュボード</h1>
         <p className="text-muted-foreground">
-          公式ホームページやSNSキャンペーンの編集スペースです。下のボタンからホームページ編集やブログ編集へ進めます。
+          公式ホームページやSNSキャンペーンの編集スペースです。下のボタンからホームページ編集・ブログ編集・UI編集に進めます。
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
@@ -22,6 +22,12 @@ export default function PrDashboard() {
             className="inline-flex items-center justify-center px-4 py-3 bg-card text-foreground rounded-xl border border-border hover:border-accent"
           >
             ブログを編集
+          </Link>
+          <Link
+            href="/dashboard/pr/ui"
+            className="inline-flex items-center justify-center px-4 py-3 bg-card text-foreground rounded-xl border border-border hover:border-accent"
+          >
+            UIを編集
           </Link>
           <Link
             href="/"

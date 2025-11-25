@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -25,6 +25,26 @@ function LoginPageInner() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [routerReady, setRouterReady] = useState(false);
+  const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
+  const [themeColors, setThemeColors] = useState<{
+    light: { background: string; border: string; foreground: string };
+    dark: { background: string; border: string; foreground: string };
+  } | null>(null);
+
+  const applyColors = useCallback(
+    (nextIsDark: boolean, colors: typeof themeColors) => {
+      if (!colors) return;
+      const root = document.documentElement;
+      const mode = nextIsDark ? colors.dark : colors.light;
+      root.style.setProperty('--background', mode.background);
+      root.style.setProperty('--foreground', mode.foreground);
+      root.style.setProperty('--border', mode.border);
+      root.style.setProperty('--background-dark', colors.dark.background);
+      root.style.setProperty('--foreground-dark', colors.dark.foreground);
+      root.style.setProperty('--border-dark', colors.dark.border);
+    },
+    []
+  );
 
   useEffect(() => {
     (async () => {
@@ -45,6 +65,7 @@ function LoginPageInner() {
     const applyTheme = (next: boolean) => {
       setIsDark(next);
       document.documentElement.classList.toggle('dark', next);
+      applyColors(next, themeColors);
     };
     applyTheme(media.matches);
     const handleChange = (event: MediaQueryListEvent) => {
@@ -53,14 +74,46 @@ function LoginPageInner() {
     };
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [hasManualPreference]);
+  }, [hasManualPreference, applyColors, themeColors]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/pr/website', { cache: 'no-store' });
+        const data = await res.json();
+        const ui = data?.uiSettings;
+        if (ui?.loginIconUrl) setLoginIconUrl(ui.loginIconUrl);
+        if (ui) {
+          setThemeColors({
+            light: {
+              background: ui.lightBackground || '#f8fafc',
+              border: ui.lightBorder || '#e2e8f0',
+              foreground: ui.lightForeground || '#0f172a',
+            },
+            dark: {
+              background: ui.darkBackground || '#0b1220',
+              border: ui.darkBorder || '#1f2937',
+              foreground: ui.darkForeground || '#e5e7eb',
+            },
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
 
   const toggleTheme = () => {
     const next = !isDark;
     setHasManualPreference(true);
     setIsDark(next);
     document.documentElement.classList.toggle('dark', next);
+    applyColors(next, themeColors);
   };
+
+  useEffect(() => {
+    if (themeColors) applyColors(isDark, themeColors);
+  }, [themeColors, isDark, applyColors]);
 
   const validatePassword = (value: string) => {
     // 要件: 英数字8文字以上（英字・数字を各1文字以上）
@@ -163,7 +216,7 @@ function LoginPageInner() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Image src="/MERRILY_Simbol.png" alt="MERRILY" width={120} height={120} className="object-contain" priority />
+            <Image src={loginIconUrl || '/MERRILY_Simbol.png'} alt="MERRILY" width={120} height={120} className="object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">MERRILY</h1>
           <p className="text-xs uppercase text-muted-foreground tracking-[0.2em]">Cafe Management System</p>

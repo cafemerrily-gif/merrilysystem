@@ -27,16 +27,22 @@ const navItems: NavItem[] = [
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
 type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
+type UiColors = {
+  light: { background: string; border: string; foreground: string };
+  dark: { background: string; border: string; foreground: string };
+};
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
+  const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
   const [userName, setUserName] = useState<string>('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [themeColors, setThemeColors] = useState<UiColors | null>(null);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -44,12 +50,29 @@ export default function Home() {
   const supabase = createClientComponentClient();
 
   // テーマ: デバイス設定 → PCのみ手動トグル
+  const applyColors = useCallback(
+    (nextIsDark: boolean, colors: UiColors | null) => {
+      if (!colors) return;
+      const root = document.documentElement;
+      const mode = nextIsDark ? colors.dark : colors.light;
+      root.style.setProperty('--background', mode.background);
+      root.style.setProperty('--foreground', mode.foreground);
+      root.style.setProperty('--border', mode.border);
+      // 併せてダーク側も上書き
+      root.style.setProperty('--background-dark', colors.dark.background);
+      root.style.setProperty('--foreground-dark', colors.dark.foreground);
+      root.style.setProperty('--border-dark', colors.dark.border);
+    },
+    []
+  );
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = (next: boolean) => {
       setIsDark(next);
       document.documentElement.classList.toggle('dark', next);
+      applyColors(next, themeColors);
     };
     applyTheme(media.matches);
     const handleChange = (event: MediaQueryListEvent) => {
@@ -58,7 +81,7 @@ export default function Home() {
     };
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [hasManualPreference]);
+  }, [hasManualPreference, applyColors, themeColors]);
 
   // ユーザー情報取得
   useEffect(() => {
@@ -112,6 +135,22 @@ export default function Home() {
           .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
         setBlogPosts(sorted);
       } else setBlogPosts([]);
+      if (data?.uiSettings) {
+        const ui = data.uiSettings;
+        if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
+        setThemeColors({
+          light: {
+            background: ui.lightBackground || '#f8fafc',
+            border: ui.lightBorder || '#e2e8f0',
+            foreground: ui.lightForeground || '#0f172a',
+          },
+          dark: {
+            background: ui.darkBackground || '#0b1220',
+            border: ui.darkBorder || '#1f2937',
+            foreground: ui.darkForeground || '#e5e7eb',
+          },
+        });
+      }
     } catch (e) {
       console.error('ブログ取得エラー', e);
       setBlogPosts([]);
@@ -152,7 +191,14 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       document.documentElement.classList.toggle('dark', next);
     }
+    applyColors(next, themeColors);
   };
+
+  useEffect(() => {
+    if (themeColors) {
+      applyColors(isDark, themeColors);
+    }
+  }, [themeColors, isDark, applyColors]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -160,7 +206,7 @@ export default function Home() {
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
-              <Image src="/MERRILY_Simbol.png" width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
+              <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cafe Management System</p>
