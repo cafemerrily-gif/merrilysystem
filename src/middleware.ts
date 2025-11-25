@@ -3,6 +3,12 @@ import type { NextRequest } from "next/server";
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 
 export async function middleware(req: NextRequest) {
+  // 一時的に認証をバイパスしたい場合は .env で AUTH_BYPASS=true を設定
+  const authBypass = process.env.AUTH_BYPASS === 'true';
+  if (authBypass) {
+    return NextResponse.next();
+  }
+
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
