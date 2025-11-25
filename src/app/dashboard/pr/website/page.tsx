@@ -39,6 +39,7 @@ export default function PrWebsiteEditor() {
   const [headerColor, setHeaderColor] = useState('#0f172a');
   const [headerTextColor, setHeaderTextColor] = useState('#ffffff');
   const [heroImage, setHeroImage] = useState('/MERRILY_Simbol.png');
+  const [uploadingIcon, setUploadingIcon] = useState(false);
 
   // 読み込み
   useEffect(() => {
@@ -95,6 +96,26 @@ export default function PrWebsiteEditor() {
       });
     } catch (err) {
       console.error('ログ記録失敗', err);
+    }
+  };
+
+  const handleUploadHeaderIcon = async (file?: File | null) => {
+    if (!file) return;
+    try {
+      setUploadingIcon(true);
+      setError(null);
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `pr-header-icon-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('ui-icons').upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('ui-icons').getPublicUrl(fileName);
+      setHeroImage(data.publicUrl);
+      setInfo('ヘッダーアイコンをアップロードしました（保存で反映）');
+    } catch (e: any) {
+      setError(e?.message || 'アップロードに失敗しました');
+    } finally {
+      setUploadingIcon(false);
+      setTimeout(() => setInfo(null), 3000);
     }
   };
 
@@ -193,7 +214,14 @@ export default function PrWebsiteEditor() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2"
               placeholder="/MERRILY_Simbol.png"
             />
-            <span className="text-xs text-muted-foreground">public 配下のパスか、外部URLを指定できます。</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-accent">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadHeaderIcon(e.target.files?.[0])} disabled={uploadingIcon} />
+                <span>デバイスからアップロード</span>
+              </label>
+              {uploadingIcon && <span>アップロード中...</span>}
+            </div>
+            <span className="text-xs text-muted-foreground">public 配下のパスか、外部URLを指定できます。アップロードを使った場合は保存後に公開URLが反映されます。</span>
           </label>
           <label className="text-sm text-muted-foreground flex flex-col gap-2">
             ヒーロータイトル
@@ -424,3 +452,4 @@ export default function PrWebsiteEditor() {
     </div>
   );
 }
+
