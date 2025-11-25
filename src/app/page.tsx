@@ -35,6 +35,8 @@ type UiHeader = { background: string; foreground: string };
 type UiMuted = { color: string };
 type UiCard = { background: string; foreground: string; border: string };
 type UiWelcome = { background: string; foreground: string; border: string };
+type UiHeaderText = { title: string; subtitle: string; user: string };
+type UiWelcomeText = { title: string; body: string };
 
 const normalizeColorValue = (value: string) => {
   // Tailwindのhsl(var(--background))形式に合わせるため、hexをH S L三要素に変換
@@ -86,6 +88,12 @@ export default function Home() {
   const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
   const [cardColors, setCardColors] = useState<UiCard>({ background: '', foreground: '', border: '' });
   const [welcomeColors, setWelcomeColors] = useState<UiWelcome>({ background: '', foreground: '', border: '' });
+  const [headerTextColors, setHeaderTextColors] = useState<UiHeaderText>({ title: '', subtitle: '', user: '' });
+  const [welcomeTextColors, setWelcomeTextColors] = useState<UiWelcomeText>({ title: '', body: '' });
+  const [welcomeTextContent, setWelcomeTextContent] = useState<UiWelcomeText>({
+    title: 'バー形式で全ダッシュボードをまとめました',
+    body: '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。',
+  });
   const [uiSettingsRaw, setUiSettingsRaw] = useState<any>({});
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
@@ -207,6 +215,19 @@ export default function Home() {
             border: ui.welcomeBorder || '',
           });
         }
+        setHeaderTextColors({
+          title: ui.headerTitleColorLight || ui.headerTitleColorDark || '',
+          subtitle: ui.headerSubtitleColorLight || ui.headerSubtitleColorDark || '',
+          user: ui.headerUserColorLight || ui.headerUserColorDark || '',
+        });
+        setWelcomeTextColors({
+          title: ui.welcomeTitleColorLight || ui.welcomeTitleColorDark || '',
+          body: ui.welcomeBodyColorLight || ui.welcomeBodyColorDark || '',
+        });
+        setWelcomeTextContent({
+          title: ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました',
+          body: ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。',
+        });
         setThemeColors({
           light: {
             background: ui.lightBackground || '#f8fafc',
@@ -276,6 +297,9 @@ export default function Home() {
     foreground: isDark
       ? uiSettingsRaw.headerFgDark || uiSettingsRaw.headerForeground || headerColors.foreground
       : uiSettingsRaw.headerFgLight || uiSettingsRaw.headerForeground || headerColors.foreground,
+    title: isDark ? uiSettingsRaw.headerTitleColorDark || headerTextColors.title : uiSettingsRaw.headerTitleColorLight || headerTextColors.title,
+    subtitle: isDark ? uiSettingsRaw.headerSubtitleColorDark || headerTextColors.subtitle : uiSettingsRaw.headerSubtitleColorLight || headerTextColors.subtitle,
+    user: isDark ? uiSettingsRaw.headerUserColorDark || headerTextColors.user : uiSettingsRaw.headerUserColorLight || headerTextColors.user,
   };
 
   const currentMuted = {
@@ -286,6 +310,10 @@ export default function Home() {
     background: isDark ? uiSettingsRaw.welcomeBgDark || welcomeColors.background : uiSettingsRaw.welcomeBgLight || welcomeColors.background,
     foreground: isDark ? uiSettingsRaw.welcomeFgDark || welcomeColors.foreground : uiSettingsRaw.welcomeFgLight || welcomeColors.foreground,
     border: isDark ? uiSettingsRaw.welcomeBorderDark || welcomeColors.border : uiSettingsRaw.welcomeBorderLight || welcomeColors.border,
+    title: isDark ? uiSettingsRaw.welcomeTitleColorDark || welcomeTextColors.title : uiSettingsRaw.welcomeTitleColorLight || welcomeTextColors.title,
+    body: isDark ? uiSettingsRaw.welcomeBodyColorDark || welcomeTextColors.body : uiSettingsRaw.welcomeBodyColorLight || welcomeTextColors.body,
+    textTitle: uiSettingsRaw.welcomeTitleText || welcomeTextContent.title,
+    textBody: uiSettingsRaw.welcomeBodyText || welcomeTextContent.body,
   };
 
   const currentCard = {
@@ -312,12 +340,12 @@ export default function Home() {
             <div>
               <p
                 className="text-xs uppercase tracking-[0.2em]"
-                style={{ color: mutedColor.color || undefined }}
+                style={{ color: currentHeader.subtitle || currentMuted.color || undefined }}
               >
                 Cafe Management System
               </p>
-              <h1 className="text-2xl font-bold">{appTitle}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-2xl font-bold" style={{ color: currentHeader.title || undefined }}>{appTitle}</h1>
+              <p className="text-sm" style={{ color: currentHeader.user || undefined }}>
                 {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
               </p>
             </div>
@@ -398,17 +426,15 @@ export default function Home() {
           <div
             className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center"
             style={{
-              backgroundColor: welcomeColors.background || undefined,
-              color: welcomeColors.foreground || undefined,
-              border: welcomeColors.border ? `1px solid ${welcomeColors.border}` : undefined,
+              backgroundColor: currentWelcome.background || undefined,
+              color: currentWelcome.foreground || undefined,
+              border: currentWelcome.border ? `1px solid ${currentWelcome.border}` : undefined,
             }}
           >
             <div className="col-span-2 space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Welcome</p>
-              <h2 className="text-2xl font-bold">バー形式で各ダッシュボードをまとめました</h2>
-              <p className="text-sm text-muted-foreground">
-                部署に合わせて必要なボードだけが左のバーに並びます。操作ログと通知は実データを下部に表示します。
-              </p>
+              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentMuted.color || undefined }}>Welcome</p>
+              <h2 className="text-2xl font-bold" style={{ color: currentWelcome.title || undefined }}>{currentWelcome.textTitle}</h2>
+              <p className="text-sm" style={{ color: currentWelcome.body || currentMuted.color || undefined }}>{currentWelcome.textBody}</p>
             </div>
             <div className="justify-self-end text-sm text-muted-foreground flex flex-col items-end gap-2">
               <div className="flex items-center gap-2">
@@ -454,9 +480,9 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: cardColors.background || undefined,
-                color: cardColors.foreground || undefined,
-                borderColor: cardColors.border || undefined,
+                backgroundColor: currentCard.background || undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -488,9 +514,9 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: cardColors.background || undefined,
-                color: cardColors.foreground || undefined,
-                borderColor: cardColors.border || undefined,
+                backgroundColor: currentCard.background || undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -522,9 +548,9 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: cardColors.background || undefined,
-                color: cardColors.foreground || undefined,
-                borderColor: cardColors.border || undefined,
+                backgroundColor: currentCard.background || undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -558,3 +584,5 @@ export default function Home() {
     </div>
   );
 }
+
+
