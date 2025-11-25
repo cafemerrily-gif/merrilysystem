@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-type BlogPost = { id: string; title: string; body: string; date: string };
+type BlogPost = { id: string; title: string; body: string; date: string; image?: string };
 
 export default function PrBlogsEditor() {
   const supabase = createClientComponentClient();
@@ -41,7 +41,12 @@ export default function PrBlogsEditor() {
         const data = await res.json();
         if (data) {
           setPayload(data);
-          setBlogPosts(data.blogPosts ?? []);
+          setBlogPosts(
+            (data.blogPosts ?? []).map((b: any) => ({
+              ...b,
+              image: b.image || '',
+            }))
+          );
         }
       } catch (e: any) {
         setError(e?.message || 'データの取得に失敗しました');
@@ -54,7 +59,7 @@ export default function PrBlogsEditor() {
   const addBlogPost = () =>
     setBlogPosts((prev) => [
       ...prev,
-      { id: `b-${prev.length + 1}`, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10) },
+      { id: `b-${prev.length + 1}`, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10), image: '' },
     ]);
   const updateBlogPost = (id: string, field: keyof BlogPost, value: string) =>
     setBlogPosts((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
@@ -79,6 +84,12 @@ export default function PrBlogsEditor() {
       } else {
         setInfo('保存しました');
         setPayload(data);
+        setBlogPosts(
+          (data.blogPosts ?? []).map((b: any) => ({
+            ...b,
+            image: b.image || '',
+          }))
+        );
         await logClientActivity('広報: ブログを保存');
       }
     } catch (e: any) {
@@ -153,6 +164,12 @@ export default function PrBlogsEditor() {
                     削除
                   </button>
                 </div>
+                <input
+                  value={post.image || ''}
+                  onChange={(e) => updateBlogPost(post.id, 'image', e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="画像URL（任意）"
+                />
                 <textarea
                   value={post.body}
                   onChange={(e) => updateBlogPost(post.id, 'body', e.target.value)}
@@ -170,12 +187,15 @@ export default function PrBlogsEditor() {
           <h2 className="text-xl font-semibold">プレビュー</h2>
           <div className="space-y-3">
             {blogPosts.map((post) => (
-              <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
+              <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-2">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
                   <span>ブログ</span>
                 </div>
                 <p className="font-semibold text-foreground">{post.title}</p>
+                {post.image ? (
+                  <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-cover max-h-64" />
+                ) : null}
                 <p className="text-sm text-muted-foreground">{post.body}</p>
               </div>
             ))}

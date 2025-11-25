@@ -257,6 +257,7 @@ export default function Home() {
                         <span>ブログ</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
+                      {post.image ? <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-cover max-h-40 mb-2" /> : null}
                       <p className="text-muted-foreground line-clamp-2">{post.body}</p>
                     </div>
                   ))
