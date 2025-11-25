@@ -219,12 +219,23 @@ export default function Home() {
           </aside>
 
           <section className="space-y-6">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold mb-3">概要</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                会計・開発・広報・スタッフの各ダッシュボードをまとめています。エンジニアチームはデバッグツールで確認できます。
-                スマホではバーが2列→1列に折り返し、タップしやすいスペースを確保しています。
-              </p>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg grid gap-6 md:grid-cols-2">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">運用チェック</h3>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>ログイン・会計・開発・広報・スタッフ操作は「操作ログ」に記録されます。</li>
+                  <li>ログは最新50件を表示。更新したいときは画面を開き直すか再読み込みをしてください。</li>
+                  <li>通知も最新50件を表示。個別/全員どちらもここに出ます。</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-3">クイックガイド</h3>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>会計部: 売上登録/削除は実ログに残ります。</li>
+                  <li>開発部: カテゴリ・商品追加/削除もログに残します。</li>
+                  <li>広報部: ホームページ編集の保存でログが残ります。</li>
+                </ul>
+              </div>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
