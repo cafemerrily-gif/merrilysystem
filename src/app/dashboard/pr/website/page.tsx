@@ -423,16 +423,18 @@ export default function PrWebsiteEditor() {
                 <div className="space-y-2">
                   <h4 className="text-lg font-semibold">ブログ</h4>
                   <div className="space-y-3">
-                    {blogPosts.map((post) => (
-                      <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                          <span>ブログ</span>
+                    {[...blogPosts]
+                      .sort((a, b) => (a.date > b.date ? -1 : 1))
+                      .map((post) => (
+                        <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                            <span>ブログ</span>
+                          </div>
+                          <p className="font-semibold text-foreground">{post.title}</p>
+                          <p className="text-sm text-muted-foreground">{post.body}</p>
                         </div>
-                        <p className="font-semibold text-foreground">{post.title}</p>
-                        <p className="text-sm text-muted-foreground">{post.body}</p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
