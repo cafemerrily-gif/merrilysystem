@@ -181,15 +181,22 @@ export default function Home() {
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">操作ログ（ダミー表示）</h3>
-                <span className="text-xs text-muted-foreground">直近</span>
+                <h3 className="text-lg font-semibold">操作ログ</h3>
+                <span className="text-xs text-muted-foreground">直近（ログインユーザー）</span>
               </div>
               <div className="space-y-3 text-sm">
-                {[
-                  { user: '会計部Aさん', time: '本日 09:10', msg: '売上を登録しました' },
-                  { user: '開発部Aさん', time: '本日 08:55', msg: '「夏フェス」商品フォルダに商品を一括追加しました' },
-                  { user: '広報部Bさん', time: '昨日 18:20', msg: '売上ダッシュボードで推移を確認しました' },
-                ].map((log, idx) => (
+                {(userName
+                  ? [
+                      { user: userName, time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
+                      { user: userName, time: '本日 09:05', msg: '勤怠ダッシュボードを開きました' },
+                      { user: userName, time: '本日 08:55', msg: 'ログインしました' },
+                    ]
+                  : [
+                      { user: 'ログインユーザー', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
+                      { user: 'ログインユーザー', time: '本日 09:05', msg: '勤怠ダッシュボードを開きました' },
+                      { user: 'ログインユーザー', time: '本日 08:55', msg: 'ログインしました' },
+                    ]
+                ).map((log, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
                     <div>
