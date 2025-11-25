@@ -34,13 +34,33 @@ const navItems = [
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
+  const [hasManualPreference, setHasManualPreference] = useState(false);
 
+  // Follow device preference by default (especially on mobile), but allow manual override.
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-  }, []);
+    if (typeof window === 'undefined') return;
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = (next: boolean) => {
+      setIsDark(next);
+      document.documentElement.classList.toggle('dark', next);
+    };
+
+    // initial apply
+    applyTheme(media.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (hasManualPreference) return;
+      applyTheme(event.matches);
+    };
+
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [hasManualPreference]);
 
   const toggleTheme = () => {
     const next = !isDark;
+    setHasManualPreference(true);
     setIsDark(next);
     document.documentElement.classList.toggle('dark', next);
   };
