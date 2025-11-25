@@ -130,7 +130,7 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-4 pb-16">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/90 text-primary-foreground flex items-center justify-center text-xl shadow-lg">
+            <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border">
               <Image src="/MERRILY_Simbol.png" width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
