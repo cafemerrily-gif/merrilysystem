@@ -182,7 +182,13 @@ export default function AccountingDashboard() {
             {!summary?.monthlySales?.length ? (
               <p className="text-muted-foreground">データなし</p>
             ) : (
-              <SmoothLineChart data={summary.monthlySales.sort((a, b) => (a.month > b.month ? 1 : -1)).slice(-6)} height={200} />
+              <SmoothLineChart
+                data={summary.monthlySales
+                  .sort((a, b) => (a.month > b.month ? 1 : -1))
+                  .slice(-6)
+                  .map((m) => ({ date: m.month, total: m.total }))}
+                height={200}
+              />
             )}
           </div>
 
