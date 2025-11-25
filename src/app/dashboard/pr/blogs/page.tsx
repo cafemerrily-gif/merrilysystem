@@ -87,6 +87,14 @@ export default function PrBlogsEditor() {
     setActiveBlogId(id);
   };
 
+  const removeBlog = (id: string) => {
+    const next = blogs.filter((b) => b.id !== id);
+    setBlogs(next);
+    if (activeBlogId === id) {
+      setActiveBlogId(next[0]?.id ?? null);
+    }
+  };
+
   const updateBlogName = (id: string, name: string) => {
     setBlogs((prev) => prev.map((b) => (b.id === id ? { ...b, name } : b)));
   };
@@ -276,9 +284,17 @@ export default function PrBlogsEditor() {
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>記事数: {b.posts.length}</span>
-                  <button onClick={() => setActiveBlogId(b.id)} className="px-2 py-1 rounded-lg border border-border hover:border-accent">
-                    編集する
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setActiveBlogId(b.id)} className="px-2 py-1 rounded-lg border border-border hover:border-accent">
+                      編集
+                    </button>
+                    <button
+                      onClick={() => removeBlog(b.id)}
+                      className="px-2 py-1 rounded-lg border border-destructive text-destructive hover:border-accent"
+                    >
+                      削除
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -365,16 +381,25 @@ export default function PrBlogsEditor() {
                   .slice()
                   .sort((a, b) => (a.date > b.date ? -1 : 1))
                   .map((post) => (
-                    <div key={post.id} className="border border-border rounded-lg p-3 bg-card space-y-2">
+                    <div
+                      key={post.id}
+                      className="border border-border rounded-lg p-4 bg-card space-y-3 shadow-sm hover:shadow transition"
+                    >
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
                         <span>{post.author || userName || '不明なユーザー'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
                       {post.image ? (
-                        <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-64 bg-background" />
+                        <div className="bg-background rounded-lg border border-border overflow-hidden">
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            className="w-full h-64 object-cover"
+                          />
+                        </div>
                       ) : null}
-                      <p className="text-sm text-muted-foreground">{post.body}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{post.body}</p>
                     </div>
                   ))}
                 {blog.posts.length === 0 && <p className="text-muted-foreground text-sm">この記事はまだありません。</p>}

@@ -76,7 +76,10 @@ export default function Home() {
       setLoadingLogs(true);
       const res = await fetch('/api/logs');
       const data = await res.json();
-      if (!data.error) setLogs(data);
+      if (!data.error) {
+        const sorted = data.slice().sort((a: any, b: any) => (a.created_at > b.created_at ? -1 : 1));
+        setLogs(sorted);
+      }
     } catch (e) {
       console.error('ログ取得エラー', e);
     } finally {
