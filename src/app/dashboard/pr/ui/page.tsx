@@ -12,10 +12,15 @@ type UiColors = {
 type ModeValues = {
   headerBg: string;
   headerFg: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  headerUser: string;
   muted: string;
   welcomeBg: string;
   welcomeFg: string;
   welcomeBorder: string;
+  welcomeTitle: string;
+  welcomeBody: string;
   cardBg: string;
   cardFg: string;
   cardBorder: string;
@@ -24,10 +29,15 @@ type ModeValues = {
 const defaultModeValues: ModeValues = {
   headerBg: '#0b1220',
   headerFg: '#e5e7eb',
+  headerTitle: '#e5e7eb',
+  headerSubtitle: '#94a3b8',
+  headerUser: '#cbd5e1',
   muted: '#6b7280',
   welcomeBg: '#ffffff',
   welcomeFg: '#0f172a',
   welcomeBorder: '#e2e8f0',
+  welcomeTitle: '#0f172a',
+  welcomeBody: '#1f2937',
   cardBg: '#0b1220',
   cardFg: '#e5e7eb',
   cardBorder: '#1f2937',
@@ -43,9 +53,11 @@ export default function UiEditor() {
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
+  const [welcomeTitleText, setWelcomeTitleText] = useState('バー形式で全ダッシュボードをまとめました');
+  const [welcomeBodyText, setWelcomeBodyText] = useState('最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。');
   const [modeValues, setModeValues] = useState<{ light: ModeValues; dark: ModeValues }>({
     light: defaultModeValues,
-    dark: { ...defaultModeValues, headerBg: '#0b1220', headerFg: '#e5e7eb', cardBg: '#0b1220', cardFg: '#e5e7eb', cardBorder: '#1f2937' },
+    dark: defaultModeValues,
   });
   const [colors, setColors] = useState<UiColors>(defaultColors);
   const [selectedMode, setSelectedMode] = useState<'light' | 'dark'>('light');
@@ -65,6 +77,8 @@ export default function UiEditor() {
         setLoginIconUrl(ui.loginIconUrl || '/MERRILY_Simbol.png');
         setAppIconUrl(ui.appIconUrl || '/MERRILY_Simbol.png');
         setAppTitle(ui.appTitle || 'MERRILY');
+        setWelcomeTitleText(ui.welcomeTitleText || welcomeTitleText);
+        setWelcomeBodyText(ui.welcomeBodyText || welcomeBodyText);
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -81,10 +95,15 @@ export default function UiEditor() {
           light: {
             headerBg: ui.headerBgLight || ui.headerBackground || defaultModeValues.headerBg,
             headerFg: ui.headerFgLight || ui.headerForeground || defaultModeValues.headerFg,
+            headerTitle: ui.headerTitleColorLight || defaultModeValues.headerTitle,
+            headerSubtitle: ui.headerSubtitleColorLight || defaultModeValues.headerSubtitle,
+            headerUser: ui.headerUserColorLight || defaultModeValues.headerUser,
             muted: ui.mutedColorLight || ui.mutedColor || defaultModeValues.muted,
             welcomeBg: ui.welcomeBgLight || ui.welcomeBackground || defaultModeValues.welcomeBg,
             welcomeFg: ui.welcomeFgLight || ui.welcomeForeground || defaultModeValues.welcomeFg,
             welcomeBorder: ui.welcomeBorderLight || ui.welcomeBorder || defaultModeValues.welcomeBorder,
+            welcomeTitle: ui.welcomeTitleColorLight || defaultModeValues.welcomeTitle,
+            welcomeBody: ui.welcomeBodyColorLight || defaultModeValues.welcomeBody,
             cardBg: ui.cardBgLight || ui.cardBackground || defaultModeValues.cardBg,
             cardFg: ui.cardFgLight || ui.cardForeground || defaultModeValues.cardFg,
             cardBorder: ui.cardBorderLight || ui.cardBorder || defaultModeValues.cardBorder,
@@ -92,10 +111,15 @@ export default function UiEditor() {
           dark: {
             headerBg: ui.headerBgDark || ui.headerBackground || defaultModeValues.headerBg,
             headerFg: ui.headerFgDark || ui.headerForeground || defaultModeValues.headerFg,
+            headerTitle: ui.headerTitleColorDark || defaultModeValues.headerTitle,
+            headerSubtitle: ui.headerSubtitleColorDark || defaultModeValues.headerSubtitle,
+            headerUser: ui.headerUserColorDark || defaultModeValues.headerUser,
             muted: ui.mutedColorDark || ui.mutedColor || defaultModeValues.muted,
             welcomeBg: ui.welcomeBgDark || ui.welcomeBackground || defaultModeValues.welcomeBg,
             welcomeFg: ui.welcomeFgDark || ui.welcomeForeground || defaultModeValues.welcomeFg,
             welcomeBorder: ui.welcomeBorderDark || ui.welcomeBorder || defaultModeValues.welcomeBorder,
+            welcomeTitle: ui.welcomeTitleColorDark || defaultModeValues.welcomeTitle,
+            welcomeBody: ui.welcomeBodyColorDark || defaultModeValues.welcomeBody,
             cardBg: ui.cardBgDark || ui.cardBackground || defaultModeValues.cardBg,
             cardFg: ui.cardFgDark || ui.cardForeground || defaultModeValues.cardFg,
             cardBorder: ui.cardBorderDark || ui.cardBorder || defaultModeValues.cardBorder,
@@ -119,6 +143,8 @@ export default function UiEditor() {
         ...(basePayload || {}),
         uiSettings: {
           appTitle,
+          welcomeTitleText,
+          welcomeBodyText,
           loginIconUrl,
           appIconUrl,
           lightBackground: colors.light.background,
@@ -131,14 +157,24 @@ export default function UiEditor() {
           headerFgLight: modeValues.light.headerFg,
           headerBgDark: modeValues.dark.headerBg,
           headerFgDark: modeValues.dark.headerFg,
+          headerTitleColorLight: modeValues.light.headerTitle,
+          headerSubtitleColorLight: modeValues.light.headerSubtitle,
+          headerUserColorLight: modeValues.light.headerUser,
+          headerTitleColorDark: modeValues.dark.headerTitle,
+          headerSubtitleColorDark: modeValues.dark.headerSubtitle,
+          headerUserColorDark: modeValues.dark.headerUser,
           mutedColorLight: modeValues.light.muted,
           mutedColorDark: modeValues.dark.muted,
           welcomeBgLight: modeValues.light.welcomeBg,
           welcomeFgLight: modeValues.light.welcomeFg,
           welcomeBorderLight: modeValues.light.welcomeBorder,
+          welcomeTitleColorLight: modeValues.light.welcomeTitle,
+          welcomeBodyColorLight: modeValues.light.welcomeBody,
           welcomeBgDark: modeValues.dark.welcomeBg,
           welcomeFgDark: modeValues.dark.welcomeFg,
           welcomeBorderDark: modeValues.dark.welcomeBorder,
+          welcomeTitleColorDark: modeValues.dark.welcomeTitle,
+          welcomeBodyColorDark: modeValues.dark.welcomeBody,
           cardBgLight: modeValues.light.cardBg,
           cardFgLight: modeValues.light.cardFg,
           cardBorderLight: modeValues.light.cardBorder,
@@ -289,7 +325,7 @@ export default function UiEditor() {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-            <h2 className="font-semibold">選択中モードの色</h2>
+            <h2 className="font-semibold">選択中モードのベース色</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
               <input
@@ -332,7 +368,7 @@ export default function UiEditor() {
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              文字色
+              文字色（ベース）
               <input
                 type="color"
                 value={currentMode.headerFg}
@@ -340,6 +376,45 @@ export default function UiEditor() {
                   setModeValues((prev) => ({
                     ...prev,
                     [selectedMode]: { ...prev[selectedMode], headerFg: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              タイトル色
+              <input
+                type="color"
+                value={currentMode.headerTitle}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], headerTitle: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              サブタイトル色
+              <input
+                type="color"
+                value={currentMode.headerSubtitle}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], headerSubtitle: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              ユーザー行の色
+              <input
+                type="color"
+                value={currentMode.headerUser}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], headerUser: e.target.value },
                   }))
                 }
               />
@@ -364,7 +439,28 @@ export default function UiEditor() {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-            <h2 className="font-semibold">Welcomeカード</h2>
+            <h2 className="font-semibold">Welcomeカードの内容</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              タイトル
+              <input
+                value={welcomeTitleText}
+                onChange={(e) => setWelcomeTitleText(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              本文
+              <textarea
+                value={welcomeBodyText}
+                onChange={(e) => setWelcomeBodyText(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                rows={3}
+              />
+            </label>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="font-semibold">Welcomeカードの色</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
               <input
@@ -400,6 +496,32 @@ export default function UiEditor() {
                   setModeValues((prev) => ({
                     ...prev,
                     [selectedMode]: { ...prev[selectedMode], welcomeBorder: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              タイトル文字色
+              <input
+                type="color"
+                value={currentMode.welcomeTitle}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], welcomeTitle: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              本文字色
+              <input
+                type="color"
+                value={currentMode.welcomeBody}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], welcomeBody: e.target.value },
                   }))
                 }
               />
