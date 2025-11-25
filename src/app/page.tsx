@@ -72,7 +72,7 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const supabase = createClientComponentClient();
 
-  // デバイス設定＋PCのみ手動トグル
+  // テーマ: デバイス設定＋PCのみ手動トグル
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -240,8 +240,8 @@ export default function Home() {
               </div>
               <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1">
                 {[
-                  { user: '管理者', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
-                  { user: '店舗スタッフA', time: '本日 09:05', msg: '勤怠ダッシュボードで出勤を登録しました' },
+                  { user: userName || 'ログインユーザー', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
+                  { user: userName || 'ログインユーザー', time: '本日 09:05', msg: '勤怠ダッシュボードで出勤を登録しました' },
                   { user: '広報部B', time: '本日 08:55', msg: 'ホームページ編集を更新しました' },
                   { user: '開発部C', time: '本日 08:40', msg: 'メニュー管理で商品を一括追加しました' },
                   { user: '会計部D', time: '昨日 18:20', msg: '売上データをエクスポートしました' },
@@ -258,20 +258,21 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">実運用では実ログと連携してください（現在はサンプル）。</p>
+              <p className="mt-3 text-xs text-muted-foreground">実ログと連携する場合は通知/ログAPIと組み合わせてください（現在はサンプル）。</p>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">通知（共通）</h3>
+                <h3 className="text-lg font-semibold">通知</h3>
                 <span className="text-xs text-muted-foreground">未読/既読は未実装</span>
               </div>
               <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1">
                 {[
                   { title: 'ホームページ編集', detail: '広報部Bが公式サイトのトップを更新しました', time: '本日 09:12' },
-                  { title: '勤怠登録', detail: '店舗スタッフAが出勤を登録しました', time: '本日 09:05' },
+                  { title: '勤怠登録', detail: `${userName || 'スタッフ'} が出勤を登録しました`, time: '本日 09:05' },
                   { title: 'メニュー更新', detail: '開発部Cが新メニューを追加しました', time: '本日 08:45' },
                   { title: 'デバッグ', detail: 'エンジニアチームがAPIテストを実施しました', time: '昨日 17:50' },
+                  { title: '重要', detail: '通知APIと連携してください（現在はサンプル）', time: 'システム' },
                 ].map((n, idx) => (
                   <div key={idx} className="border border-border rounded-lg p-3 bg-muted/30">
                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -283,7 +284,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">通知はダミーです。必要に応じて実データと連携してください。</p>
+              <p className="mt-3 text-xs text-muted-foreground">実通知を使う場合はサーバーからの通知APIと連携してください。</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
