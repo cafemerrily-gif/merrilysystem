@@ -70,6 +70,10 @@ export default function Home() {
   const [userName, setUserName] = useState<string>('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [logs, setLogs] = useState<{ id: number; user_name: string | null; message: string; created_at: string }[]>([]);
+  const [notifications, setNotifications] = useState<{ id: number; title: string; detail: string | null; created_at: string }[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(true);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
   const supabase = createClientComponentClient();
 
   // テーマ: デバイス設定＋PCのみ手動トグル
@@ -99,6 +103,38 @@ export default function Home() {
       if (meta?.is_admin === true || meta?.role === 'admin') setIsAdmin(true);
     })();
   }, [supabase]);
+
+  // 実ログ取得
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingLogs(true);
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        if (!data.error) setLogs(data);
+      } catch (e) {
+        console.error('ログ取得エラー', e);
+      } finally {
+        setLoadingLogs(false);
+      }
+    })();
+  }, []);
+
+  // 通知取得
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingNotifications(true);
+        const res = await fetch('/api/notifications');
+        const data = await res.json();
+        if (!data.error) setNotifications(data);
+      } catch (e) {
+        console.error('通知取得エラー', e);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    })();
+  }, []);
 
   const privilegedTags = ['職員', 'マネジメント部', 'エンジニアチーム'];
   const hasPrivilege = userDepartments.some((d) => privilegedTags.includes(d));
@@ -239,26 +275,27 @@ export default function Home() {
                 <span className="text-xs text-muted-foreground">直近（共通表示）</span>
               </div>
               <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1">
-                {[
-                  { user: userName || 'ログインユーザー', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
-                  { user: userName || 'ログインユーザー', time: '本日 09:05', msg: '勤怠ダッシュボードで出勤を登録しました' },
-                  { user: '広報部B', time: '本日 08:55', msg: 'ホームページ編集を更新しました' },
-                  { user: '開発部C', time: '本日 08:40', msg: 'メニュー管理で商品を一括追加しました' },
-                  { user: '会計部D', time: '昨日 18:20', msg: '売上データをエクスポートしました' },
-                  { user: 'エンジニアチーム', time: '昨日 17:50', msg: 'デバッグツールでAPIテストを実施しました' },
-                ].map((log, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
-                    <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{log.time}</p>
-                      <p className="text-foreground">
-                        <span className="font-semibold">{log.user}</span>：{log.msg}
-                      </p>
+                {loadingLogs ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : logs.length === 0 ? (
+                  <p className="text-muted-foreground">ログはまだありません。</p>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
+                      <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString('ja-JP')}
+                        </p>
+                        <p className="text-foreground">
+                          <span className="font-semibold">{log.user_name || '不明なユーザー'}</span>：{log.message}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">実ログと連携する場合は通知/ログAPIと組み合わせてください（現在はサンプル）。</p>
+              <p className="mt-3 text-xs text-muted-foreground">現在は実ログと連携済みです（最新50件）。</p>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
@@ -267,24 +304,24 @@ export default function Home() {
                 <span className="text-xs text-muted-foreground">未読/既読は未実装</span>
               </div>
               <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1">
-                {[
-                  { title: 'ホームページ編集', detail: '広報部Bが公式サイトのトップを更新しました', time: '本日 09:12' },
-                  { title: '勤怠登録', detail: `${userName || 'スタッフ'} が出勤を登録しました`, time: '本日 09:05' },
-                  { title: 'メニュー更新', detail: '開発部Cが新メニューを追加しました', time: '本日 08:45' },
-                  { title: 'デバッグ', detail: 'エンジニアチームがAPIテストを実施しました', time: '昨日 17:50' },
-                  { title: '重要', detail: '通知APIと連携してください（現在はサンプル）', time: 'システム' },
-                ].map((n, idx) => (
-                  <div key={idx} className="border border-border rounded-lg p-3 bg-muted/30">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>{n.time}</span>
-                      <span>通知</span>
+                {loadingNotifications ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : notifications.length === 0 ? (
+                  <p className="text-muted-foreground">通知はまだありません。</p>
+                ) : (
+                  notifications.map((n) => (
+                    <div key={n.id} className="border border-border rounded-lg p-3 bg-muted/30">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{new Date(n.created_at).toLocaleString('ja-JP')}</span>
+                        <span>通知</span>
+                      </div>
+                      <p className="font-semibold text-foreground">{n.title}</p>
+                      <p className="text-muted-foreground">{n.detail || ''}</p>
                     </div>
-                    <p className="font-semibold text-foreground">{n.title}</p>
-                    <p className="text-muted-foreground">{n.detail}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">実通知を使う場合はサーバーからの通知APIと連携してください。</p>
+              <p className="mt-3 text-xs text-muted-foreground">最新の通知を表示しています（最大50件）。</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
