@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
         sale_time: saleTime,
         time_slot: timeSlot,
         total_amount: computedTotal,
-        payment_method: paymentMethod || 'cash',
+        payment_method: 'cash',
         entered_by: staffId || 1,
       })
       .select('id')

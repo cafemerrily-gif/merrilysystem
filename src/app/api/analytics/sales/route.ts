@@ -6,14 +6,13 @@ type SaleRow = {
   sale_date: string;
   sale_time: string;
   time_slot: string;
-  total_amount: number;
+  total_amount: number | string;
 };
 
 type SaleItemRow = {
   product_id: number;
   quantity: number;
   unit_price: number;
-  // Supabase returns either an object or an array for the joined relation depending on config
   product: { name: string; cost_price: number } | { name: string; cost_price: number }[] | null;
 };
 
@@ -22,16 +21,10 @@ const toMonthKey = (dateStr: string) => dateStr.slice(0, 7);
 
 export async function GET(_req: NextRequest) {
   try {
-    const [{ data: sales, error: salesError }, { data: items, error: itemsError }] =
-      await Promise.all([
-        supabaseAdmin
-          .from('sales')
-          .select('id,sale_date,sale_time,time_slot,total_amount')
-          .order('sale_date', { ascending: true }),
-        supabaseAdmin
-          .from('sale_items')
-          .select('product_id,quantity,unit_price,product:products(name,cost_price)'),
-      ]);
+    const [{ data: sales, error: salesError }, { data: items, error: itemsError }] = await Promise.all([
+      supabaseAdmin.from('sales').select('id,sale_date,sale_time,time_slot,total_amount').order('sale_date', { ascending: true }),
+      supabaseAdmin.from('sale_items').select('product_id,quantity,unit_price,product:products(name,cost_price)'),
+    ]);
 
     if (salesError) {
       console.error('売上取得エラー:', salesError);
@@ -51,7 +44,7 @@ export async function GET(_req: NextRequest) {
     let todayTotal = 0;
 
     (sales || []).forEach((sale: SaleRow) => {
-      const amt = Number(sale.total_amount) || 0;
+      const amt = Number(sale.total_amount) || 0; // Supabase DECIMAL comes as string
       totalAmount += amt;
       if (sale.sale_date === todayKey) todayTotal += amt;
       dailyMap[sale.sale_date] = (dailyMap[sale.sale_date] || 0) + amt;
@@ -62,7 +55,7 @@ export async function GET(_req: NextRequest) {
       }
     });
 
-    // 月次比較
+    // 月次比率
     const now = new Date();
     const pad = (n: number) => `${n}`.padStart(2, '0');
     const currentMonthKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
@@ -73,10 +66,7 @@ export async function GET(_req: NextRequest) {
     const lastYearMonthSales = monthlyMap[lastYearMonthKey] || 0;
 
     // 商品別集計
-    const productMap: Record<
-      number,
-      { name: string; revenue: number; cost: number; quantity: number }
-    > = {};
+    const productMap: Record<number, { name: string; revenue: number; cost: number; quantity: number }> = {};
 
     (items || []).forEach((row: SaleItemRow) => {
       const revenue = Number(row.unit_price) * Number(row.quantity);
