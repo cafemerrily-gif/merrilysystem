@@ -33,6 +33,8 @@ type UiColors = {
 };
 type UiHeader = { background: string; foreground: string };
 type UiMuted = { color: string };
+type UiCard = { background: string; foreground: string; border: string };
+type UiWelcome = { background: string; foreground: string; border: string };
 
 const normalizeColorValue = (value: string) => {
   // Tailwindのhsl(var(--background))形式に合わせるため、hexをH S L三要素に変換
@@ -82,6 +84,8 @@ export default function Home() {
   const [themeColors, setThemeColors] = useState<UiColors | null>(null);
   const [headerColors, setHeaderColors] = useState<UiHeader>({ background: '', foreground: '' });
   const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
+  const [cardColors, setCardColors] = useState<UiCard>({ background: '', foreground: '', border: '' });
+  const [welcomeColors, setWelcomeColors] = useState<UiWelcome>({ background: '', foreground: '', border: '' });
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -187,6 +191,20 @@ export default function Home() {
         if (ui.mutedColor) {
           setMutedColor({ color: ui.mutedColor });
         }
+        if (ui.cardBackground || ui.cardForeground || ui.cardBorder) {
+          setCardColors({
+            background: ui.cardBackground || '',
+            foreground: ui.cardForeground || '',
+            border: ui.cardBorder || '',
+          });
+        }
+        if (ui.welcomeBackground || ui.welcomeForeground || ui.welcomeBorder) {
+          setWelcomeColors({
+            background: ui.welcomeBackground || '',
+            foreground: ui.welcomeForeground || '',
+            border: ui.welcomeBorder || '',
+          });
+        }
         setThemeColors({
           light: {
             background: ui.lightBackground || '#f8fafc',
@@ -253,11 +271,10 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-16">
         <header
-          className="flex items-center justify-between py-6"
+          className="flex items-center justify-between py-4 px-4 sm:px-0 sticky top-0 z-30"
           style={{
             backgroundColor: headerColors.background || undefined,
             color: headerColors.foreground || undefined,
-            paddingInline: headerColors.background ? '12px' : undefined,
             marginBottom: '18px',
           }}
         >
@@ -351,7 +368,14 @@ export default function Home() {
         </header>
 
         <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl mt-4">
-          <div className="rounded-2xl bg-background px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
+          <div
+            className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center"
+            style={{
+              backgroundColor: welcomeColors.background || undefined,
+              color: welcomeColors.foreground || undefined,
+              border: welcomeColors.border ? `1px solid ${welcomeColors.border}` : undefined,
+            }}
+          >
             <div className="col-span-2 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Welcome</p>
               <h2 className="text-2xl font-bold">バー形式で各ダッシュボードをまとめました</h2>
@@ -400,7 +424,14 @@ export default function Home() {
           </aside>
 
           <section className="space-y-6">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <div
+              className="rounded-2xl p-6 shadow-lg border"
+              style={{
+                backgroundColor: cardColors.background || undefined,
+                color: cardColors.foreground || undefined,
+                borderColor: cardColors.border || undefined,
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">最新ブログ</h3>
                 <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
@@ -427,7 +458,14 @@ export default function Home() {
               <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <div
+              className="rounded-2xl p-6 shadow-lg border"
+              style={{
+                backgroundColor: cardColors.background || undefined,
+                color: cardColors.foreground || undefined,
+                borderColor: cardColors.border || undefined,
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">操作ログ</h3>
                 <span className="text-xs text-muted-foreground">最新50件</span>
@@ -454,7 +492,14 @@ export default function Home() {
               <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+            <div
+              className="rounded-2xl p-6 shadow-lg border"
+              style={{
+                backgroundColor: cardColors.background || undefined,
+                color: cardColors.foreground || undefined,
+                borderColor: cardColors.border || undefined,
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">通知</h3>
                 <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>

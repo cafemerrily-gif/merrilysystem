@@ -22,6 +22,12 @@ export default function UiEditor() {
   const [headerBg, setHeaderBg] = useState('#0b1220');
   const [headerFg, setHeaderFg] = useState('#e5e7eb');
   const [mutedColor, setMutedColor] = useState('#6b7280');
+  const [welcomeBg, setWelcomeBg] = useState('#ffffff');
+  const [welcomeFg, setWelcomeFg] = useState('#0f172a');
+  const [welcomeBorder, setWelcomeBorder] = useState('#e2e8f0');
+  const [cardBg, setCardBg] = useState('#0b1220');
+  const [cardFg, setCardFg] = useState('#e5e7eb');
+  const [cardBorder, setCardBorder] = useState('#1f2937');
   const [colors, setColors] = useState<UiColors>(defaultColors);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,6 +48,12 @@ export default function UiEditor() {
         setHeaderBg(ui.headerBackground || '#0b1220');
         setHeaderFg(ui.headerForeground || '#e5e7eb');
         setMutedColor(ui.mutedColor || '#6b7280');
+        setWelcomeBg(ui.welcomeBackground || '#ffffff');
+        setWelcomeFg(ui.welcomeForeground || '#0f172a');
+        setWelcomeBorder(ui.welcomeBorder || '#e2e8f0');
+        setCardBg(ui.cardBackground || '#0b1220');
+        setCardFg(ui.cardForeground || '#e5e7eb');
+        setCardBorder(ui.cardBorder || '#1f2937');
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -77,6 +89,12 @@ export default function UiEditor() {
           headerBackground: headerBg,
           headerForeground: headerFg,
           mutedColor,
+          welcomeBackground: welcomeBg,
+          welcomeForeground: welcomeFg,
+          welcomeBorder,
+          cardBackground: cardBg,
+          cardForeground: cardFg,
+          cardBorder,
           lightBackground: colors.light.background,
           lightBorder: colors.light.border,
           lightForeground: colors.light.foreground,
@@ -251,6 +269,38 @@ export default function UiEditor() {
             <label className="text-sm text-muted-foreground space-y-1 block">
               色
               <input type="color" value={mutedColor} onChange={(e) => setMutedColor(e.target.value)} />
+            </label>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="font-semibold">Welcomeカード</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              背景色
+              <input type="color" value={welcomeBg} onChange={(e) => setWelcomeBg(e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              文字色
+              <input type="color" value={welcomeFg} onChange={(e) => setWelcomeFg(e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              枠線色
+              <input type="color" value={welcomeBorder} onChange={(e) => setWelcomeBorder(e.target.value)} />
+            </label>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="font-semibold">その他カード（ログ/通知など）</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              背景色
+              <input type="color" value={cardBg} onChange={(e) => setCardBg(e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              文字色
+              <input type="color" value={cardFg} onChange={(e) => setCardFg(e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              枠線色
+              <input type="color" value={cardBorder} onChange={(e) => setCardBorder(e.target.value)} />
             </label>
           </div>
 
