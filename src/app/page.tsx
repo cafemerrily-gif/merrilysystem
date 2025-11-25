@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
+type BlogPost = { id: string; title: string; body: string; date: string };
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
@@ -35,8 +36,10 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
   const supabase = createClientComponentClient();
 
   // テーマ: デバイス設定 → PCのみ手動トグル
@@ -93,21 +96,38 @@ export default function Home() {
     }
   }, []);
 
+  const loadBlogs = useCallback(async () => {
+    try {
+      setLoadingBlogs(true);
+      const res = await fetch('/api/pr/website');
+      const data = await res.json();
+      if (data?.blogPosts) setBlogPosts(data.blogPosts);
+      else setBlogPosts([]);
+    } catch (e) {
+      console.error('ブログ取得エラー', e);
+      setBlogPosts([]);
+    } finally {
+      setLoadingBlogs(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadLogs();
     loadNotifications();
-  }, [loadLogs, loadNotifications]);
+    loadBlogs();
+  }, [loadLogs, loadNotifications, loadBlogs]);
 
   useEffect(() => {
     const handler = () => {
       if (document.visibilityState === 'visible') {
         loadLogs();
         loadNotifications();
+        loadBlogs();
       }
     };
     document.addEventListener('visibilitychange', handler);
     return () => document.removeEventListener('visibilitychange', handler);
-  }, [loadLogs, loadNotifications]);
+  }, [loadLogs, loadNotifications, loadBlogs]);
 
   const privileged = ['職員', 'マネジメント部', 'エンジニアチーム'];
   const visibleNavItems = navItems.filter((item) => {
@@ -289,6 +309,32 @@ export default function Home() {
                 )}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">最新ブログ</h3>
+                <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
+              </div>
+              <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+                {loadingBlogs ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : blogPosts.length === 0 ? (
+                  <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
+                ) : (
+                  blogPosts.map((post) => (
+                    <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                        <span>ブログ</span>
+                      </div>
+                      <p className="font-semibold text-foreground">{post.title}</p>
+                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
