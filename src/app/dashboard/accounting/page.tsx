@@ -61,6 +61,7 @@ const buildSmoothPath = (points: [number, number][]) => {
 function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: number }) {
   if (!data.length) return <p className="text-sm text-muted-foreground">データなし</p>;
   const width = 600;
+  const labelArea = 30;
   const max = Math.max(...data.map((d) => d.total));
   const points = data.map((d, idx) => {
     const x = (idx / Math.max(1, data.length - 1)) * width;
@@ -69,8 +70,13 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
   });
   const path = buildSmoothPath(points);
 
+  const formatLabel = (raw: string) => {
+    if (!raw) return '';
+    return raw.length >= 10 ? raw.slice(5) : raw; // 日次はMM-DD、月次はYYYY-MM
+  };
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
+    <svg viewBox={`0 0 ${width} ${height + labelArea}`} className="w-full h-52">
       <path
         d={path}
         fill="none"
@@ -80,7 +86,17 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
         strokeLinejoin="round"
       />
       {points.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
+        <g key={i}>
+          <circle cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
+          <text
+            x={x}
+            y={height + 18}
+            textAnchor="middle"
+            className="fill-muted-foreground text-[10px]"
+          >
+            {formatLabel(data[i]?.date)}
+          </text>
+        </g>
       ))}
     </svg>
   );
@@ -91,17 +107,25 @@ export default function AccountingDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    let timer: NodeJS.Timer | null = null;
+
+    const load = async () => {
       try {
         const res = await fetch('/api/analytics/sales');
         const data = await res.json();
         if (!data.error) setSummary(data);
       } catch (error) {
-        console.error('売上サマリ取得エラー:', error);
+        console.error('売上サマリー取得エラー:', error);
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    load();
+    timer = setInterval(load, 30000); // 定期リフレッシュでグラフを自動反映
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, []);
 
   const timeSlotTotal = useMemo(() => {
@@ -131,8 +155,8 @@ export default function AccountingDashboard() {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">会計部ダッシュボード</h1>
-              <p className="text-sm text-muted-foreground">日次・月次の売上とメニュー別成績を確認</p>
+              <h1 className="text-3xl font-bold">会計部</h1>
+              <p className="text-sm text-muted-foreground">売上・時間帯別やランキングを確認</p>
             </div>
           </div>
           <Link
@@ -148,26 +172,26 @@ export default function AccountingDashboard() {
         {summary && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">本日の売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.todayTotal.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground mb-2">今日の売上</p>
+              <div className="text-3xl font-bold text-foreground">\{summary.todayTotal.toLocaleString()}</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">今月売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.currentMonthSales.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground mb-2">今月の売上</p>
+              <div className="text-3xl font-bold text-foreground">\{summary.currentMonthSales.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">前月比 {formatRatio(summary.currentMonthSales, summary.prevMonthSales)}</p>
               <p className="text-xs text-muted-foreground">前年同月比 {formatRatio(summary.currentMonthSales, summary.lastYearMonthSales)}</p>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
               <p className="text-sm text-muted-foreground mb-2">累計売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.totalAmount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">原価率（概算） {summary.costRate.toFixed(1)}%</p>
+              <div className="text-3xl font-bold text-foreground">\{summary.totalAmount.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">原価率（試算） {summary.costRate.toFixed(1)}%</p>
             </div>
           </div>
         )}
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">日次売上推移</h2>
+            <h2 className="text-xl font-semibold">日次推移</h2>
             <span className="text-sm text-muted-foreground">直近データ</span>
           </div>
           <SmoothLineChart data={summary?.dailySales?.slice(-30) || []} />
@@ -176,8 +200,8 @@ export default function AccountingDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">月次売上（カーブ表示）</h2>
-              <span className="text-sm text-muted-foreground">最近6ヶ月</span>
+              <h2 className="text-xl font-semibold">月次推移（カーブ表示）</h2>
+              <span className="text-sm text-muted-foreground">直近6か月</span>
             </div>
             {!summary?.monthlySales?.length ? (
               <p className="text-muted-foreground">データなし</p>
@@ -195,7 +219,7 @@ export default function AccountingDashboard() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">時間帯別売上</h2>
-              <span className="text-sm text-muted-foreground">割合</span>
+              <span className="text-sm text-muted-foreground">比率</span>
             </div>
             {!summary?.timeSlots ? (
               <p className="text-muted-foreground">データなし</p>
@@ -207,7 +231,7 @@ export default function AccountingDashboard() {
                     <div key={slot} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{timeSlotLabels[slot] || slot}</span>
-                        <span className="text-muted-foreground">¥{amount.toLocaleString()} ({ratio.toFixed(1)}%)</span>
+                        <span className="text-muted-foreground">\{amount.toLocaleString()} ({ratio.toFixed(1)}%)</span>
                       </div>
                       <div className="h-3 rounded-full bg-muted">
                         <div
@@ -242,12 +266,12 @@ export default function AccountingDashboard() {
                     <div className="flex-1">
                       <div className="font-semibold">{p.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        数量 {p.quantity} / 利益率 {p.profitRate.toFixed(1)}%
+                        個数 {p.quantity} / 利益率 {p.profitRate.toFixed(1)}%
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold">¥{p.revenue.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">利益 ¥{p.profit.toLocaleString()}</div>
+                      <div className="text-sm font-bold">\{p.revenue.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">粗利 \{p.profit.toLocaleString()}</div>
                     </div>
                   </div>
                 ))}
@@ -259,8 +283,8 @@ export default function AccountingDashboard() {
             <h2 className="text-xl font-semibold">客数と客単価</h2>
             {summary?.customerCount == null ? (
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-xl text-sm text-yellow-900 dark:text-yellow-200">
-                客数データがスキーマに存在しないため計算できません。<br />
-                対応方法: sales テーブルに guest_count を追加し、入力フォームにも項目を足してください。
+                客数データがスキーマに無いため計算できません。<br />
+                対応するには: sales テーブルに guest_count を追加し、入力フォームに項目を足してください。
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
@@ -271,16 +295,16 @@ export default function AccountingDashboard() {
                 <div className="bg-muted/40 rounded-xl p-4 border border-border">
                   <p className="text-xs text-muted-foreground">客単価</p>
                   <p className="text-2xl font-bold">
-                    {summary.averageSpend !== null ? `¥${summary.averageSpend.toLocaleString()}` : 'N/A'}
+                    {summary.averageSpend !== null ? `\\${summary.averageSpend.toLocaleString()}` : 'N/A'}
                   </p>
                 </div>
               </div>
             )}
             <div className="bg-muted/40 rounded-xl p-4 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">原価率（概算）</p>
+              <p className="text-xs text-muted-foreground mb-1">原価率（試算）</p>
               <p className="text-2xl font-bold">{summary?.costRate.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                売上が上がっても原価率が高いと利益が出ないため、粗利率と合わせて確認してください。
+                原価率が高止まりしていないかを確認してください。
               </p>
             </div>
           </div>
