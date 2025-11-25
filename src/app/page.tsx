@@ -136,12 +136,20 @@ export default function Home() {
               </div>
             )}
             {isAdmin && (
-              <Link
-                href="/profile"
-                className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
-              >
-                タグ編集
-              </Link>
+              <div className="hidden sm:flex items-center gap-2">
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
+                >
+                  タグ編集
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className="inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
+                >
+                  メンバー管理
+                </Link>
+              </div>
             )}
           </div>
           {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
