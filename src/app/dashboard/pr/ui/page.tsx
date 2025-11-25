@@ -82,12 +82,14 @@ export default function UiEditor() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         const ui = data?.uiSettings || {};
+        const localPresets = typeof window !== 'undefined' ? window.localStorage.getItem('ui-presets') : null;
+        const parsedLocalPresets = localPresets ? JSON.parse(localPresets) : [];
         setLoginIconUrl(ui.loginIconUrl || '/MERRILY_Simbol.png');
         setAppIconUrl(ui.appIconUrl || '/MERRILY_Simbol.png');
         setAppTitle(ui.appTitle || 'MERRILY');
         setWelcomeTitleText(ui.welcomeTitleText || welcomeTitleText);
         setWelcomeBodyText(ui.welcomeBodyText || welcomeBodyText);
-        setPresets(ui.presets || []);
+        setPresets(ui.presets || parsedLocalPresets || []);
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -257,6 +259,8 @@ export default function UiEditor() {
     headerFgLight: modeValues.light.headerFg,
     headerBgDark: modeValues.dark.headerBg,
     headerFgDark: modeValues.dark.headerFg,
+    headerBgAlphaLight: modeValues.light.headerBgAlpha,
+    headerBgAlphaDark: modeValues.dark.headerBgAlpha,
     headerTitleColorLight: modeValues.light.headerTitle,
     headerSubtitleColorLight: modeValues.light.headerSubtitle,
     headerUserColorLight: modeValues.light.headerUser,
@@ -266,19 +270,23 @@ export default function UiEditor() {
     mutedColorLight: modeValues.light.muted,
     mutedColorDark: modeValues.dark.muted,
     welcomeBgLight: modeValues.light.welcomeBg,
+    welcomeBgAlphaLight: modeValues.light.welcomeBgAlpha,
     welcomeFgLight: modeValues.light.welcomeFg,
     welcomeBorderLight: modeValues.light.welcomeBorder,
     welcomeTitleColorLight: modeValues.light.welcomeTitle,
     welcomeBodyColorLight: modeValues.light.welcomeBody,
     welcomeBgDark: modeValues.dark.welcomeBg,
+    welcomeBgAlphaDark: modeValues.dark.welcomeBgAlpha,
     welcomeFgDark: modeValues.dark.welcomeFg,
     welcomeBorderDark: modeValues.dark.welcomeBorder,
     welcomeTitleColorDark: modeValues.dark.welcomeTitle,
     welcomeBodyColorDark: modeValues.dark.welcomeBody,
     cardBgLight: modeValues.light.cardBg,
+    cardBgAlphaLight: modeValues.light.cardBgAlpha,
     cardFgLight: modeValues.light.cardFg,
     cardBorderLight: modeValues.light.cardBorder,
     cardBgDark: modeValues.dark.cardBg,
+    cardBgAlphaDark: modeValues.dark.cardBgAlpha,
     cardFgDark: modeValues.dark.cardFg,
     cardBorderDark: modeValues.dark.cardBorder,
   });
@@ -352,6 +360,12 @@ export default function UiEditor() {
     setPresetName('');
     setMessage('プリセットを保存しました（UI設定の保存も行ってください）');
   };
+
+  // プリセットをローカルにも保持しておき、サーバーから返らなかった場合のバックアップにする
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('ui-presets', JSON.stringify(presets));
+  }, [presets]);
 
   const currentMode = modeValues[selectedMode];
 
