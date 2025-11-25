@@ -332,7 +332,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <header
-          className="flex items-center justify-between py-4 px-4 sm:px-0 sticky top-0 z-30"
+          className="flex items-center justify-between py-4 px-0 sticky top-0 z-30"
           style={{
             backgroundColor: currentHeader.background || undefined,
             color: currentHeader.foreground || undefined,
@@ -459,7 +459,12 @@ export default function Home() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center justify-between px-4 py-4 rounded-xl border border-border bg-card hover:bg-muted transition-all duration-200 shadow-sm hover:shadow-lg"
+                  className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
+                  style={{
+                    backgroundColor: currentCard.background || undefined,
+                    color: currentCard.foreground || undefined,
+                    borderColor: currentCard.border || undefined,
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
