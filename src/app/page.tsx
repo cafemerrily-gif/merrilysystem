@@ -133,6 +133,28 @@ export default function Home() {
               </p>
             </div>
 
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">操作ログ</h3>
+                <span className="text-xs text-muted-foreground">直近の動き</span>
+              </div>
+              <div className="space-y-3 text-sm">
+                {[
+                  { time: '今日 09:10', msg: '会計部で売上を登録しました' },
+                  { time: '今日 08:55', msg: '開発部で「春メニュー」フォルダに商品を追加しました' },
+                  { time: '昨日 18:20', msg: '会計部ダッシュボードで集計を確認しました' },
+                ].map((log, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
+                    <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{log.time}</p>
+                      <p className="text-foreground">{log.msg}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-xl bg-card border border-border">
                 <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">3</div>
