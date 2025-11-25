@@ -22,15 +22,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { staff_name, work_date, clock_in, clock_out, note } = body;
 
-    if (!staff_name || !work_date || !clock_in) {
-      return NextResponse.json({ error: 'staff_name, work_date, clock_in are required' }, { status: 400 });
+    if (!work_date || !clock_in) {
+      return NextResponse.json({ error: 'work_date, clock_in are required' }, { status: 400 });
     }
+
+    const resolvedName = staff_name || 'ログインユーザー'; // ログイン連携後に置き換え
 
     const { data, error } = await supabaseAdmin
       .from('attendance')
       .insert([
         {
-          staff_name,
+          staff_name: resolvedName,
           work_date,
           clock_in,
           clock_out: clock_out || null,

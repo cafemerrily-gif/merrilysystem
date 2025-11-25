@@ -6,7 +6,17 @@ import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-const navItems = [
+type NavItem = {
+  href: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  desc: string;
+  accent: string;
+  requiredTags?: string[];
+};
+
+const navItems: NavItem[] = [
   {
     href: '/dashboard/staff',
     icon: '🧑‍🍳',
@@ -14,6 +24,7 @@ const navItems = [
     subtitle: '勤怠管理',
     desc: '出勤・退勤の記録と履歴を管理',
     accent: 'スタッフダッシュボード',
+    requiredTags: ['店舗スタッフ'],
   },
   {
     href: '/dashboard/accounting',
@@ -22,6 +33,7 @@ const navItems = [
     subtitle: '売上ダッシュボード',
     desc: '売上推移・時間帯別・ランキングを確認',
     accent: 'ダッシュボードを開く',
+    requiredTags: ['会計部'],
   },
   {
     href: '/dashboard/dev',
@@ -30,6 +42,7 @@ const navItems = [
     subtitle: 'メニュー管理',
     desc: 'カテゴリー／商品フォルダ／商品を登録・編集',
     accent: '開発部へ進む',
+    requiredTags: ['開発部'],
   },
   {
     href: '/dashboard/pr',
@@ -38,6 +51,16 @@ const navItems = [
     subtitle: 'キャンペーン枠',
     desc: 'SNSやキャンペーン指標を置くスペース（準備中）',
     accent: '広報部へ',
+    requiredTags: ['広報部'],
+  },
+  {
+    href: '/dashboard/debug',
+    icon: '🧪',
+    title: 'デバッグ',
+    subtitle: '技術検証',
+    desc: '検証用のダッシュボード（エンジニアチームのみ）',
+    accent: 'デバッグツール',
+    requiredTags: ['エンジニアチーム'],
   },
 ];
 
@@ -74,6 +97,15 @@ export default function Home() {
     })();
   }, [supabase]);
 
+  const privilegedTags = ['職員', 'マネジメント部', 'エンジニアチーム'];
+  const hasPrivilege = userDepartments.some((d) => privilegedTags.includes(d));
+  const visibleNavItems = hasPrivilege
+    ? navItems
+    : navItems.filter((item) => {
+        if (!item.requiredTags || item.requiredTags.length === 0) return true;
+        return item.requiredTags.some((tag) => userDepartments.includes(tag));
+      });
+
   const toggleTheme = () => {
     const next = !isDark;
     setHasManualPreference(true);
@@ -91,9 +123,13 @@ export default function Home() {
               <div className="hidden sm:flex flex-col items-end text-sm bg-card border border-border px-3 py-2 rounded-xl">
                 <span className="font-semibold text-foreground">{userName}</span>
                 {userDepartments.length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {userDepartments.join(' / ')}
-                  </span>
+                  <div className="flex flex-wrap gap-1 justify-end mt-1">
+                    {userDepartments.map((dept) => (
+                      <span key={dept} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground border border-border">
+                        {dept}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -143,7 +179,7 @@ export default function Home() {
           <aside className="space-y-4">
             <div className="hidden lg:block text-sm text-muted-foreground mb-2">ダッシュボードメニュー</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
