@@ -1,13 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type Section = { id: string; title: string; body: string };
 type MenuItem = { id: string; name: string; price: string; desc: string };
 type BlogPost = { id: string; title: string; body: string; date: string };
 
 export default function PrWebsiteEditor() {
+  const supabase = createClientComponentClient();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
+
   const [heroTitle, setHeroTitle] = useState('MERRILY CAFE');
   const [heroSubtitle, setHeroSubtitle] = useState('季節のこだわりメニューとくつろぎの空間');
   const [ctaLabel, setCtaLabel] = useState('ご来店をお待ちしています');
@@ -26,36 +34,92 @@ export default function PrWebsiteEditor() {
   const [headerColor, setHeaderColor] = useState('#0f172a');
   const [headerTextColor, setHeaderTextColor] = useState('#ffffff');
   const [heroImage, setHeroImage] = useState('/MERRILY_Simbol.png');
-  const [info, setInfo] = useState<string | null>(null);
 
-  const addSection = () => {
-    const newId = `sec-${sections.length + 1}`;
-    setSections([...sections, { id: newId, title: '新しいセクション', body: 'ここに本文を入力' }]);
-  };
+  // 初期データ読込
+  useEffect(() => {
+    (async () => {
+      try {
+        const userRes = await supabase.auth.getUser();
+        const meta = userRes.data.user?.user_metadata;
+        if (meta?.full_name) setUserName(meta.full_name);
+        const res = await fetch('/api/pr/website');
+        const data = await res.json();
+        if (data) {
+          setHeroTitle(data.heroTitle ?? heroTitle);
+          setHeroSubtitle(data.heroSubtitle ?? heroSubtitle);
+          setCtaLabel(data.ctaLabel ?? ctaLabel);
+          setSections(data.sections ?? sections);
+          setMenuItems(data.menuItems ?? menuItems);
+          setBlogPosts(data.blogPosts ?? blogPosts);
+          setPreviewUrl(data.previewUrl ?? previewUrl);
+          setHeaderColor(data.headerColor ?? headerColor);
+          setHeaderTextColor(data.headerTextColor ?? headerTextColor);
+          setHeroImage(data.heroImage ?? heroImage);
+        }
+      } catch (e: any) {
+        setError(e?.message || '初期データの取得に失敗しました');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const addSection = () => setSections((prev) => [...prev, { id: `sec-${prev.length + 1}`, title: '新しいセクション', body: 'ここに本文を入力' }]);
   const updateSection = (id: string, field: 'title' | 'body', value: string) =>
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   const removeSection = (id: string) => setSections((prev) => prev.filter((s) => s.id !== id));
 
-  const addMenuItem = () => {
-    const newId = `m-${menuItems.length + 1}`;
-    setMenuItems([...menuItems, { id: newId, name: '新しいメニュー', price: '¥0', desc: '' }]);
-  };
+  const addMenuItem = () => setMenuItems((prev) => [...prev, { id: `m-${prev.length + 1}`, name: '新しいメニュー', price: '¥0', desc: '' }]);
   const updateMenuItem = (id: string, field: keyof MenuItem, value: string) =>
     setMenuItems((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
   const removeMenuItem = (id: string) => setMenuItems((prev) => prev.filter((m) => m.id !== id));
 
-  const addBlogPost = () => {
-    const newId = `b-${blogPosts.length + 1}`;
-    setBlogPosts([...blogPosts, { id: newId, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10) }]);
-  };
+  const addBlogPost = () =>
+    setBlogPosts((prev) => [...prev, { id: `b-${prev.length + 1}`, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10) }]);
   const updateBlogPost = (id: string, field: keyof BlogPost, value: string) =>
     setBlogPosts((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
   const removeBlogPost = (id: string) => setBlogPosts((prev) => prev.filter((b) => b.id !== id));
 
-  const mockSave = () => {
-    setInfo('保存しました（プレビュー用）。本番保存する場合はAPI連携を追加してください。');
-    setTimeout(() => setInfo(null), 3000);
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const payload = {
+        heroTitle,
+        heroSubtitle,
+        ctaLabel,
+        sections,
+        menuItems,
+        blogPosts,
+        previewUrl,
+        headerColor,
+        headerTextColor,
+        heroImage,
+      };
+      const res = await fetch('/api/pr/website', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload, updated_by: userName || 'unknown' }),
+      });
+      const data = await res.json();
+      if (data?.error) setError(data.error);
+      else setInfo('保存しました');
+    } catch (e: any) {
+      setError(e?.message || '保存に失敗しました');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setInfo(null), 3000);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-muted-foreground">読み込み中...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -65,15 +129,16 @@ export default function PrWebsiteEditor() {
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📰</div>
             <div>
               <h1 className="text-2xl font-bold">公式ホームページ編集</h1>
-              <p className="text-sm text-muted-foreground">広報向けの宣伝ページを素早く編集・プレビュー</p>
+              <p className="text-sm text-muted-foreground">広報向けの宣伝ページを編集・保存・プレビュー</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={mockSave}
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
             >
-              保存（モック）
+              {saving ? '保存中...' : '保存'}
             </button>
             <Link href="/dashboard/pr" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
               広報部トップへ
@@ -252,8 +317,9 @@ export default function PrWebsiteEditor() {
           </div>
 
           {info && <p className="text-green-600 text-sm">{info}</p>}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <p className="text-xs text-muted-foreground">
-            ※ 現在はプレビューのみで保存機能はモックです。必要に応じて API と連携してください。
+            Supabaseの pr_site テーブルに保存しています（1行固定）。必要に応じてスキーマや保存形式を調整してください。
           </p>
         </div>
 
