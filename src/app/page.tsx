@@ -342,7 +342,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <main className="w-full max-w-none mx-0 px-0 pb-16">
         <header
           className="flex items-center justify-between py-4 px-0 sticky top-0 z-30"
           style={{
@@ -440,6 +440,7 @@ export default function Home() {
           </div>
         </header>
 
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl mt-4">
           <div
             className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center"
@@ -602,6 +603,7 @@ export default function Home() {
             </div>
           </section>
 
+        </div>
         </div>
       </main>
     </div>
