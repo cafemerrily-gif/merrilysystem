@@ -3,11 +3,6 @@ import type { NextRequest } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 export async function middleware(req: NextRequest) {
-  // 認証バイパス（環境変数で有効化）
-  const bypass =
-    (process.env.AUTH_BYPASS || process.env.NEXT_PUBLIC_AUTH_BYPASS || '').toLowerCase() === 'true';
-  if (bypass) return NextResponse.next();
-
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
