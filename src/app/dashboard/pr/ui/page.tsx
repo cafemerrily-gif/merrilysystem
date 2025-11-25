@@ -18,6 +18,7 @@ export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [loginIconUrl, setLoginIconUrl] = useState('');
   const [appIconUrl, setAppIconUrl] = useState('');
+  const [appTitle, setAppTitle] = useState('MERRILY');
   const [colors, setColors] = useState<UiColors>(defaultColors);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,6 +35,7 @@ export default function UiEditor() {
         const ui = data?.uiSettings || {};
         setLoginIconUrl(ui.loginIconUrl || '');
         setAppIconUrl(ui.appIconUrl || '');
+        setAppTitle(ui.appTitle || 'MERRILY');
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -63,6 +65,7 @@ export default function UiEditor() {
       const payload = {
         ...(basePayload || {}),
         uiSettings: {
+          appTitle,
           loginIconUrl,
           appIconUrl,
           lightBackground: colors.light.background,
@@ -144,7 +147,16 @@ export default function UiEditor() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-            <h2 className="font-semibold">アイコン</h2>
+            <h2 className="font-semibold">アイコン・題名</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              アプリの題名
+              <input
+                value={appTitle}
+                onChange={(e) => setAppTitle(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                placeholder="MERRILY"
+              />
+            </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               ログイン画面のアイコンURL
               <input

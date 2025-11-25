@@ -70,6 +70,7 @@ export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appTitle, setAppTitle] = useState('MERRILY');
   const [userName, setUserName] = useState<string>('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -172,6 +173,7 @@ export default function Home() {
       if (data?.uiSettings) {
         const ui = data.uiSettings;
         if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
+        if (ui.appTitle) setAppTitle(ui.appTitle);
         setThemeColors({
           light: {
             background: ui.lightBackground || '#f8fafc',
@@ -244,7 +246,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cafe Management System</p>
-              <h1 className="text-2xl font-bold">MERRILY</h1>
+              <h1 className="text-2xl font-bold">{appTitle}</h1>
               <p className="text-sm text-muted-foreground">
                 {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
               </p>

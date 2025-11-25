@@ -26,6 +26,7 @@ function LoginPageInner() {
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [routerReady, setRouterReady] = useState(false);
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appTitle, setAppTitle] = useState('MERRILY');
   const [themeColors, setThemeColors] = useState<{
     light: { background: string; border: string; foreground: string };
     dark: { background: string; border: string; foreground: string };
@@ -116,6 +117,7 @@ function LoginPageInner() {
         const data = await res.json();
         const ui = data?.uiSettings;
         if (ui?.loginIconUrl) setLoginIconUrl(ui.loginIconUrl);
+        if (ui?.appTitle) setAppTitle(ui.appTitle);
         if (ui) {
           setThemeColors({
             light: {
@@ -251,7 +253,7 @@ function LoginPageInner() {
           <div className="flex justify-center">
             <Image src={loginIconUrl || '/MERRILY_Simbol.png'} alt="MERRILY" width={120} height={120} className="object-contain" priority />
           </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">MERRILY</h1>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">{appTitle}</h1>
           <p className="text-xs uppercase text-muted-foreground tracking-[0.2em]">Cafe Management System</p>
           <p className="text-sm text-muted-foreground">
             {mode === 'login' ? 'メールアドレスとパスワードでサインイン' : '初回のみユーザー登録してください'}
