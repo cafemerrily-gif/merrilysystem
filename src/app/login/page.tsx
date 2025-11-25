@@ -14,7 +14,7 @@ function LoginPageInner() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const deptOptions = ['会計部', '開発部', '広報部', 'マネジメント部', '職員'];
+  const deptOptions = ['会計部', '開発部', '広報部', 'マネジメント部', '職員', 'エンジニアチーム', '店舗スタッフ'];
   const [departments, setDepartments] = useState<string[]>([]);
   // login と signup を切り替え（初回だけ signup を使う運用）
   const [mode, setMode] = useState<'login' | 'signup'>('login');
