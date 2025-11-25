@@ -280,18 +280,35 @@ export default function Home() {
               <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center p-4 rounded-xl bg-card border border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">3</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">アクティブな部署</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-2xl p-4 shadow-md space-y-3">
+                <h4 className="text-base font-semibold">クイックアクション</h4>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <Link href="/dashboard/accounting" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
+                    <span>会計部: 売上入力・ダッシュボード</span>
+                    <span className="text-primary">→</span>
+                  </Link>
+                  <Link href="/dashboard/dev" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
+                    <span>開発部: メニュー/フォルダ管理</span>
+                    <span className="text-primary">→</span>
+                  </Link>
+                  <Link href="/dashboard/pr" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
+                    <span>広報部: ホームページ編集</span>
+                    <span className="text-primary">→</span>
+                  </Link>
+                  <Link href="/dashboard/staff" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
+                    <span>店舗スタッフ: 出勤/退勤を記録</span>
+                    <span className="text-primary">→</span>
+                  </Link>
+                </div>
               </div>
-              <div className="text-center p-4 rounded-xl bg-card border border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">24/7</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">稼働目標</div>
-              </div>
-              <div className="text-center p-4 rounded-xl bg-card border border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">最新</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">デザイン刷新</div>
+              <div className="bg-card border border-border rounded-2xl p-4 shadow-md space-y-3">
+                <h4 className="text-base font-semibold">運用メモ</h4>
+                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                  <li>ログイン・各ダッシュボードの操作は「操作ログ」に記録されます。</li>
+                  <li>最新の操作を確認したいときはページを開き直すか、上部で再読込を行ってください。</li>
+                  <li>通知は全員/個別問わず最新50件を表示しています。</li>
+                </ul>
               </div>
             </div>
           </section>
