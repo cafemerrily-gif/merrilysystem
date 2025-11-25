@@ -6,7 +6,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type Section = { id: string; title: string; body: string };
 type MenuItem = { id: string; name: string; price: string; desc: string };
-type BlogPost = { id: string; title: string; body: string; date: string };
+type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
 
 export default function PrWebsiteEditor() {
   const supabase = createClientComponentClient();
@@ -426,13 +426,20 @@ export default function PrWebsiteEditor() {
                     {[...blogPosts]
                       .sort((a, b) => (a.date > b.date ? -1 : 1))
                       .map((post) => (
-                        <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
+                        <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-2">
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                            <span>ブログ</span>
+                            <span>{post.author || 'ブログ'}</span>
                           </div>
                           <p className="font-semibold text-foreground">{post.title}</p>
-                          <p className="text-sm text-muted-foreground">{post.body}</p>
+                          {post.image ? (
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="w-full rounded-lg border border-border object-cover max-h-56"
+                            />
+                          ) : null}
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.body}</p>
                         </div>
                       ))}
                   </div>
