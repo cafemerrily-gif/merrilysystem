@@ -140,19 +140,24 @@ export default function Home() {
               </div>
               <div className="space-y-3 text-sm">
                 {[
-                  { time: '今日 09:10', msg: '会計部で売上を登録しました' },
-                  { time: '今日 08:55', msg: '開発部で「春メニュー」フォルダに商品を追加しました' },
-                  { time: '昨日 18:20', msg: '会計部ダッシュボードで集計を確認しました' },
+                  { user: '開発担当A', time: '今日 09:10', msg: '会計部で売上を登録しました' },
+                  { user: '開発担当A', time: '今日 08:55', msg: '開発部で「春メニュー」フォルダに商品を追加しました' },
+                  { user: '広報担当B', time: '昨日 18:20', msg: '会計部ダッシュボードで集計を確認しました' },
                 ].map((log, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
                     <div>
                       <p className="text-xs text-muted-foreground">{log.time}</p>
-                      <p className="text-foreground">{log.msg}</p>
+                      <p className="text-foreground">
+                        <span className="font-semibold">{log.user}</span>：{log.msg}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                ※現状はサンプル表示です。ログイン実装後は認証情報からユーザー名を紐づけて記録してください。
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
