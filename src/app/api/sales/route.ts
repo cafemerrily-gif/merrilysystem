@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { logActivity } from '@/lib/logger';
 
 interface SaleItem {
   productId: number;
@@ -14,13 +15,9 @@ interface SaleRequest {
   locationId?: number;
   items?: SaleItem[];
   totalAmount?: number;
-  paymentMethod?: string;
 }
 
-/**
- * GET /api/sales
- * 売上サマリ（グラフ用）
- */
+// GET /api/sales : サマリー（グラフ用）
 export async function GET(request: NextRequest) {
   try {
     const { data, error } = await supabaseAdmin
@@ -30,21 +27,12 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('売上取得エラー:', error);
-      return NextResponse.json(
-        { error: '売上の取得に失敗しました' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: '売上の取得に失敗しました' }, { status: 500 });
     }
 
     const today = new Date().toISOString().split('T')[0];
     const dailyMap: Record<string, number> = {};
-    const timeSlotMap: Record<string, number> = {
-      morning: 0,
-      lunch: 0,
-      afternoon: 0,
-      evening: 0,
-    };
-
+    const timeSlotMap: Record<string, number> = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
     let total = 0;
     let todayTotal = 0;
 
@@ -58,15 +46,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const dailySales = Object.entries(dailyMap).map(([date, amount]) => ({
-      date,
-      total: amount,
-    }));
-
-    const recentSales = data
-      .slice()
-      .sort((a, b) => (a.sale_date < b.sale_date ? 1 : -1))
-      .slice(0, 15);
+    const dailySales = Object.entries(dailyMap).map(([date, amount]) => ({ date, total: amount }));
+    const recentSales = data.slice().sort((a, b) => (a.sale_date < b.sale_date ? 1 : -1)).slice(0, 15);
 
     return NextResponse.json({
       totalAmount: total,
@@ -76,24 +57,18 @@ export async function GET(request: NextRequest) {
       recentSales,
     });
   } catch (error) {
-    console.error('売上サマリ取得エラー:', error);
-    return NextResponse.json(
-        { error: '売上の取得に失敗しました' },
-        { status: 500 }
-    );
+    console.error('売上サマリー取得エラー:', error);
+    return NextResponse.json({ error: '売上の取得に失敗しました' }, { status: 500 });
   }
 }
 
-/**
- * DELETE /api/sales?saleId=123
- * 売上データを削除（sale_items は ON DELETE CASCADE）
- */
+// DELETE /api/sales?saleId=123 : 売上削除
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const saleId = searchParams.get('saleId');
 
   if (!saleId) {
-    return NextResponse.json({ error: 'saleId が必要です' }, { status: 400 });
+    return NextResponse.json({ error: 'saleId は必須です' }, { status: 400 });
   }
 
   try {
@@ -104,6 +79,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
     }
 
+    await logActivity(`会計: 売上削除 saleId=${saleId}`, null);
+
     return NextResponse.json({ message: '削除しました', saleId: Number(saleId) });
   } catch (error) {
     console.error('売上削除エラー:', error);
@@ -111,45 +88,29 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-/**
- * POST /api/sales
- * 売上データを登録（手動入力も想定）
- */
+// POST /api/sales : 売上登録（商品があれば sale_items にも挿入）
 export async function POST(request: NextRequest) {
   try {
     const body: SaleRequest = await request.json();
-    const { saleDate, saleTime, staffId, items, totalAmount, paymentMethod } = body;
+    const { saleDate, saleTime, staffId, items, totalAmount } = body;
 
     if (!saleDate || !saleTime) {
-      return NextResponse.json(
-        { error: '日付と時間は必須です' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'saleDate, saleTime は必須です' }, { status: 400 });
     }
 
-    const hasItems = !!items && items.length > 0;
-    if (!hasItems && (totalAmount === undefined || Number.isNaN(Number(totalAmount)))) {
-      return NextResponse.json(
-        { error: '売上金額を入力してください' },
-        { status: 400 }
-      );
-    }
+    const hasItems = Array.isArray(items) && items.length > 0;
+    const computedTotal =
+      totalAmount ||
+      (hasItems ? items!.reduce((sum, i) => sum + Number(i.unitPrice) * Number(i.quantity), 0) : 0);
 
-    const computedTotal = hasItems
-      ? items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-      : Number(totalAmount);
-
-    const hour = parseInt(saleTime.split(':')[0], 10);
-    let timeSlot: 'morning' | 'lunch' | 'afternoon' | 'evening';
-    if (hour >= 6 && hour < 11) {
-      timeSlot = 'morning';
-    } else if (hour >= 11 && hour < 14) {
-      timeSlot = 'lunch';
-    } else if (hour >= 14 && hour < 18) {
-      timeSlot = 'afternoon';
-    } else {
-      timeSlot = 'evening';
-    }
+    const timeSlot =
+      Number(saleTime.slice(0, 2)) < 10
+        ? 'morning'
+        : Number(saleTime.slice(0, 2)) < 14
+        ? 'lunch'
+        : Number(saleTime.slice(0, 2)) < 18
+        ? 'afternoon'
+        : 'evening';
 
     const { data: saleData, error: saleError } = await supabaseAdmin
       .from('sales')
@@ -166,16 +127,13 @@ export async function POST(request: NextRequest) {
 
     if (saleError) {
       console.error('売上登録エラー:', saleError);
-      return NextResponse.json(
-        { error: '売上の登録に失敗しました' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: '売上の登録に失敗しました' }, { status: 500 });
     }
 
     const saleId = saleData.id;
 
     if (hasItems) {
-      const saleItems = items!.map(item => ({
+      const saleItems = items!.map((item) => ({
         sale_id: saleId,
         product_id: item.productId,
         quantity: item.quantity,
@@ -183,20 +141,17 @@ export async function POST(request: NextRequest) {
         subtotal: item.unitPrice * item.quantity,
       }));
 
-      const { error: itemsError } = await supabaseAdmin
-        .from('sale_items')
-        .insert(saleItems);
+      const { error: itemsError } = await supabaseAdmin.from('sale_items').insert(saleItems);
 
       if (itemsError) {
-        console.error('明細登録エラー:', itemsError);
+        console.error('売上項目登録エラー:', itemsError);
         await supabaseAdmin.from('sales').delete().eq('id', saleId);
 
-        return NextResponse.json(
-          { error: '明細の登録に失敗しました' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: '売上項目の登録に失敗しました' }, { status: 500 });
       }
     }
+
+    await logActivity(`会計: 売上登録 saleId=${saleId} 金額=${computedTotal}`, null);
 
     return NextResponse.json(
       {
@@ -208,9 +163,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('売上登録エラー:', error);
-    return NextResponse.json(
-      { error: '売上の登録に失敗しました' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '売上の登録に失敗しました' }, { status: 500 });
   }
 }
