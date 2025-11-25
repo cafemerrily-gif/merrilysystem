@@ -239,18 +239,11 @@ export default function Home() {
                 <span className="text-xs text-muted-foreground">直近（ログインユーザー）</span>
               </div>
               <div className="space-y-3 text-sm">
-                {(userName
-                  ? [
-                      { user: userName, time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
-                      { user: userName, time: '本日 09:05', msg: '勤怠ダッシュボードを開きました' },
-                      { user: userName, time: '本日 08:55', msg: 'ログインしました' },
-                    ]
-                  : [
-                      { user: 'ログインユーザー', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
-                      { user: 'ログインユーザー', time: '本日 09:05', msg: '勤怠ダッシュボードを開きました' },
-                      { user: 'ログインユーザー', time: '本日 08:55', msg: 'ログインしました' },
-                    ]
-                ).map((log, idx) => (
+                {[
+                  { user: '管理者', time: '本日 09:10', msg: '売上ダッシュボードを閲覧しました' },
+                  { user: '店舗スタッフA', time: '本日 09:05', msg: '勤怠ダッシュボードで出勤を登録しました' },
+                  { user: '広報部B', time: '本日 08:55', msg: 'ホームページ編集を更新しました' },
+                ].map((log, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
                     <div>
