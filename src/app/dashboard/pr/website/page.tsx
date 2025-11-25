@@ -12,6 +12,7 @@ export default function PrWebsiteEditor() {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
@@ -81,7 +82,9 @@ export default function PrWebsiteEditor() {
   const removeBlogPost = (id: string) => setBlogPosts((prev) => prev.filter((b) => b.id !== id));
 
   const handleSave = async () => {
+    if (saving || cooldown) return; // 連打防止
     setSaving(true);
+    setCooldown(true);
     setError(null);
     setInfo(null);
     try {
@@ -110,6 +113,8 @@ export default function PrWebsiteEditor() {
     } finally {
       setSaving(false);
       setTimeout(() => setInfo(null), 3000);
+      // 連打防止: 2秒間は再度送信不可
+      setTimeout(() => setCooldown(false), 2000);
     }
   };
 
