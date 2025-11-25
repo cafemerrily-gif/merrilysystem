@@ -39,7 +39,8 @@ export default function PrBlogsEditor() {
         if (meta?.full_name) setUserName(meta.full_name);
 
         const res = await fetch('/api/pr/website');
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
         if (data) {
           setPayload(data);
           setBlogPosts(
@@ -103,14 +104,15 @@ export default function PrBlogsEditor() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload: newPayload, updated_by: userName || 'unknown' }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
       if (data?.error) {
         setError(data.error);
       } else {
         setInfo('保存しました');
-        setPayload(data);
+        setPayload(data || {});
         setBlogPosts(
-          (data.blogPosts ?? []).map((b: any) => ({
+          ((data && data.blogPosts) ?? blogPosts).map((b: any) => ({
             ...b,
             image: b.image || '',
           }))
