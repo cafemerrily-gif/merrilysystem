@@ -107,7 +107,7 @@ export default function AccountingDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let timer: NodeJS.Timer | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
 
     const load = async () => {
       try {

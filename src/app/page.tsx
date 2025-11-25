@@ -8,83 +8,53 @@ import LogoutButton from '@/components/LogoutButton';
 const navItems = [
   {
     href: '/dashboard/accounting',
-    icon: '📊',
+    icon: '📈',
     title: '会計部',
-    subtitle: '売上管理・分析',
-    desc: '売上入力と日次・月次推移、時間帯、ランキングを確認',
-    accent: 'ダッシュボードを見る',
+    subtitle: '売上ダッシュボード',
+    desc: '売上推移・時間帯別・ランキングを確認',
+    accent: 'ダッシュボードを開く',
   },
   {
     href: '/dashboard/dev',
-    icon: '🛠',
+    icon: '🛠️',
     title: '開発部',
     subtitle: 'メニュー管理',
-    desc: 'カテゴリー・商品管理への導線と開発KPIのスペース',
-    accent: 'ダッシュボードを見る',
+    desc: 'カテゴリー／商品フォルダ／商品を登録・編集',
+    accent: '開発部へ進む',
   },
   {
     href: '/dashboard/pr',
     icon: '📣',
     title: '広報部',
-    subtitle: '準備中',
-    desc: 'SNS/キャンペーン指標の配置スペース（後日追加）',
-    accent: 'ダッシュボードを見る',
+    subtitle: 'キャンペーン枠',
+    desc: 'SNSやキャンペーン指標を置くスペース（準備中）',
+    accent: '広報部へ',
   },
 ];
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
-  const [hasManualPreference, setHasManualPreference] = useState(false);
 
-  // Follow device preference by default (especially on mobile), but allow manual override.
+  // デバイス設定に従ってライト/ダークを適用（手動トグルなし）
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = (next: boolean) => {
       setIsDark(next);
       document.documentElement.classList.toggle('dark', next);
     };
-
-    // initial apply
     applyTheme(media.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      if (hasManualPreference) return;
-      applyTheme(event.matches);
-    };
-
+    const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches);
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [hasManualPreference]);
-
-  const toggleTheme = () => {
-    const next = !isDark;
-    setHasManualPreference(true);
-    setIsDark(next);
-    document.documentElement.classList.toggle('dark', next);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <header className="fixed top-4 left-0 right-0 z-50 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <LogoutButton />
-          <button
-            onClick={toggleTheme}
-            className="p-3 rounded-xl bg-card border border-border shadow-lg hover:shadow-xl transition-all duration-200 group"
-            aria-label="テーマ切り替え"
-          >
-            {isDark ? (
-              <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
-          </button>
+          {/* テーマはデバイス設定に従うため切り替えボタンなし */}
         </div>
       </header>
 
@@ -110,9 +80,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 左メニュー / 右情報 */}
         <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-8">
-          {/* 左: ダッシュボードメニュー（モバイルはカードグリッド） */}
           <aside className="space-y-4">
             <div className="hidden lg:block text-sm text-muted-foreground mb-2">ダッシュボードメニュー</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
@@ -143,26 +111,25 @@ export default function Home() {
             </div>
           </aside>
 
-          {/* 右: 補足情報 / KPI */}
           <section className="space-y-6">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-3">概要</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                会計部・開発部・広報部の3つのダッシュボードで役割を分けました。左のメニューから各部門のダッシュボードへ移動できます。
-                スマホではカードが2列→1列に折り返され、タップしやすい配置にしています。
+                会計・開発・広報の3つのダッシュボードで業務をまとめています。右のメニューから各部のダッシュボードへ進めます。
+                スマホではカードが2列→1列に崩れ、タップしやすいスペースを確保しています。
               </p>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">操作ログ</h3>
-                <span className="text-xs text-muted-foreground">直近の動き</span>
+                <h3 className="text-lg font-semibold">操作ログ（ダミー表示）</h3>
+                <span className="text-xs text-muted-foreground">直近</span>
               </div>
               <div className="space-y-3 text-sm">
                 {[
-                  { user: '開発担当A', time: '今日 09:10', msg: '会計部で売上を登録しました' },
-                  { user: '開発担当A', time: '今日 08:55', msg: '開発部で「春メニュー」フォルダに商品を追加しました' },
-                  { user: '広報担当B', time: '昨日 18:20', msg: '会計部ダッシュボードで集計を確認しました' },
+                  { user: '会計部Aさん', time: '本日 09:10', msg: '売上を登録しました' },
+                  { user: '開発部Aさん', time: '本日 08:55', msg: '「夏フェス」商品フォルダに商品を一括追加しました' },
+                  { user: '広報部Bさん', time: '昨日 18:20', msg: '売上ダッシュボードで推移を確認しました' },
                 ].map((log, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
@@ -176,22 +143,22 @@ export default function Home() {
                 ))}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                ※現状はサンプル表示です。ログイン実装後は認証情報からユーザー名を紐づけて記録してください。
+                ※ログイン機能実装後は実ユーザー情報で置き換えます。
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-xl bg-card border border-border">
                 <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">3</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">アクティブ機能</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">アクティブな部署</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-card border border-border">
                 <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">24/7</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">稼働時間</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">稼働予定</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-card border border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-accent mb-1">✓</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">運用準備完了</div>
+                <div className="text-2xl sm:text-3xl font-bold text-accent mb-1">∞</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">成長余白</div>
               </div>
             </div>
           </section>
