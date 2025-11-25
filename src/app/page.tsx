@@ -31,6 +31,7 @@ type UiColors = {
   light: { background: string; border: string; foreground: string };
   dark: { background: string; border: string; foreground: string };
 };
+type UiHeader = { background: string; foreground: string };
 
 const normalizeColorValue = (value: string) => {
   // Tailwindのhsl(var(--background))形式に合わせるため、hexをH S L三要素に変換
@@ -78,6 +79,7 @@ export default function Home() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [themeColors, setThemeColors] = useState<UiColors | null>(null);
+  const [headerColors, setHeaderColors] = useState<UiHeader>({ background: '', foreground: '' });
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -174,6 +176,12 @@ export default function Home() {
         const ui = data.uiSettings;
         if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
         if (ui.appTitle) setAppTitle(ui.appTitle);
+        if (ui.headerBackground || ui.headerForeground) {
+          setHeaderColors({
+            background: ui.headerBackground || '',
+            foreground: ui.headerForeground || '',
+          });
+        }
         setThemeColors({
           light: {
             background: ui.lightBackground || '#f8fafc',
@@ -239,7 +247,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-16">
-        <header className="flex items-center justify-between py-6">
+        <header
+          className="flex items-center justify-between py-6"
+          style={{
+            backgroundColor: headerColors.background || undefined,
+            color: headerColors.foreground || undefined,
+            borderRadius: '12px',
+            paddingInline: headerColors.background ? '12px' : undefined,
+          }}
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />

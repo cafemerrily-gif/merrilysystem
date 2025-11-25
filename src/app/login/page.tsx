@@ -27,6 +27,7 @@ function LoginPageInner() {
   const [routerReady, setRouterReady] = useState(false);
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
+  const [headerColors, setHeaderColors] = useState<{ background: string; foreground: string }>({ background: '', foreground: '' });
   const [themeColors, setThemeColors] = useState<{
     light: { background: string; border: string; foreground: string };
     dark: { background: string; border: string; foreground: string };
@@ -118,6 +119,12 @@ function LoginPageInner() {
         const ui = data?.uiSettings;
         if (ui?.loginIconUrl) setLoginIconUrl(ui.loginIconUrl);
         if (ui?.appTitle) setAppTitle(ui.appTitle);
+        if (ui?.headerBackground || ui?.headerForeground) {
+          setHeaderColors({
+            background: ui.headerBackground || '',
+            foreground: ui.headerForeground || '',
+          });
+        }
         if (ui) {
           setThemeColors({
             light: {
@@ -248,7 +255,14 @@ function LoginPageInner() {
           )}
         </button>
       </div>
-      <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-8 space-y-6">
+      <div
+        className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-8 space-y-6"
+        style={{
+          backgroundColor: headerColors.background || undefined,
+          color: headerColors.foreground || undefined,
+          borderColor: headerColors.background ? headerColors.background : undefined,
+        }}
+      >
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Image src={loginIconUrl || '/MERRILY_Simbol.png'} alt="MERRILY" width={120} height={120} className="object-contain" priority />

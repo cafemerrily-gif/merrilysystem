@@ -17,8 +17,10 @@ const defaultColors: UiColors = {
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [loginIconUrl, setLoginIconUrl] = useState('');
-  const [appIconUrl, setAppIconUrl] = useState('');
+  const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
+  const [headerBg, setHeaderBg] = useState('#0b1220');
+  const [headerFg, setHeaderFg] = useState('#e5e7eb');
   const [colors, setColors] = useState<UiColors>(defaultColors);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,9 +35,11 @@ export default function UiEditor() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         const ui = data?.uiSettings || {};
-        setLoginIconUrl(ui.loginIconUrl || '');
-        setAppIconUrl(ui.appIconUrl || '');
+        setLoginIconUrl(ui.loginIconUrl || '/MERRILY_Simbol.png');
+        setAppIconUrl(ui.appIconUrl || '/MERRILY_Simbol.png');
         setAppTitle(ui.appTitle || 'MERRILY');
+        setHeaderBg(ui.headerBackground || '#0b1220');
+        setHeaderFg(ui.headerForeground || '#e5e7eb');
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
@@ -68,6 +72,8 @@ export default function UiEditor() {
           appTitle,
           loginIconUrl,
           appIconUrl,
+          headerBackground: headerBg,
+          headerForeground: headerFg,
           lightBackground: colors.light.background,
           lightBorder: colors.light.border,
           lightForeground: colors.light.foreground,
@@ -188,6 +194,13 @@ export default function UiEditor() {
                 <span>デバイスからアップロード</span>
               </label>
             </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="rounded-full border border-border bg-background px-2 py-1">プレビュー</span>
+              <div className="w-10 h-10 rounded-full border border-border bg-white overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={appIconUrl} alt="preview app icon" className="w-full h-full object-contain" />
+              </div>
+            </div>
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
@@ -215,6 +228,18 @@ export default function UiEditor() {
                 value={colors.light.foreground}
                 onChange={(e) => setColors((c) => ({ ...c, light: { ...c.light, foreground: e.target.value } }))}
               />
+            </label>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="font-semibold">ヘッダーの色</h2>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              背景色
+              <input type="color" value={headerBg} onChange={(e) => setHeaderBg(e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              文字色
+              <input type="color" value={headerFg} onChange={(e) => setHeaderFg(e.target.value)} />
             </label>
           </div>
 
