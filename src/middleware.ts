@@ -15,10 +15,12 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/reset-password");
+  const isStaticFile = pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i);
   const isPublicAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
-    pathname.startsWith("/api"); // APIはサービスロールで保護されているため通す
+    pathname.startsWith("/api") || // APIはサービスロールで保護されているため通す
+    Boolean(isStaticFile);
 
   if (!session && !isAuthPage && !isPublicAsset) {
     const redirectUrl = new URL("/login", req.url);
