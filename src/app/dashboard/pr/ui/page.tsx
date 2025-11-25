@@ -29,6 +29,7 @@ export default function UiEditor() {
   const [cardFg, setCardFg] = useState('#e5e7eb');
   const [cardBorder, setCardBorder] = useState('#1f2937');
   const [colors, setColors] = useState<UiColors>(defaultColors);
+  const [selectedMode, setSelectedMode] = useState<'light' | 'dark'>('light');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -118,6 +119,13 @@ export default function UiEditor() {
     }
   };
 
+  const updateModeColor = (field: 'background' | 'border' | 'foreground', value: string) => {
+    setColors((prev) => ({
+      ...prev,
+      [selectedMode]: { ...prev[selectedMode], [field]: value },
+    }));
+  };
+
   const handleUpload = async (target: 'login' | 'app', file?: File | null) => {
     if (!file) return;
     setUploading(true);
@@ -170,6 +178,24 @@ export default function UiEditor() {
               戻る
             </Link>
           </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h2 className="font-semibold">編集するモード</h2>
+          <div className="flex gap-2">
+            {(['light', 'dark'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setSelectedMode(mode)}
+                className={`px-3 py-2 rounded-lg border ${
+                  selectedMode === mode ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'
+                }`}
+              >
+                {mode === 'light' ? 'ライトモード' : 'ダークモード'}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">まずモードを選択してから、以下の色設定を変更してください。</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -230,24 +256,24 @@ export default function UiEditor() {
               背景色
               <input
                 type="color"
-                value={colors.light.background}
-                onChange={(e) => setColors((c) => ({ ...c, light: { ...c.light, background: e.target.value } }))}
+                value={colors[selectedMode].background}
+                onChange={(e) => updateModeColor('background', e.target.value)}
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               枠線色
               <input
                 type="color"
-                value={colors.light.border}
-                onChange={(e) => setColors((c) => ({ ...c, light: { ...c.light, border: e.target.value } }))}
+                value={colors[selectedMode].border}
+                onChange={(e) => updateModeColor('border', e.target.value)}
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               文字色
               <input
                 type="color"
-                value={colors.light.foreground}
-                onChange={(e) => setColors((c) => ({ ...c, light: { ...c.light, foreground: e.target.value } }))}
+                value={colors[selectedMode].foreground}
+                onChange={(e) => updateModeColor('foreground', e.target.value)}
               />
             </label>
           </div>
