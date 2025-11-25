@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
-type BlogPost = { id: string; title: string; body: string; date: string };
+type BlogPost = { id: string; title: string; body: string; date: string; image?: string };
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
