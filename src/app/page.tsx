@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
-type BlogPost = { id: string; title: string; body: string; date: string; image?: string };
+type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
@@ -103,7 +103,10 @@ export default function Home() {
       const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data = await res.json();
       if (data?.blogPosts) {
-        const sorted = data.blogPosts.slice().sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
+        const sorted = data.blogPosts
+          .slice()
+          .map((p: any) => ({ ...p, author: p.author || '' }))
+          .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
         setBlogPosts(sorted);
       } else setBlogPosts([]);
     } catch (e) {
@@ -153,7 +156,7 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-4 pb-16">
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border">
+            <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src="/MERRILY_Simbol.png" width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
@@ -195,8 +198,11 @@ export default function Home() {
               <button
                 onClick={() => setShowMenu((v) => !v)}
                 className="px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition text-sm"
+                aria-label="メニュー"
               >
-                メニュー
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-44 rounded-xl border border-border bg-card shadow-lg p-2 space-y-1 z-10">
@@ -298,7 +304,7 @@ export default function Home() {
                     <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
                       <div className="flex justify-between text-xs text-muted-foreground mb-1">
                         <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                        <span>ブログ</span>
+                        <span>{post.author || 'ブログ'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
                       {post.image ? <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-64 bg-background mb-2" /> : null}

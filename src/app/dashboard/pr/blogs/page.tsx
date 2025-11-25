@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-type BlogPost = { id: string; title: string; body: string; date: string; image?: string };
+type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
 type Blog = { id: string; name: string; posts: BlogPost[] };
 
 export default function PrBlogsEditor() {
@@ -20,10 +20,7 @@ export default function PrBlogsEditor() {
   const [activeBlogId, setActiveBlogId] = useState<string | null>(null);
   const [payload, setPayload] = useState<any>({});
 
-  const activeBlog = useMemo(
-    () => blogs.find((b) => b.id === activeBlogId) || blogs[0],
-    [blogs, activeBlogId]
-  );
+  const activeBlog = useMemo(() => blogs.find((b) => b.id === activeBlogId) || blogs[0], [blogs, activeBlogId]);
 
   const logClientActivity = async (message: string) => {
     try {
@@ -49,7 +46,6 @@ export default function PrBlogsEditor() {
         const data = text ? JSON.parse(text) : null;
         if (data) {
           setPayload(data);
-          // 既存データの互換: blogs があればそれを使う。なければ blogPosts をデフォルトブログに入れる
           if (data.blogs && Array.isArray(data.blogs) && data.blogs.length > 0) {
             const normalized = data.blogs.map((blog: any, idx: number) => ({
               id: blog.id || `blog-${idx + 1}`,
@@ -57,6 +53,7 @@ export default function PrBlogsEditor() {
               posts: (blog.posts ?? []).map((p: any) => ({
                 ...p,
                 image: p.image || '',
+                author: p.author || p.updated_by || meta?.full_name || '',
               })),
             }));
             setBlogs(normalized);
@@ -68,8 +65,9 @@ export default function PrBlogsEditor() {
               body: p.body || '',
               date: p.date || new Date().toISOString().slice(0, 10),
               image: p.image || '',
+              author: p.author || meta?.full_name || '',
             }));
-            const defaultBlog: Blog = { id: 'blog-1', name: '公式ブログ', posts: fallbackPosts };
+            const defaultBlog: Blog = { id: 'blog-1', name: '既存ブログ', posts: fallbackPosts };
             setBlogs([defaultBlog]);
             setActiveBlogId('blog-1');
           }
@@ -80,11 +78,11 @@ export default function PrBlogsEditor() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [supabase]);
 
   const addBlog = () => {
     const id = `blog-${blogs.length + 1}`;
-    const next = [...blogs, { id, name: `新しいブログ ${blogs.length + 1}`, posts: [] }];
+    const next = [...blogs, { id, name: `新規ブログ ${blogs.length + 1}`, posts: [] }];
     setBlogs(next);
     setActiveBlogId(id);
   };
@@ -98,7 +96,14 @@ export default function PrBlogsEditor() {
     const id = `p-${activeBlog.posts.length + 1}-${Date.now()}`;
     const nextPosts = [
       ...activeBlog.posts,
-      { id, title: '新しい記事', body: '', date: new Date().toISOString().slice(0, 10), image: '' },
+      {
+        id,
+        title: '新しい記事',
+        body: '',
+        date: new Date().toISOString().slice(0, 10),
+        image: '',
+        author: userName || 'unknown',
+      },
     ];
     setBlogs((prev) => prev.map((b) => (b.id === activeBlog.id ? { ...b, posts: nextPosts } : b)));
   };
@@ -147,11 +152,14 @@ export default function PrBlogsEditor() {
     setError(null);
     setInfo(null);
     try {
-      // blogPosts 互換用にフラットな配列も含める
       const flatPosts = blogs
         .flatMap((b) => b.posts)
         .sort((a, b) => (a.date > b.date ? -1 : 1))
-        .map((p) => ({ ...p, image: p.image || '' }));
+        .map((p) => ({
+          ...p,
+          image: p.image || '',
+          author: p.author || userName || 'unknown',
+        }));
 
       const newPayload = { ...(payload || {}), blogs, blogPosts: flatPosts };
       const res = await fetch('/api/pr/website', {
@@ -160,7 +168,7 @@ export default function PrBlogsEditor() {
         body: JSON.stringify({ payload: newPayload, updated_by: userName || 'unknown' }),
       });
       if (!res.ok) {
-        setError(`保存に失敗しました（${res.status}）`);
+        setError(`保存に失敗しました(${res.status})`);
         return;
       }
       const text = await res.text();
@@ -174,12 +182,16 @@ export default function PrBlogsEditor() {
           const sortedBlogs = data.blogs.map((b: any, idx: number) => ({
             id: b.id || `blog-${idx + 1}`,
             name: b.name || `ブログ${idx + 1}`,
-            posts: (b.posts ?? []).map((p: any) => ({ ...p, image: p.image || '' })),
+            posts: (b.posts ?? []).map((p: any) => ({
+              ...p,
+              image: p.image || '',
+              author: p.author || userName || '',
+            })),
           }));
           setBlogs(sortedBlogs);
           setActiveBlogId(sortedBlogs[0]?.id ?? null);
         }
-        // サーバー最新を反映
+        // 最新を再フェッチ
         const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
         if (refresh.ok) {
           const refreshText = await refresh.text();
@@ -188,7 +200,11 @@ export default function PrBlogsEditor() {
             const sortedBlogs = refreshData.blogs.map((b: any, idx: number) => ({
               id: b.id || `blog-${idx + 1}`,
               name: b.name || `ブログ${idx + 1}`,
-              posts: (b.posts ?? []).map((p: any) => ({ ...p, image: p.image || '' })),
+              posts: (b.posts ?? []).map((p: any) => ({
+                ...p,
+                image: p.image || '',
+                author: p.author || userName || '',
+              })),
             }));
             setBlogs(sortedBlogs);
             setActiveBlogId(sortedBlogs[0]?.id ?? null);
@@ -220,8 +236,8 @@ export default function PrBlogsEditor() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📰</div>
             <div>
-              <h1 className="text-2xl font-bold">広報部 ブログ編集</h1>
-              <p className="text-sm text-muted-foreground">複数のブログを作成し、記事を管理します</p>
+              <h1 className="text-2xl font-bold">広報 ブログ管理</h1>
+              <p className="text-sm text-muted-foreground">複数のブログを作成し、記事を管理できます</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -233,7 +249,7 @@ export default function PrBlogsEditor() {
               {saving ? '保存中...' : '保存'}
             </button>
             <Link href="/dashboard/pr" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
-              広報部トップへ
+              広報部へ戻る
             </Link>
           </div>
         </div>
@@ -260,10 +276,7 @@ export default function PrBlogsEditor() {
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>記事数: {b.posts.length}</span>
-                  <button
-                    onClick={() => setActiveBlogId(b.id)}
-                    className="px-2 py-1 rounded-lg border border-border hover:border-accent"
-                  >
+                  <button onClick={() => setActiveBlogId(b.id)} className="px-2 py-1 rounded-lg border border-border hover:border-accent">
                     編集する
                   </button>
                 </div>
@@ -302,6 +315,12 @@ export default function PrBlogsEditor() {
                     </button>
                   </div>
                   <input
+                    value={post.author || userName}
+                    onChange={(e) => updateBlogPost(post.id, 'author', e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    placeholder="執筆者"
+                  />
+                  <input
                     value={post.image || ''}
                     onChange={(e) => updateBlogPost(post.id, 'image', e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
@@ -333,7 +352,7 @@ export default function PrBlogsEditor() {
             </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg text-muted-foreground">編集するブログがありません。</div>
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg text-muted-foreground">編集対象のブログがありません。</div>
         )}
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
@@ -349,11 +368,11 @@ export default function PrBlogsEditor() {
                     <div key={post.id} className="border border-border rounded-lg p-3 bg-card space-y-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                        <span>ブログ</span>
+                        <span>{post.author || userName || '不明なユーザー'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
                       {post.image ? (
-                        <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-64" />
+                        <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-64 bg-background" />
                       ) : null}
                       <p className="text-sm text-muted-foreground">{post.body}</p>
                     </div>
