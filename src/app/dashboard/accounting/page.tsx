@@ -45,21 +45,40 @@ const formatRatio = (current: number, previous: number) => {
   return `${sign}${diff.toFixed(1)}%`;
 };
 
-function MiniLineChart({ data }: { data: Daily[] }) {
+const buildSmoothPath = (points: [number, number][]) => {
+  if (points.length < 2) return '';
+  const d: string[] = [];
+  d.push(`M ${points[0][0]} ${points[0][1]}`);
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    const cx = (x0 + x1) / 2;
+    d.push(`Q ${cx} ${y0}, ${x1} ${y1}`);
+  }
+  return d.join(' ');
+};
+
+function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: number }) {
   if (!data.length) return <p className="text-sm text-muted-foreground">データなし</p>;
   const width = 600;
-  const height = 180;
   const max = Math.max(...data.map((d) => d.total));
   const points = data.map((d, idx) => {
     const x = (idx / Math.max(1, data.length - 1)) * width;
     const y = max ? height - (d.total / max) * height : height;
     return [x, y] as [number, number];
   });
-  const path = points.map((p) => p.join(',')).join(' ');
+  const path = buildSmoothPath(points);
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
-      <polyline fill="none" stroke="hsl(var(--accent))" strokeWidth="4" points={path} />
+      <path
+        d={path}
+        fill="none"
+        stroke="hsl(var(--accent))"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       {points.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
       ))}
@@ -78,7 +97,7 @@ export default function AccountingDashboard() {
         const data = await res.json();
         if (!data.error) setSummary(data);
       } catch (error) {
-        console.error('分析データ取得エラー:', error);
+        console.error('売上サマリ取得エラー:', error);
       } finally {
         setLoading(false);
       }
@@ -151,38 +170,19 @@ export default function AccountingDashboard() {
             <h2 className="text-xl font-semibold">日次売上推移</h2>
             <span className="text-sm text-muted-foreground">直近データ</span>
           </div>
-          <MiniLineChart data={summary?.dailySales?.slice(-30) || []} />
+          <SmoothLineChart data={summary?.dailySales?.slice(-30) || []} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">月次売上（棒グラフ）</h2>
+              <h2 className="text-xl font-semibold">月次売上（カーブ表示）</h2>
               <span className="text-sm text-muted-foreground">最近6ヶ月</span>
             </div>
             {!summary?.monthlySales?.length ? (
               <p className="text-muted-foreground">データなし</p>
             ) : (
-              <div className="flex items-end gap-3 h-56">
-                {summary.monthlySales
-                  .sort((a, b) => (a.month > b.month ? 1 : -1))
-                  .slice(-6)
-                  .map((m) => {
-                    const max = Math.max(...summary.monthlySales.map((mm) => mm.total));
-                    const h = max ? Math.max(8, (m.total / max) * 200) : 8;
-                    return (
-                      <div key={m.month} className="flex flex-col items-center justify-end gap-2 flex-1 min-w-[60px]">
-                        <div
-                          className="w-full rounded-lg bg-gradient-to-t from-primary to-accent"
-                          style={{ height: `${h}px` }}
-                          title={`¥${m.total.toLocaleString()}`}
-                        />
-                        <span className="text-xs text-muted-foreground">{m.month}</span>
-                        <span className="text-[11px] font-semibold">¥{m.total.toLocaleString()}</span>
-                      </div>
-                    );
-                  })}
-              </div>
+              <SmoothLineChart data={summary.monthlySales.sort((a, b) => (a.month > b.month ? 1 : -1)).slice(-6)} height={200} />
             )}
           </div>
 

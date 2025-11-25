@@ -35,7 +35,6 @@ export default function SalesInputPage() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [saleTime, setSaleTime] = useState(() => new Date().toTimeString().split(' ')[0].substring(0, 5));
-  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(false);
   const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
 
@@ -118,7 +117,6 @@ export default function SalesInputPage() {
           saleDate,
           saleTime,
           staffId: 1,
-          paymentMethod,
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })),
         }),
       });
@@ -213,19 +211,6 @@ export default function SalesInputPage() {
                 onChange={(e) => setSaleTime(e.target.value)}
                 className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">支払い方法</label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-              >
-                <option value="cash">現金</option>
-                <option value="card">クレジット/デビット</option>
-                <option value="qr">QR/電子マネー</option>
-                <option value="other">その他</option>
-              </select>
             </div>
           </div>
           <div className="text-sm text-muted-foreground">
