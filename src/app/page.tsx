@@ -72,6 +72,15 @@ const normalizeColorValue = (value: string) => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+const hexToRgb = (hex: string) => {
+  const cleaned = hex.replace('#', '');
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
+};
+
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
@@ -300,6 +309,7 @@ export default function Home() {
     background: isDark
       ? uiSettingsRaw.headerBgDark || uiSettingsRaw.headerBackground || headerColors.background
       : uiSettingsRaw.headerBgLight || uiSettingsRaw.headerBackground || headerColors.background,
+    backgroundAlpha: isDark ? uiSettingsRaw.headerBgAlphaDark ?? 1 : uiSettingsRaw.headerBgAlphaLight ?? 1,
     foreground: isDark
       ? uiSettingsRaw.headerFgDark || uiSettingsRaw.headerForeground || headerColors.foreground
       : uiSettingsRaw.headerFgLight || uiSettingsRaw.headerForeground || headerColors.foreground,
@@ -314,6 +324,7 @@ export default function Home() {
 
   const currentWelcome = {
     background: isDark ? uiSettingsRaw.welcomeBgDark || welcomeColors.background : uiSettingsRaw.welcomeBgLight || welcomeColors.background,
+    backgroundAlpha: isDark ? uiSettingsRaw.welcomeBgAlphaDark ?? 1 : uiSettingsRaw.welcomeBgAlphaLight ?? 1,
     foreground: isDark ? uiSettingsRaw.welcomeFgDark || welcomeColors.foreground : uiSettingsRaw.welcomeFgLight || welcomeColors.foreground,
     border: isDark ? uiSettingsRaw.welcomeBorderDark || welcomeColors.border : uiSettingsRaw.welcomeBorderLight || welcomeColors.border,
     title: isDark ? uiSettingsRaw.welcomeTitleColorDark || welcomeTextColors.title : uiSettingsRaw.welcomeTitleColorLight || welcomeTextColors.title,
@@ -324,6 +335,7 @@ export default function Home() {
 
   const currentCard = {
     background: isDark ? uiSettingsRaw.cardBgDark || cardColors.background : uiSettingsRaw.cardBgLight || cardColors.background,
+    backgroundAlpha: isDark ? uiSettingsRaw.cardBgAlphaDark ?? 1 : uiSettingsRaw.cardBgAlphaLight ?? 1,
     foreground: isDark ? uiSettingsRaw.cardFgDark || cardColors.foreground : uiSettingsRaw.cardFgLight || cardColors.foreground,
     border: isDark ? uiSettingsRaw.cardBorderDark || cardColors.border : uiSettingsRaw.cardBorderLight || cardColors.border,
   };
@@ -334,7 +346,7 @@ export default function Home() {
         <header
           className="flex items-center justify-between py-4 px-0 sticky top-0 z-30"
           style={{
-            backgroundColor: currentHeader.background || undefined,
+            backgroundColor: currentHeader.background ? `rgba(${hexToRgb(currentHeader.background)}, ${currentHeader.backgroundAlpha ?? 1})` : undefined,
             color: currentHeader.foreground || undefined,
             marginBottom: '18px',
           }}
@@ -432,7 +444,7 @@ export default function Home() {
           <div
             className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center"
             style={{
-              backgroundColor: currentWelcome.background || undefined,
+              backgroundColor: currentWelcome.background ? `rgba(${hexToRgb(currentWelcome.background)}, ${currentWelcome.backgroundAlpha ?? 1})` : undefined,
               color: currentWelcome.foreground || undefined,
               border: currentWelcome.border ? `1px solid ${currentWelcome.border}` : undefined,
             }}
@@ -491,7 +503,7 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: currentCard.background || undefined,
+                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
                 color: currentCard.foreground || undefined,
                 borderColor: currentCard.border || undefined,
               }}
@@ -525,7 +537,7 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: currentCard.background || undefined,
+                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
                 color: currentCard.foreground || undefined,
                 borderColor: currentCard.border || undefined,
               }}
@@ -559,7 +571,7 @@ export default function Home() {
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
-                backgroundColor: currentCard.background || undefined,
+                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
                 color: currentCard.foreground || undefined,
                 borderColor: currentCard.border || undefined,
               }}

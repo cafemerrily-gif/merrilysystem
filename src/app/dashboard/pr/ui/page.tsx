@@ -11,34 +11,40 @@ type UiColors = {
 
 type ModeValues = {
   headerBg: string;
+  headerBgAlpha: number;
   headerFg: string;
   headerTitle: string;
   headerSubtitle: string;
   headerUser: string;
   muted: string;
   welcomeBg: string;
+  welcomeBgAlpha: number;
   welcomeFg: string;
   welcomeBorder: string;
   welcomeTitle: string;
   welcomeBody: string;
   cardBg: string;
+  cardBgAlpha: number;
   cardFg: string;
   cardBorder: string;
 };
 
 const defaultModeValues: ModeValues = {
   headerBg: '#0b1220',
+  headerBgAlpha: 1,
   headerFg: '#e5e7eb',
   headerTitle: '#e5e7eb',
   headerSubtitle: '#94a3b8',
   headerUser: '#cbd5e1',
   muted: '#6b7280',
   welcomeBg: '#ffffff',
+  welcomeBgAlpha: 1,
   welcomeFg: '#0f172a',
   welcomeBorder: '#e2e8f0',
   welcomeTitle: '#0f172a',
   welcomeBody: '#1f2937',
   cardBg: '#0b1220',
+  cardBgAlpha: 1,
   cardFg: '#e5e7eb',
   cardBorder: '#1f2937',
 };
@@ -97,33 +103,39 @@ export default function UiEditor() {
         setModeValues({
           light: {
             headerBg: ui.headerBgLight || ui.headerBackground || defaultModeValues.headerBg,
+            headerBgAlpha: ui.headerBgAlphaLight ?? defaultModeValues.headerBgAlpha,
             headerFg: ui.headerFgLight || ui.headerForeground || defaultModeValues.headerFg,
             headerTitle: ui.headerTitleColorLight || defaultModeValues.headerTitle,
             headerSubtitle: ui.headerSubtitleColorLight || defaultModeValues.headerSubtitle,
             headerUser: ui.headerUserColorLight || defaultModeValues.headerUser,
             muted: ui.mutedColorLight || ui.mutedColor || defaultModeValues.muted,
             welcomeBg: ui.welcomeBgLight || ui.welcomeBackground || defaultModeValues.welcomeBg,
+            welcomeBgAlpha: ui.welcomeBgAlphaLight ?? defaultModeValues.welcomeBgAlpha,
             welcomeFg: ui.welcomeFgLight || ui.welcomeForeground || defaultModeValues.welcomeFg,
             welcomeBorder: ui.welcomeBorderLight || ui.welcomeBorder || defaultModeValues.welcomeBorder,
             welcomeTitle: ui.welcomeTitleColorLight || defaultModeValues.welcomeTitle,
             welcomeBody: ui.welcomeBodyColorLight || defaultModeValues.welcomeBody,
             cardBg: ui.cardBgLight || ui.cardBackground || defaultModeValues.cardBg,
+            cardBgAlpha: ui.cardBgAlphaLight ?? defaultModeValues.cardBgAlpha,
             cardFg: ui.cardFgLight || ui.cardForeground || defaultModeValues.cardFg,
             cardBorder: ui.cardBorderLight || ui.cardBorder || defaultModeValues.cardBorder,
           },
           dark: {
             headerBg: ui.headerBgDark || ui.headerBackground || defaultModeValues.headerBg,
+            headerBgAlpha: ui.headerBgAlphaDark ?? defaultModeValues.headerBgAlpha,
             headerFg: ui.headerFgDark || ui.headerForeground || defaultModeValues.headerFg,
             headerTitle: ui.headerTitleColorDark || defaultModeValues.headerTitle,
             headerSubtitle: ui.headerSubtitleColorDark || defaultModeValues.headerSubtitle,
             headerUser: ui.headerUserColorDark || defaultModeValues.headerUser,
             muted: ui.mutedColorDark || ui.mutedColor || defaultModeValues.muted,
             welcomeBg: ui.welcomeBgDark || ui.welcomeBackground || defaultModeValues.welcomeBg,
+            welcomeBgAlpha: ui.welcomeBgAlphaDark ?? defaultModeValues.welcomeBgAlpha,
             welcomeFg: ui.welcomeFgDark || ui.welcomeForeground || defaultModeValues.welcomeFg,
             welcomeBorder: ui.welcomeBorderDark || ui.welcomeBorder || defaultModeValues.welcomeBorder,
             welcomeTitle: ui.welcomeTitleColorDark || defaultModeValues.welcomeTitle,
             welcomeBody: ui.welcomeBodyColorDark || defaultModeValues.welcomeBody,
             cardBg: ui.cardBgDark || ui.cardBackground || defaultModeValues.cardBg,
+            cardBgAlpha: ui.cardBgAlphaDark ?? defaultModeValues.cardBgAlpha,
             cardFg: ui.cardFgDark || ui.cardForeground || defaultModeValues.cardFg,
             cardBorder: ui.cardBorderDark || ui.cardBorder || defaultModeValues.cardBorder,
           },
@@ -157,8 +169,10 @@ export default function UiEditor() {
           darkBorder: colors.dark.border,
           darkForeground: colors.dark.foreground,
           headerBgLight: modeValues.light.headerBg,
+          headerBgAlphaLight: modeValues.light.headerBgAlpha,
           headerFgLight: modeValues.light.headerFg,
           headerBgDark: modeValues.dark.headerBg,
+          headerBgAlphaDark: modeValues.dark.headerBgAlpha,
           headerFgDark: modeValues.dark.headerFg,
           headerTitleColorLight: modeValues.light.headerTitle,
           headerSubtitleColorLight: modeValues.light.headerSubtitle,
@@ -169,19 +183,23 @@ export default function UiEditor() {
           mutedColorLight: modeValues.light.muted,
           mutedColorDark: modeValues.dark.muted,
           welcomeBgLight: modeValues.light.welcomeBg,
+          welcomeBgAlphaLight: modeValues.light.welcomeBgAlpha,
           welcomeFgLight: modeValues.light.welcomeFg,
           welcomeBorderLight: modeValues.light.welcomeBorder,
           welcomeTitleColorLight: modeValues.light.welcomeTitle,
           welcomeBodyColorLight: modeValues.light.welcomeBody,
           welcomeBgDark: modeValues.dark.welcomeBg,
+          welcomeBgAlphaDark: modeValues.dark.welcomeBgAlpha,
           welcomeFgDark: modeValues.dark.welcomeFg,
           welcomeBorderDark: modeValues.dark.welcomeBorder,
           welcomeTitleColorDark: modeValues.dark.welcomeTitle,
           welcomeBodyColorDark: modeValues.dark.welcomeBody,
           cardBgLight: modeValues.light.cardBg,
+          cardBgAlphaLight: modeValues.light.cardBgAlpha,
           cardFgLight: modeValues.light.cardFg,
           cardBorderLight: modeValues.light.cardBorder,
           cardBgDark: modeValues.dark.cardBg,
+          cardBgAlphaDark: modeValues.dark.cardBgAlpha,
           cardFgDark: modeValues.dark.cardFg,
           cardBorderDark: modeValues.dark.cardBorder,
           presets,
@@ -510,6 +528,23 @@ export default function UiEditor() {
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
+              背景の透明度 (0-1)
+              <input
+                type="number"
+                min={0}
+                max={1}
+                step={0.05}
+                value={currentMode.headerBgAlpha}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], headerBgAlpha: Number(e.target.value) },
+                  }))
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
               文字色（ベース）
               <input
                 type="color"
@@ -617,6 +652,23 @@ export default function UiEditor() {
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
+              背景の透明度 (0-1)
+              <input
+                type="number"
+                min={0}
+                max={1}
+                step={0.05}
+                value={currentMode.welcomeBgAlpha}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], welcomeBgAlpha: Number(e.target.value) },
+                  }))
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
               文字色
               <input
                 type="color"
@@ -683,6 +735,23 @@ export default function UiEditor() {
                     [selectedMode]: { ...prev[selectedMode], cardBg: e.target.value },
                   }))
                 }
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              背景の透明度 (0-1)
+              <input
+                type="number"
+                min={0}
+                max={1}
+                step={0.05}
+                value={currentMode.cardBgAlpha}
+                onChange={(e) =>
+                  setModeValues((prev) => ({
+                    ...prev,
+                    [selectedMode]: { ...prev[selectedMode], cardBgAlpha: Number(e.target.value) },
+                  }))
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
