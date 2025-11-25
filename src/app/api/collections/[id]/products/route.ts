@@ -57,7 +57,7 @@ export async function GET(
 
 /**
  * POST /api/collections/[id]/products
- * 指定コレクションに商品を追加
+ * 指定コレクションに商品を追加（複数対応）
  */
 export async function POST(
   request: NextRequest,
@@ -69,24 +69,35 @@ export async function POST(
       return NextResponse.json({ error: '無効なコレクションIDです' }, { status: 400 });
     }
 
-    const { productId } = await request.json();
-    if (!productId) {
-      return NextResponse.json({ error: 'productId が必要です' }, { status: 400 });
+    const body = await request.json();
+    const productIds: number[] = Array.isArray(body.productIds)
+      ? body.productIds.map((n: any) => Number(n)).filter((n: number) => !isNaN(n))
+      : body.productId
+      ? [Number(body.productId)]
+      : [];
+
+    if (!productIds.length) {
+      return NextResponse.json({ error: 'productId または productIds が必要です' }, { status: 400 });
     }
+
+    const rows = productIds.map((pid) => ({
+      collection_id: collectionId,
+      product_id: pid,
+    }));
 
     const { error } = await supabaseAdmin
       .from('collection_products')
-      .insert({
-        collection_id: collectionId,
-        product_id: Number(productId),
-      });
+      .insert(rows);
 
     if (error) {
       console.error('コレクション商品追加エラー:', error);
-      return NextResponse.json({ error: 'コレクション商品追加に失敗しました' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'コレクション商品追加に失敗しました。重複や外部キー制約の可能性があります。' },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ message: '追加しました' }, { status: 201 });
+    return NextResponse.json({ message: '追加しました', count: productIds.length }, { status: 201 });
   } catch (error) {
     console.error('コレクション商品追加エラー:', error);
     return NextResponse.json({ error: 'コレクション商品追加に失敗しました' }, { status: 500 });

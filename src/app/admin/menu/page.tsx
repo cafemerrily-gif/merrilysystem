@@ -31,12 +31,14 @@ export default function MenuManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [collectionProducts, setCollectionProducts] = useState<Record<number, Product[]>>({});
+  const [viewCollectionId, setViewCollectionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '', display_order: 0 });
   const [productForm, setProductForm] = useState({ category_id: '', name: '', selling_price: '', cost_price: '' });
   const [collectionForm, setCollectionForm] = useState({ name: '', description: '', startDate: '', endDate: '' });
-  const [assignForm, setAssignForm] = useState({ collectionId: '', productId: '' });
+  const [assignForm, setAssignForm] = useState({ collectionId: '', productIds: [] as number[] });
 
   useEffect(() => {
     fetchAll();
@@ -61,6 +63,14 @@ export default function MenuManagementPage() {
     const res = await fetch('/api/collections');
     const data = await res.json();
     setCollections(data.collections || []);
+  };
+
+  const loadCollectionProducts = async (collectionId: number) => {
+    const res = await fetch(`/api/collections/${collectionId}/products`);
+    if (res.ok) {
+      const data = await res.json();
+      setCollectionProducts((prev) => ({ ...prev, [collectionId]: data.products || [] }));
+    }
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -103,7 +113,7 @@ export default function MenuManagementPage() {
   };
 
   const handleDeleteProduct = async (id: number) => {
-    if (!confirm('この商品を削除しますか？（関連する売上明細がある場合はエラーになります）')) return;
+    if (!confirm('この商品を削除しますか？（関連する売上明細がある場合は削除できません）')) return;
     const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -132,14 +142,15 @@ export default function MenuManagementPage() {
 
   const handleAssignProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!assignForm.collectionId || !assignForm.productId) return alert('フォルダと商品を選択してください');
+    if (!assignForm.collectionId || !assignForm.productIds.length) return alert('フォルダと商品を選択してください');
     const res = await fetch(`/api/collections/${assignForm.collectionId}/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: Number(assignForm.productId) }),
+      body: JSON.stringify({ productIds: assignForm.productIds }),
     });
     if (res.ok) {
-      setAssignForm({ collectionId: '', productId: '' });
+      setAssignForm({ collectionId: '', productIds: [] });
+      loadCollectionProducts(Number(assignForm.collectionId));
     } else {
       const error = await res.json();
       alert(error.error || 'フォルダへの追加に失敗しました');
@@ -151,6 +162,12 @@ export default function MenuManagementPage() {
     const res = await fetch(`/api/collections?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       setCollections((prev) => prev.filter((c) => c.id !== id));
+      setCollectionProducts((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+      if (viewCollectionId === id) setViewCollectionId(null);
     } else {
       const error = await res.json();
       alert(error.error || 'フォルダの削除に失敗しました');
@@ -158,7 +175,7 @@ export default function MenuManagementPage() {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm('このカテゴリーを削除しますか？')) return;
+    if (!confirm('このカテゴリーを削除しますか？（商品が残っている場合は削除できません）')) return;
     const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       setCategories((prev) => prev.filter((c) => c.id !== id));
@@ -166,6 +183,14 @@ export default function MenuManagementPage() {
       const error = await res.json();
       alert(error.error || 'カテゴリーの削除に失敗しました');
     }
+  };
+
+  const toggleProductSelection = (productId: number) => {
+    setAssignForm((prev) => {
+      const exists = prev.productIds.includes(productId);
+      const nextIds = exists ? prev.productIds.filter((id) => id !== productId) : [...prev.productIds, productId];
+      return { ...prev, productIds: nextIds };
+    });
   };
 
   if (loading) {
@@ -267,7 +292,7 @@ export default function MenuManagementPage() {
                   <th className="px-4 py-3">フォルダ名</th>
                   <th className="px-4 py-3">期間</th>
                   <th className="px-4 py-3">説明</th>
-                  <th className="px-4 py-3 w-20"></th>
+                  <th className="px-4 py-3 w-28 text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -278,10 +303,19 @@ export default function MenuManagementPage() {
                       {c.start_date || '未設定'} ～ {c.end_date || '未設定'}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{c.description || '-'}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right space-x-2">
+                      <button
+                        onClick={() => {
+                          setViewCollectionId(c.id);
+                          loadCollectionProducts(c.id);
+                        }}
+                        className="text-xs font-semibold text-primary hover:text-accent"
+                      >
+                        中身を見る
+                      </button>
                       <button
                         onClick={() => handleDeleteCollection(c.id)}
-                        className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                        className="text-xs font-semibold text-red-500 hover:text-red-400"
                       >
                         削除
                       </button>
@@ -291,6 +325,49 @@ export default function MenuManagementPage() {
               </tbody>
             </table>
           </div>
+
+          {viewCollectionId && (
+            <div className="border border-border rounded-2xl p-4 bg-muted/40">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold">
+                  {collections.find((c) => c.id === viewCollectionId)?.name || 'フォルダ'}
+                </h4>
+                <button
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setViewCollectionId(null)}
+                >
+                  閉じる
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground uppercase tracking-wider">
+                      <th className="px-3 py-2">商品名</th>
+                      <th className="px-3 py-2">カテゴリ</th>
+                      <th className="px-3 py-2">売価</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(collectionProducts[viewCollectionId] || []).map((p) => (
+                      <tr key={p.id}>
+                        <td className="px-3 py-2">{p.name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{p.category_name}</td>
+                        <td className="px-3 py-2 font-semibold">¥{p.selling_price.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {!(collectionProducts[viewCollectionId] || []).length && (
+                      <tr>
+                        <td className="px-3 py-3 text-muted-foreground" colSpan={3}>
+                          商品がありません
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* フォルダへ商品を追加 */}
@@ -299,45 +376,57 @@ export default function MenuManagementPage() {
             <h2 className="text-xl font-semibold">フォルダに商品を登録</h2>
             <span className="text-sm text-muted-foreground">販売期間と紐づけて売上入力を効率化</span>
           </div>
-          <form onSubmit={handleAssignProduct} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">フォルダ</label>
-              <select
-                value={assignForm.collectionId}
-                onChange={(e) => setAssignForm({ ...assignForm, collectionId: e.target.value })}
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                required
-              >
-                <option value="">選択してください</option>
-                {collections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.start_date || '未設定'}~{c.end_date || '未設定'})
-                  </option>
-                ))}
-              </select>
+          <form onSubmit={handleAssignProduct} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">フォルダ</label>
+                <select
+                  value={assignForm.collectionId}
+                  onChange={(e) => setAssignForm({ ...assignForm, collectionId: e.target.value })}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  required
+                >
+                  <option value="">選択してください</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.start_date || '未設定'}~{c.end_date || '未設定'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">商品（複数選択可）</label>
+                <div className="h-48 overflow-y-auto border border-border rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {products.map((p) => {
+                    const checked = assignForm.productIds.includes(p.id);
+                    return (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 text-sm bg-background border border-border rounded-lg px-3 py-2 hover:border-accent cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleProductSelection(p.id)}
+                          className="accent-primary"
+                        />
+                        <span className="flex-1">
+                          <span className="font-semibold">{p.name}</span>
+                          <span className="block text-muted-foreground text-xs">{p.category_name}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">¥{p.selling_price.toLocaleString()}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">商品</label>
-              <select
-                value={assignForm.productId}
-                onChange={(e) => setAssignForm({ ...assignForm, productId: e.target.value })}
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                required
-              >
-                <option value="">選択してください</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.category_name})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
+            <div className="flex justify-end">
               <button
                 type="submit"
                 className="w-full md:w-auto bg-gradient-to-r from-accent to-primary text-primary-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                追加
+                まとめて追加
               </button>
             </div>
           </form>
@@ -354,29 +443,29 @@ export default function MenuManagementPage() {
                     <th className="px-4 py-3">ID</th>
                     <th className="px-4 py-3">名前</th>
                     <th className="px-4 py-3">説明</th>
-                  <th className="px-4 py-3">表示順</th>
-                  <th className="px-4 py-3 w-16"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {categories.map((cat) => (
-                  <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">{cat.id}</td>
-                    <td className="px-4 py-3 font-medium">{cat.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{cat.description}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{cat.display_order}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="text-red-500 hover:text-red-400 text-xs font-semibold"
-                      >
-                        削除
-                      </button>
-                    </td>
+                    <th className="px-4 py-3">表示順</th>
+                    <th className="px-4 py-3 w-16"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {categories.map((cat) => (
+                    <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">{cat.id}</td>
+                      <td className="px-4 py-3 font-medium">{cat.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{cat.description}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{cat.display_order}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="text-red-500 hover:text-red-400 text-xs font-semibold"
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
