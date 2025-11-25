@@ -32,6 +32,40 @@ type UiColors = {
   dark: { background: string; border: string; foreground: string };
 };
 
+const normalizeColorValue = (value: string) => {
+  // Tailwindのhsl(var(--background))形式に合わせるため、hexをH S L三要素に変換
+  if (!value) return '210 40% 98%';
+  if (value.includes('%')) return value; // 既に "210 40% 98%" のような形式
+  const hex = value.replace('#', '');
+  if (hex.length !== 6) return '210 40% 98%';
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    switch (max) {
+      case r:
+        h = ((g - b) / d) % 6;
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      default:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+  }
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
@@ -55,13 +89,13 @@ export default function Home() {
       if (!colors) return;
       const root = document.documentElement;
       const mode = nextIsDark ? colors.dark : colors.light;
-      root.style.setProperty('--background', mode.background);
-      root.style.setProperty('--foreground', mode.foreground);
-      root.style.setProperty('--border', mode.border);
+      root.style.setProperty('--background', normalizeColorValue(mode.background));
+      root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
+      root.style.setProperty('--border', normalizeColorValue(mode.border));
       // 併せてダーク側も上書き
-      root.style.setProperty('--background-dark', colors.dark.background);
-      root.style.setProperty('--foreground-dark', colors.dark.foreground);
-      root.style.setProperty('--border-dark', colors.dark.border);
+      root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
+      root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
+      root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
     },
     []
   );
