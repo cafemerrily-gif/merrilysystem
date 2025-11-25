@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const navItems = [
   {
@@ -43,6 +44,9 @@ const navItems = [
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+  const [userDepartments, setUserDepartments] = useState<string[]>([]);
+  const supabase = createClientComponentClient();
 
   // デバイス設定に従ってライト/ダークを適用。PCのみ手動トグルを表示し、押した場合は手動優先。
   useEffect(() => {
@@ -61,6 +65,15 @@ export default function Home() {
     return () => media.removeEventListener('change', handleChange);
   }, [hasManualPreference]);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const meta = data.user?.user_metadata;
+      if (meta?.full_name) setUserName(meta.full_name);
+      if (Array.isArray(meta?.departments)) setUserDepartments(meta.departments);
+    })();
+  }, [supabase]);
+
   const toggleTheme = () => {
     const next = !isDark;
     setHasManualPreference(true);
@@ -72,7 +85,19 @@ export default function Home() {
     <div className="min-h-screen bg-background transition-colors duration-300">
       <header className="fixed top-4 left-0 right-0 z-50 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <LogoutButton />
+          <div className="flex items-center gap-3">
+            <LogoutButton />
+            {userName && (
+              <div className="hidden sm:flex flex-col items-end text-sm bg-card border border-border px-3 py-2 rounded-xl">
+                <span className="font-semibold text-foreground">{userName}</span>
+                {userDepartments.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {userDepartments.join(' / ')}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
           <button
             onClick={toggleTheme}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type Attendance = {
   id: number;
@@ -17,12 +18,14 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    staff_name: '',
     work_date: '',
     clock_in: '',
     clock_out: '',
     note: '',
   });
+  // ログイン実装までは固定名で保存（本来はログインユーザー名を使う）
+  const [currentUserLabel, setCurrentUserLabel] = useState('ログインユーザー');
+  const supabase = createClientComponentClient();
 
   const totalHours = useMemo(() => {
     // 簡易集計（clock_out があるものだけ時間差を算出）
@@ -52,6 +55,11 @@ export default function StaffDashboard() {
   };
 
   useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const meta = data.user?.user_metadata;
+      if (meta?.full_name) setCurrentUserLabel(meta.full_name);
+    })();
     load();
   }, []);
 
@@ -62,13 +70,13 @@ export default function StaffDashboard() {
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, staff_name: currentUserLabel }),
       });
       const data = await res.json();
       if (data.error) {
         alert(data.error);
       } else {
-        setForm({ staff_name: '', work_date: '', clock_in: '', clock_out: '', note: '' });
+        setForm({ work_date: '', clock_in: '', clock_out: '', note: '' });
         load();
       }
     } catch (error) {
@@ -133,16 +141,6 @@ export default function StaffDashboard() {
             </div>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={submit}>
               <label className="text-sm text-muted-foreground flex flex-col gap-2">
-                スタッフ名
-                <input
-                  required
-                  value={form.staff_name}
-                  onChange={(e) => setForm((f) => ({ ...f, staff_name: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2"
-                  placeholder="山田 太郎"
-                />
-              </label>
-              <label className="text-sm text-muted-foreground flex flex-col gap-2">
                 日付
                 <input
                   required
@@ -192,7 +190,8 @@ export default function StaffDashboard() {
               </div>
             </form>
             <p className="mt-3 text-xs text-muted-foreground">
-              ※ 勤怠データを保存するには Supabase に attendance テーブル（id, staff_name, work_date, clock_in, clock_out, note）を作成してください。
+              ※ 勤怠データを保存するには Supabase に attendance テーブル（id, staff_name, work_date, clock_in, clock_out, note）を作成してください。<br />
+              ※ スタッフ名はログイン実装後に自動でセットする前提です（現在は「ログインユーザー」で保存）。
             </p>
           </div>
 
