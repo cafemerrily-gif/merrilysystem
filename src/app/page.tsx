@@ -330,7 +330,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="max-w-6xl mx-auto px-4 pb-16">
+      <main className="w-full max-w-none mx-0 px-0 pb-16">
         <header
           className="flex items-center justify-between py-4 px-4 sm:px-0 sticky top-0 z-30"
           style={{
