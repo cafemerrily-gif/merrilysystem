@@ -101,8 +101,10 @@ export default function Home() {
       setLoadingBlogs(true);
       const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data = await res.json();
-      if (data?.blogPosts) setBlogPosts(data.blogPosts);
-      else setBlogPosts([]);
+      if (data?.blogPosts) {
+        const sorted = data.blogPosts.slice().sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
+        setBlogPosts(sorted);
+      } else setBlogPosts([]);
     } catch (e) {
       console.error('ブログ取得エラー', e);
       setBlogPosts([]);

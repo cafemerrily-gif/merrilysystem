@@ -42,13 +42,11 @@ export default function PrBlogsEditor() {
         const text = await res.text();
         const data = text ? JSON.parse(text) : null;
         if (data) {
+          const sorted = (data.blogPosts ?? [])
+            .map((b: any) => ({ ...b, image: b.image || '' }))
+            .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
           setPayload(data);
-          setBlogPosts(
-            (data.blogPosts ?? []).map((b: any) => ({
-              ...b,
-              image: b.image || '',
-            }))
-          );
+          setBlogPosts(sorted);
         }
       } catch (e: any) {
         setError(e?.message || 'データの取得に失敗しました');
@@ -117,12 +115,10 @@ export default function PrBlogsEditor() {
         setPayload(data || {});
         // レスポンスに blogPosts がない場合はローカルのものを保持
         if (data && data.blogPosts) {
-          setBlogPosts(
-            (data.blogPosts ?? []).map((b: any) => ({
-              ...b,
-              image: b.image || '',
-            }))
-          );
+          const merged = (data.blogPosts ?? [])
+            .map((b: any) => ({ ...b, image: b.image || '' }))
+            .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
+          setBlogPosts(merged);
         }
         // サーバーの最新を再取得してズレを防ぐ（成功時のみ）
         const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
@@ -131,12 +127,10 @@ export default function PrBlogsEditor() {
           const refreshData = refreshText ? JSON.parse(refreshText) : null;
           if (refreshData && refreshData.blogPosts) {
             setPayload(refreshData);
-            setBlogPosts(
-              (refreshData.blogPosts ?? []).map((b: any) => ({
-                ...b,
-                image: b.image || '',
-              }))
-            );
+            const sortedRefresh = (refreshData.blogPosts ?? [])
+              .map((b: any) => ({ ...b, image: b.image || '' }))
+              .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
+            setBlogPosts(sortedRefresh);
           }
         }
         await logClientActivity('広報: ブログを保存');
