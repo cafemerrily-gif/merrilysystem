@@ -256,7 +256,7 @@ export default function PrBlogsEditor() {
                 </div>
                 <p className="font-semibold text-foreground">{post.title}</p>
                 {post.image ? (
-                  <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-cover max-h-64" />
+                  <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-96 bg-background" />
                 ) : null}
                 <p className="text-sm text-muted-foreground">{post.body}</p>
               </div>
