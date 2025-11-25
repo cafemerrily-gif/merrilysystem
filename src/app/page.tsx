@@ -7,6 +7,14 @@ import LogoutButton from '@/components/LogoutButton';
 
 const navItems = [
   {
+    href: '/dashboard/staff',
+    icon: '🧑‍🍳',
+    title: '店舗スタッフ',
+    subtitle: '勤怠管理',
+    desc: '出勤・退勤の記録と履歴を管理',
+    accent: 'スタッフダッシュボード',
+  },
+  {
     href: '/dashboard/accounting',
     icon: '📈',
     title: '会計部',
@@ -29,14 +37,6 @@ const navItems = [
     subtitle: 'キャンペーン枠',
     desc: 'SNSやキャンペーン指標を置くスペース（準備中）',
     accent: '広報部へ',
-  },
-  {
-    href: '/dashboard/staff',
-    icon: '🧑‍🍳',
-    title: '店舗スタッフ',
-    subtitle: '勤怠管理',
-    desc: '出勤・退勤の記録と履歴を管理',
-    accent: 'スタッフダッシュボード',
   },
 ];
 
