@@ -104,6 +104,10 @@ export default function PrBlogsEditor() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload: newPayload, updated_by: userName || 'unknown' }),
       });
+      if (!res.ok) {
+        setError(`保存に失敗しました（${res.status}）`);
+        return;
+      }
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
       if (data?.error) {
@@ -111,24 +115,29 @@ export default function PrBlogsEditor() {
       } else {
         setInfo('保存しました');
         setPayload(data || {});
-        setBlogPosts(
-          ((data && data.blogPosts) ?? blogPosts).map((b: any) => ({
-            ...b,
-            image: b.image || '',
-          }))
-        );
-        // サーバーの最新を再取得してズレを防ぐ
-        const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
-        const refreshText = await refresh.text();
-        const refreshData = refreshText ? JSON.parse(refreshText) : null;
-        if (refreshData) {
-          setPayload(refreshData);
+        // レスポンスに blogPosts がない場合はローカルのものを保持
+        if (data && data.blogPosts) {
           setBlogPosts(
-            (refreshData.blogPosts ?? []).map((b: any) => ({
+            (data.blogPosts ?? []).map((b: any) => ({
               ...b,
               image: b.image || '',
             }))
           );
+        }
+        // サーバーの最新を再取得してズレを防ぐ（成功時のみ）
+        const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
+        if (refresh.ok) {
+          const refreshText = await refresh.text();
+          const refreshData = refreshText ? JSON.parse(refreshText) : null;
+          if (refreshData && refreshData.blogPosts) {
+            setPayload(refreshData);
+            setBlogPosts(
+              (refreshData.blogPosts ?? []).map((b: any) => ({
+                ...b,
+                image: b.image || '',
+              }))
+            );
+          }
         }
         await logClientActivity('広報: ブログを保存');
       }
