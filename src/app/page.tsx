@@ -69,6 +69,7 @@ export default function Home() {
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const supabase = createClientComponentClient();
 
   // デバイス設定に従ってライト/ダークを適用。PCのみ手動トグルを表示し、押した場合は手動優先。
@@ -94,6 +95,7 @@ export default function Home() {
       const meta = data.user?.user_metadata;
       if (meta?.full_name) setUserName(meta.full_name);
       if (Array.isArray(meta?.departments)) setUserDepartments(meta.departments);
+      if (meta?.is_admin === true || meta?.role === 'admin') setIsAdmin(true);
     })();
   }, [supabase]);
 
@@ -133,12 +135,14 @@ export default function Home() {
                 )}
               </div>
             )}
-            <Link
-              href="/profile"
-              className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
-            >
-              タグ編集
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/profile"
+                className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
+              >
+                タグ編集
+              </Link>
+            )}
           </div>
           {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
           <button

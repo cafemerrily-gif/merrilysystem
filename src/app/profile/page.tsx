@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -23,6 +24,7 @@ export default function ProfilePage() {
         const meta = data.user?.user_metadata || {};
         if (meta.full_name) setFullName(meta.full_name);
         if (Array.isArray(meta.departments)) setDepartments(meta.departments);
+        if (meta.is_admin === true || meta.role === 'admin') setIsAdmin(true);
       } catch (e: any) {
         setError(e?.message || 'ユーザー情報の取得に失敗しました');
       } finally {
@@ -40,6 +42,10 @@ export default function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      setError('権限がありません（管理者のみ変更できます）');
+      return;
+    }
     setSaving(true);
     setError(null);
     setInfo(null);
@@ -66,6 +72,20 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-muted-foreground">読み込み中...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="max-w-md w-full p-6 bg-card border border-border rounded-2xl shadow-lg text-center space-y-4">
+          <h1 className="text-xl font-bold">アクセス不可</h1>
+          <p className="text-sm text-muted-foreground">このページは管理者のみが利用できます。権限付与はSupabaseダッシュボードで is_admin=true を設定してください。</p>
+          <Link href="/" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
+            ホームへ戻る
+          </Link>
+        </div>
       </div>
     );
   }
