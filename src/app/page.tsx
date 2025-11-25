@@ -169,7 +169,7 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-accent/60 to-secondary/60 shadow-2xl">
+        <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl">
           <div className="rounded-2xl bg-background px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
             <div className="col-span-2 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Welcome</p>
@@ -198,7 +198,7 @@ export default function Home() {
                   className="group flex items-center justify-between px-4 py-4 rounded-xl border border-border bg-card hover:bg-muted transition-all duration-200 shadow-sm hover:shadow-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/80 text-primary-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
                       <span aria-hidden>{item.icon}</span>
                     </div>
                     <div className="text-left">
@@ -207,7 +207,7 @@ export default function Home() {
                       <p className="text-[11px] text-muted-foreground line-clamp-1">{item.desc}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-accent text-xs font-semibold">
+                  <div className="flex items-center gap-2 text-primary text-xs font-semibold">
                     <span>{item.accent}</span>
                     <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -290,7 +290,7 @@ export default function Home() {
                 <div className="text-xs sm:text-sm text-muted-foreground">稼働目標</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-card border border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-accent mb-1">最新</div>
+                <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">最新</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">デザイン刷新</div>
               </div>
             </div>
