@@ -18,31 +18,36 @@ export default function PrWebsiteEditor() {
   const [userName, setUserName] = useState<string>('');
 
   const [heroTitle, setHeroTitle] = useState('MERRILY CAFE');
-  const [heroSubtitle, setHeroSubtitle] = useState('季節のこだわりメニューとくつろぎの空間');
-  const [ctaLabel, setCtaLabel] = useState('ご来店をお待ちしています');
+  const [heroSubtitle, setHeroSubtitle] = useState('季節のブレンドコーヒーと焼き菓子で、ゆったりとした時間を。');
+  const [ctaLabel, setCtaLabel] = useState('ご予約・お問い合わせはこちら');
+
   const [sections, setSections] = useState<Section[]>([
-    { id: 'about', title: 'お店について', body: '丁寧に淹れたコーヒーと手作りスイーツでお待ちしています。' },
-    { id: 'news', title: 'お知らせ', body: '春の新作スイーツが登場。数量限定です。' },
+    { id: 'about', title: 'お店について', body: '丁寧に焼き上げたスイーツと自家焙煎のコーヒーをご用意しています。' },
+    { id: 'news', title: 'お知らせ', body: '季節限定メニューやイベント情報をお届けします。' },
   ]);
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    { id: 'm1', name: '本日のコーヒー', price: '¥500', desc: '淹れたてのスペシャルティコーヒー' },
-    { id: 'm2', name: '季節のタルト', price: '¥650', desc: '旬のフルーツを贅沢に使用' },
+    { id: 'm1', name: 'ブレンドコーヒー', price: '\\500', desc: '毎日焙煎のフレッシュなコーヒー' },
+    { id: 'm2', name: '季節のタルト', price: '\\650', desc: '旬のフルーツを贅沢に使用' },
   ]);
+
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([
-    { id: 'b1', title: '春の新作スイーツ特集', body: '苺のタルトや桜ラテをぜひお試しください。', date: '2025-03-15' },
+    { id: 'b1', title: '春の新作スイーツ', body: '桜のタルトと苺のショートが登場しました。', date: '2025-03-15' },
   ]);
+
   const [previewUrl, setPreviewUrl] = useState('https://example.com');
   const [headerColor, setHeaderColor] = useState('#0f172a');
   const [headerTextColor, setHeaderTextColor] = useState('#ffffff');
   const [heroImage, setHeroImage] = useState('/MERRILY_Simbol.png');
 
-  // 初期データ読込
+  // 読み込み
   useEffect(() => {
     (async () => {
       try {
         const userRes = await supabase.auth.getUser();
         const meta = userRes.data.user?.user_metadata;
         if (meta?.full_name) setUserName(meta.full_name);
+
         const res = await fetch('/api/pr/website');
         const data = await res.json();
         if (data) {
@@ -58,7 +63,7 @@ export default function PrWebsiteEditor() {
           setHeroImage(data.heroImage ?? heroImage);
         }
       } catch (e: any) {
-        setError(e?.message || '初期データの取得に失敗しました');
+        setError(e?.message || 'データの取得に失敗しました');
       } finally {
         setLoading(false);
       }
@@ -70,7 +75,7 @@ export default function PrWebsiteEditor() {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   const removeSection = (id: string) => setSections((prev) => prev.filter((s) => s.id !== id));
 
-  const addMenuItem = () => setMenuItems((prev) => [...prev, { id: `m-${prev.length + 1}`, name: '新しいメニュー', price: '¥0', desc: '' }]);
+  const addMenuItem = () => setMenuItems((prev) => [...prev, { id: `m-${prev.length + 1}`, name: '新しいメニュー', price: '\\0', desc: '' }]);
   const updateMenuItem = (id: string, field: keyof MenuItem, value: string) =>
     setMenuItems((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
   const removeMenuItem = (id: string) => setMenuItems((prev) => prev.filter((m) => m.id !== id));
@@ -80,6 +85,18 @@ export default function PrWebsiteEditor() {
   const updateBlogPost = (id: string, field: keyof BlogPost, value: string) =>
     setBlogPosts((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
   const removeBlogPost = (id: string) => setBlogPosts((prev) => prev.filter((b) => b.id !== id));
+
+  const logClientActivity = async (message: string) => {
+    try {
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_name: userName || null, message }),
+      });
+    } catch (err) {
+      console.error('ログ記録失敗', err);
+    }
+  };
 
   const handleSave = async () => {
     if (saving || cooldown) return; // 連打防止
@@ -107,13 +124,16 @@ export default function PrWebsiteEditor() {
       });
       const data = await res.json();
       if (data?.error) setError(data.error);
-      else setInfo('保存しました');
+      else {
+        setInfo('保存しました');
+        await logClientActivity('広報: ホームページを保存（ブログ含む）');
+      }
     } catch (e: any) {
       setError(e?.message || '保存に失敗しました');
     } finally {
       setSaving(false);
       setTimeout(() => setInfo(null), 3000);
-      // 連打防止: 2秒間は再度送信不可
+      // 連打防止: 2秒間は再送不可
       setTimeout(() => setCooldown(false), 2000);
     }
   };
@@ -131,16 +151,16 @@ export default function PrWebsiteEditor() {
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📰</div>
+            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📣</div>
             <div>
-              <h1 className="text-2xl font-bold">公式ホームページ編集</h1>
-              <p className="text-sm text-muted-foreground">広報向けの宣伝ページを編集・保存・プレビュー</p>
+              <h1 className="text-2xl font-bold">広報部ホームページ編集</h1>
+              <p className="text-sm text-muted-foreground">宣伝用のページとブログを管理・保存・プレビュー</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || cooldown}
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
             >
               {saving ? '保存中...' : '保存'}
@@ -173,7 +193,7 @@ export default function PrWebsiteEditor() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2"
               placeholder="/MERRILY_Simbol.png"
             />
-            <span className="text-xs text-muted-foreground">public配下のパスか、完全URLを指定してください。</span>
+            <span className="text-xs text-muted-foreground">public 配下のパスか、外部URLを指定できます。</span>
           </label>
           <label className="text-sm text-muted-foreground flex flex-col gap-2">
             ヒーロータイトル
@@ -200,7 +220,7 @@ export default function PrWebsiteEditor() {
             />
           </label>
           <label className="text-sm text-muted-foreground flex flex-col gap-2">
-            現行サイトURL（任意）
+            プレビュー用URL（任意）
             <input
               value={previewUrl}
               onChange={(e) => setPreviewUrl(e.target.value)}
@@ -245,7 +265,7 @@ export default function PrWebsiteEditor() {
 
           <div className="pt-4 space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">メニュー一覧</h3>
+              <h3 className="text-sm font-semibold">メニュー</h3>
               <button onClick={addMenuItem} className="text-xs px-3 py-1 rounded-lg border border-border hover:border-accent">
                 メニューを追加
               </button>
@@ -264,7 +284,7 @@ export default function PrWebsiteEditor() {
                       value={item.price}
                       onChange={(e) => updateMenuItem(item.id, 'price', e.target.value)}
                       className="w-32 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                      placeholder="¥0"
+                      placeholder="\\0"
                     />
                     <button onClick={() => removeMenuItem(item.id)} className="text-xs px-2 py-1 rounded-lg border border-border hover:border-accent">
                       削除
@@ -324,7 +344,7 @@ export default function PrWebsiteEditor() {
           {info && <p className="text-green-600 text-sm">{info}</p>}
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <p className="text-xs text-muted-foreground">
-            Supabaseの pr_site テーブルに保存しています（1行固定）。必要に応じてスキーマや保存形式を調整してください。
+            Supabase の pr_site テーブルに保存しています（1行固定）。必要に応じてスキーマを拡張してください。
           </p>
         </div>
 
@@ -343,36 +363,33 @@ export default function PrWebsiteEditor() {
                   </p>
                 </div>
               </div>
-              <button
-                className="mt-2 px-4 py-2 rounded-lg bg-white/90 text-black text-sm font-semibold hover:opacity-90"
-                style={{ color: '#000' }}
-              >
+              <button className="px-4 py-2 rounded-lg border border-border bg-white/10" style={{ color: headerTextColor }}>
                 {ctaLabel}
               </button>
             </div>
-            <div className="p-6 space-y-3">
+
+            <div className="p-6 space-y-4">
               {sections.map((sec) => (
-                <div key={sec.id} className="space-y-1">
+                <div key={sec.id} className="space-y-2">
                   <h4 className="text-lg font-semibold">{sec.title}</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">{sec.body}</p>
+                  <p className="text-sm text-muted-foreground">{sec.body}</p>
                 </div>
               ))}
-              {!!menuItems.length && (
-                <div className="space-y-2">
-                  <h4 className="text-lg font-semibold">メニュー</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {menuItems.map((item) => (
-                      <div key={item.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
-                        <div className="flex justify-between text-sm font-semibold">
-                          <span>{item.name}</span>
-                          <span>{item.price}</span>
-                        </div>
-                        {item.desc && <p className="text-xs text-muted-foreground">{item.desc}</p>}
+
+              <div className="space-y-2">
+                <h4 className="text-lg font-semibold">おすすめメニュー</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {menuItems.map((item) => (
+                    <div key={item.id} className="border border-border rounded-lg p-3 bg-muted/30">
+                      <div className="flex items-center justify-between text-sm font-semibold">
+                        <span>{item.name}</span>
+                        <span>{item.price}</span>
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {!!blogPosts.length && (
                 <div className="space-y-2">
@@ -381,27 +398,27 @@ export default function PrWebsiteEditor() {
                     {blogPosts.map((post) => (
                       <div key={post.id} className="border border-border rounded-lg p-3 bg-muted/30 space-y-1">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{post.date}</span>
+                          <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                          <span>ブログ</span>
                         </div>
-                        <h5 className="text-base font-semibold">{post.title}</h5>
-                        <p className="text-sm text-muted-foreground whitespace-pre-line">{post.body}</p>
+                        <p className="font-semibold text-foreground">{post.title}</p>
+                        <p className="text-sm text-muted-foreground">{post.body}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {previewUrl && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground">公開ページURL（任意）:</p>
+                  <a className="text-primary underline" href={previewUrl} target="_blank" rel="noreferrer">
+                    {previewUrl}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
-          {previewUrl && (
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center text-sm text-accent hover:underline"
-            >
-              現在のサイトを開く
-            </a>
-          )}
         </div>
       </div>
     </div>

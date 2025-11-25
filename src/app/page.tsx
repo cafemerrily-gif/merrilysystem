@@ -239,23 +239,30 @@ export default function Home() {
           </aside>
 
           <section className="space-y-6">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg grid gap-6 md:grid-cols-2">
-              <div>
-                <h3 className="text-lg font-semibold mb-3">運用チェック</h3>
-                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  <li>ログイン・会計・開発・広報・スタッフ操作は「操作ログ」に記録されます。</li>
-                  <li>ログは最新50件を表示。更新したいときは画面を開き直すか再読み込みをしてください。</li>
-                  <li>通知も最新50件を表示。個別/全員どちらもここに出ます。</li>
-                </ul>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">最新ブログ</h3>
+                <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-3">クイックガイド</h3>
-                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  <li>会計部: 売上登録/削除は実ログに残ります。</li>
-                  <li>開発部: カテゴリ・商品追加/削除もログに残します。</li>
-                  <li>広報部: ホームページ編集の保存でログが残ります。</li>
-                </ul>
+              <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+                {loadingBlogs ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : blogPosts.length === 0 ? (
+                  <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
+                ) : (
+                  blogPosts.map((post) => (
+                    <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                        <span>ブログ</span>
+                      </div>
+                      <p className="font-semibold text-foreground">{post.title}</p>
+                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                    </div>
+                  ))
+                )}
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
@@ -310,65 +317,8 @@ export default function Home() {
               </div>
               <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
             </div>
-
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">最新ブログ</h3>
-                <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
-              </div>
-              <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
-                {loadingBlogs ? (
-                  <p className="text-muted-foreground">読み込み中...</p>
-                ) : blogPosts.length === 0 ? (
-                  <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
-                ) : (
-                  blogPosts.map((post) => (
-                    <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                        <span>ブログ</span>
-                      </div>
-                      <p className="font-semibold text-foreground">{post.title}</p>
-                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-card border border-border rounded-2xl p-4 shadow-md space-y-3">
-                <h4 className="text-base font-semibold">クイックアクション</h4>
-                <div className="grid grid-cols-1 gap-2 text-sm">
-                  <Link href="/dashboard/accounting" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
-                    <span>会計部: 売上入力・ダッシュボード</span>
-                    <span className="text-primary">→</span>
-                  </Link>
-                  <Link href="/dashboard/dev" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
-                    <span>開発部: メニュー/フォルダ管理</span>
-                    <span className="text-primary">→</span>
-                  </Link>
-                  <Link href="/dashboard/pr" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
-                    <span>広報部: ホームページ編集</span>
-                    <span className="text-primary">→</span>
-                  </Link>
-                  <Link href="/dashboard/staff" className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-muted">
-                    <span>店舗スタッフ: 出勤/退勤を記録</span>
-                    <span className="text-primary">→</span>
-                  </Link>
-                </div>
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-4 shadow-md space-y-3">
-                <h4 className="text-base font-semibold">運用メモ</h4>
-                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                  <li>ログイン・各ダッシュボードの操作は「操作ログ」に記録されます。</li>
-                  <li>最新の操作を確認したいときはページを開き直すか、上部で再読込を行ってください。</li>
-                  <li>通知は全員/個別問わず最新50件を表示しています。</li>
-                </ul>
-              </div>
-            </div>
           </section>
+
         </div>
       </main>
     </div>
