@@ -133,6 +133,12 @@ export default function Home() {
                 )}
               </div>
             )}
+            <Link
+              href="/profile"
+              className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm"
+            >
+              タグ編集
+            </Link>
           </div>
           {/* PCでは手動切り替えボタンを表示、スマホでは非表示 */}
           <button
