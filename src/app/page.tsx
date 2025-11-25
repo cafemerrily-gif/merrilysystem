@@ -348,7 +348,7 @@ export default function Home() {
           style={{
             backgroundColor: currentHeader.background ? `rgba(${hexToRgb(currentHeader.background)}, ${currentHeader.backgroundAlpha ?? 1})` : undefined,
             color: currentHeader.foreground || undefined,
-            marginBottom: '18px',
+            margin: 0,
           }}
         >
           <div className="flex items-center gap-3">
