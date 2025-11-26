@@ -42,7 +42,8 @@ export async function GET(_req: NextRequest) {
     const todayKey = new Date().toISOString().split('T')[0];
     const dailyMap: Record<string, number> = {};
     const monthlyMap: Record<string, number> = {};
-    const timeSlotMap: Record<string, number> = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
+    // フロントは「時間=11〜16」などのキーを期待するので sale_time を時単位で集計する
+    const timeSlotMap: Record<string, number> = {};
 
     let totalAmount = 0;
     let todayTotal = 0;
@@ -54,8 +55,12 @@ export async function GET(_req: NextRequest) {
       dailyMap[sale.sale_date] = (dailyMap[sale.sale_date] || 0) + amt;
       const mKey = toMonthKey(sale.sale_date);
       monthlyMap[mKey] = (monthlyMap[mKey] || 0) + amt;
-      if (sale.time_slot) {
-        timeSlotMap[sale.time_slot] = (timeSlotMap[sale.time_slot] || 0) + amt;
+      // 時間帯: sale_time の「時」をキーにする (例: '11')
+      const hourStr = (sale.sale_time || '').split(':')[0];
+      const hourNum = Number(hourStr);
+      if (!Number.isNaN(hourNum)) {
+        const key = String(hourNum);
+        timeSlotMap[key] = (timeSlotMap[key] || 0) + amt;
       }
     });
 
