@@ -31,11 +31,11 @@ const hexToRgba = (hex: string, alpha = 1) => {
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard/staff/menu", icon: "👥", title: "店舗スタッフ", subtitle: "勤怠・シフト", desc: "出勤/退勤の記録とシフト確認", accent: "スタッフ", requiredTags: ["店舗スタッフ"] },
-  { href: "/dashboard/accounting/menu", icon: "📊", title: "会計部", subtitle: "会計メニュー", desc: "売上ダッシュボードや入力", accent: "会計", requiredTags: ["会計部"] },
-  { href: "/dashboard/dev/menu", icon: "🛠️", title: "開発部", subtitle: "メニュー管理", desc: "カテゴリ/フォルダ/商品を管理", accent: "開発", requiredTags: ["開発部"] },
-  { href: "/dashboard/pr/menu", icon: "📣", title: "広報部", subtitle: "ホームページ編集", desc: "配色・アイコン・ブログ編集", accent: "広報", requiredTags: ["広報部"] },
-  { href: "/dashboard/debug/menu", icon: "🐛", title: "デバッグ", subtitle: "テスト/チェック", desc: "APIテストやヘルスチェック", accent: "デバッグ", requiredTags: ["エンジニアチーム"] },
+  { href: '/dashboard/staff/menu', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠・シフト', desc: '出勤/退勤の記録とシフト確認', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
+  { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '会計メニュー', desc: '売上ダッシュボードや入力', accent: '会計', requiredTags: ['会計部'] },
+  { href: '/dashboard/dev/menu', icon: '🛠️', title: '開発部', subtitle: 'メニュー管理', desc: 'カテゴリ/フォルダ/商品を管理', accent: '開発', requiredTags: ['開発部'] },
+  { href: '/dashboard/pr/menu', icon: '📣', title: '広報部', subtitle: 'ホームページ編集', desc: '配色・アイコン・ブログ編集', accent: '広報', requiredTags: ['広報部'] },
+  { href: '/dashboard/debug/menu', icon: '🐛', title: 'デバッグ', subtitle: 'テスト/チェック', desc: 'APIテストやヘルスチェック', accent: 'デバッグ', requiredTags: ['エンジニアチーム'] },
 ];
 
 const applyUiToDocument = (ui: any, isDark: boolean) => {
@@ -266,7 +266,7 @@ export default function Home() {
                 <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
                   <span aria-hidden>{item.icon}</span>
                 </div>
-              <p className="text-sm text-muted-foreground">{userName ? `${userName} / ${userDepartments.join("・") || "部署未設定"}` : "ログイン情報取得中..."}</p>
+                <div className="text-left">
                   <h2 className="text-base font-semibold text-foreground leading-tight">{item.title}</h2>
                   <p className="text-xs text-muted-foreground">{item.subtitle}</p>
                   <p className="text-[11px] text-muted-foreground line-clamp-1">{item.desc}</p>
@@ -399,4 +399,3 @@ export default function Home() {
     </div>
   );
 }
-
