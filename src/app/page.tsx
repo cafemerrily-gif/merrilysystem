@@ -21,6 +21,15 @@ type NotificationItem = { id: number; title: string; detail: string | null; crea
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
+const hexToRgba = (hex: string, alpha = 1) => {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return hex;
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const navItems: NavItem[] = [
   {
     href: '/dashboard/staff/menu',
@@ -73,6 +82,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   if (typeof document === 'undefined' || !ui) return;
   const light = {
     background: ui.lightBackground || '#f8fafc',
+    backgroundAlpha: ui.lightBackgroundAlpha ?? 1,
+    backgroundGradient: ui.lightBackgroundGradient || '',
     foreground: ui.lightForeground || '#0f172a',
     border: ui.lightBorder || '#e2e8f0',
     cardBg: ui.cardBgLight || ui.cardBackground || '#ffffff',
@@ -82,6 +93,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   };
   const dark = {
     background: ui.darkBackground || '#0b1220',
+    backgroundAlpha: ui.darkBackgroundAlpha ?? 1,
+    backgroundGradient: ui.darkBackgroundGradient || '',
     foreground: ui.darkForeground || '#e5e7eb',
     border: ui.darkBorder || '#1f2937',
     cardBg: ui.cardBgDark || ui.cardBackground || '#0f172a',
@@ -91,7 +104,15 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   };
   const mode = isDark ? dark : light;
   const root = document.documentElement;
-  root.style.setProperty('--background', mode.background);
+  const bgColor = mode.backgroundGradient ? undefined : hexToRgba(mode.background, mode.backgroundAlpha);
+  if (bgColor) root.style.setProperty('--background', bgColor);
+  if (mode.backgroundGradient) {
+    root.style.setProperty('--background-gradient', mode.backgroundGradient);
+    document.body.style.backgroundImage = mode.backgroundGradient;
+  } else {
+    root.style.removeProperty('--background-gradient');
+    document.body.style.backgroundImage = 'none';
+  }
   root.style.setProperty('--foreground', mode.foreground);
   root.style.setProperty('--border', mode.border);
   root.style.setProperty('--card', mode.cardBg);
