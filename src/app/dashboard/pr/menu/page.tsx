@@ -5,9 +5,14 @@ import Link from 'next/link';
 export default function PrMenu() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold">広報部メニュー</h1>
-        <p className="text-sm text-muted-foreground">ホームページ編集・UI編集・ブログ編集への入口です。</p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">広報部メニュー</h1>
+          <p className="text-sm text-muted-foreground">ホームページ編集・UI編集・ブログ編集への入口です。</p>
+        </div>
+        <Link href="/" className="text-sm px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted transition">
+          ホームへ戻る
+        </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link href="/dashboard/pr/website" className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm">
