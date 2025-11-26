@@ -417,6 +417,7 @@ export default function Home() {
             <button
               className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
               onClick={toggleTheme}
+              style={{ color: currentCard.foreground || undefined }}
             >
               <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
               <span className="text-sm">{isDark ? 'ダーク' : 'ライト'}</span>
@@ -427,12 +428,14 @@ export default function Home() {
                   <Link
                     href="/profile"
                     className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+                    style={{ color: currentCard.foreground || undefined }}
                   >
                     プロフィール
                   </Link>
                   <Link
                     href="/admin/users"
                     className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+                    style={{ color: currentCard.foreground || undefined }}
                   >
                     メンバー管理
                   </Link>
