@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 type UiSettings = {
   lightBackground?: string;
@@ -49,50 +49,57 @@ const normalizeColorValue = (value: string) => {
 
 export function useUiTheme() {
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const applyColors = useCallback((isDark: boolean, colors: UiColors) => {
-    const root = document.documentElement;
-    const mode = isDark ? colors.dark : colors.light;
-    root.style.setProperty('--background', normalizeColorValue(mode.background));
-    root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
-    root.style.setProperty('--border', normalizeColorValue(mode.border));
-    root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
-    root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
-    root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
+  // 画面幅でモバイル判定
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // 1) ローカルキャッシュを先に適用してチラつきを抑える
+    const applyColors = (isDark: boolean, colors: UiColors) => {
+      const root = document.documentElement;
+      const mode = isDark ? colors.dark : colors.light;
+      root.style.setProperty('--background', normalizeColorValue(mode.background));
+      root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
+      root.style.setProperty('--border', normalizeColorValue(mode.border));
+      root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
+      root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
+      root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
+      root.classList.toggle('dark', isDark);
+    };
+
+    const loadColorsFromSettings = (ui: UiSettings): UiColors => ({
+      light: {
+        background: ui.lightBackground || '#f8fafc',
+        border: ui.lightBorder || '#e2e8f0',
+        foreground: ui.lightForeground || '#0f172a',
+      },
+      dark: {
+        background: ui.darkBackground || '#0b1220',
+        border: ui.darkBorder || '#1f2937',
+        foreground: ui.darkForeground || '#e5e7eb',
+      },
+    });
+
     const cached = window.localStorage.getItem('ui-settings-cache');
-    let cachedColors: UiColors | null = null;
-    if (cached) {
-      try {
-        const ui: UiSettings = JSON.parse(cached);
-        cachedColors = {
-          light: {
-            background: ui.lightBackground || '#f8fafc',
-            border: ui.lightBorder || '#e2e8f0',
-            foreground: ui.lightForeground || '#0f172a',
-          },
-          dark: {
-            background: ui.darkBackground || '#0b1220',
-            border: ui.darkBorder || '#1f2937',
-            foreground: ui.darkForeground || '#e5e7eb',
-          },
-        };
-      } catch (e) {
-        console.error('UI cache parse error', e);
-      }
-    }
+    const cachedUi: UiSettings = cached ? (() => { try { return JSON.parse(cached); } catch { return {}; } })() : {};
+    const cachedColors = loadColorsFromSettings(cachedUi);
 
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const initialIsDark = media.matches;
-    if (cachedColors) {
-      document.documentElement.classList.toggle('dark', initialIsDark);
-      applyColors(initialIsDark, cachedColors);
-    }
+    const storedPref = window.localStorage.getItem('ui-is-dark');
+    const preferred = storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches;
+    const desired = isMobile ? media.matches : preferred;
+
+    // 1) 先にキャッシュを適用
+    applyColors(desired, cachedColors);
 
     // 2) サーバーから取得して上書き
     (async () => {
@@ -100,20 +107,8 @@ export function useUiTheme() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         const ui: UiSettings = data?.uiSettings || {};
-        const colors: UiColors = {
-          light: {
-            background: ui.lightBackground || '#f8fafc',
-            border: ui.lightBorder || '#e2e8f0',
-            foreground: ui.lightForeground || '#0f172a',
-          },
-          dark: {
-            background: ui.darkBackground || '#0b1220',
-            border: ui.darkBorder || '#1f2937',
-            foreground: ui.darkForeground || '#e5e7eb',
-          },
-        };
-        document.documentElement.classList.toggle('dark', initialIsDark);
-        applyColors(initialIsDark, colors);
+        const colors = loadColorsFromSettings(ui);
+        applyColors(desired, colors);
         window.localStorage.setItem('ui-settings-cache', JSON.stringify(ui));
       } catch (e) {
         console.error('UI settings fetch error', e);
@@ -122,15 +117,14 @@ export function useUiTheme() {
       }
     })();
 
+    // モバイルのみデバイス設定の変化に追従
     const handleChange = (event: MediaQueryListEvent) => {
-      const ui = cachedColors;
-      if (!ui) return;
-      document.documentElement.classList.toggle('dark', event.matches);
-      applyColors(event.matches, ui);
+      if (!isMobile) return;
+      applyColors(event.matches, cachedColors);
     };
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [applyColors]);
+  }, [isMobile]);
 
   return { loading };
 }

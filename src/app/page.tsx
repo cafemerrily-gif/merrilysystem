@@ -82,7 +82,13 @@ const hexToRgb = (hex: string) => {
 };
 
 export default function Home() {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = window.localStorage.getItem('ui-is-dark');
+    if (stored === 'true') return true;
+    if (stored === 'false') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
@@ -336,6 +342,7 @@ export default function Home() {
     setIsDark(next);
     setHasManualPreference(true);
     if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ui-is-dark', String(next));
       document.documentElement.classList.toggle('dark', next);
     }
     applyColors(next, themeColors);
