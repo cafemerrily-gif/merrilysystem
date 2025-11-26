@@ -1,0 +1,39 @@
+p((n) => n.href);
+    setQuickStartKeys(filtered.length ? filtered : fallback);
+  }, [visibleNavItems]);
+
+  const toggleQuickStartKey = (href: string) => {
+    setQuickStartKeys((prev) => (prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]));
+  };
+
+  const saveQuickStart = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('quickstart-config', JSON.stringify(quickStartKeys));
+    }
+    setQuickStartEditing(false);
+  };
+
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        loadLogs();
+        loadNotifications();
+        loadBlogs();
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [loadLogs, loadNotifications, loadBlogs]);
+
+                      })()}
+                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
+            </div>
+
+            <div
+              className="rounded-2xl p-6 shadow-lg border"
+        

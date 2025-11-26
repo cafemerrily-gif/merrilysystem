@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -388,11 +388,50 @@ export default function Home() {
     document.addEventListener('visibilitychange', handler);
     return () => document.removeEventListener('visibilitychange', handler);
   }, [loadLogs, loadNotifications, loadBlogs]);
-
-                      })()}
-                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
-                    </div>
-                  ))
+            <div
+                          <div
+              className="rounded-2xl p-6 shadow-lg border"
+              style={{
+                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">最新ブログ</h3>
+                <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
+              </div>
+              <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+                {loadingBlogs ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : blogPosts.length === 0 ? (
+                  <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
+                ) : (
+                  blogPosts.map((post) => {
+                    const imgs = post.images && post.images.length > 0 ? post.images : post.image ? [post.image] : [];
+                    return (
+                      <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                          <span>{post.author || 'ブログ'}</span>
+                        </div>
+                        <p className="font-semibold text-foreground">{post.title}</p>
+                        {imgs.length > 0 ? (
+                          <div className="space-y-2 mb-2">
+                            {imgs.map((url: string, idx: number) => (
+                              <img
+                                key={`${post.id}-img-${idx}`}
+                                src={url}
+                                alt={post.title}
+                                className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                        <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                      </div>
+                    );
+                  })
                 )}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
@@ -463,8 +502,7 @@ export default function Home() {
                 )}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
-            </div>
-          </section>
+            </div></section>
 
         </div>
         </div>
