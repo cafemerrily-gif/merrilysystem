@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import LogoutButton from '@/components/LogoutButton';
 
@@ -150,6 +150,82 @@ export default function Home() {
     return () => media.removeEventListener('change', handleChange);
   }, [hasManualPreference, applyColors, themeColors]);
 
+  const applyUiSettings = useCallback(
+    (ui: any, shouldPersist = true) => {
+      if (!ui) return;
+      setUiSettingsRaw(ui);
+      if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
+      if (ui.appTitle) setAppTitle(ui.appTitle);
+      if (ui.headerBackground || ui.headerForeground) {
+        setHeaderColors({
+          background: ui.headerBackground || '',
+          foreground: ui.headerForeground || '',
+        });
+      }
+      if (ui.mutedColor) {
+        setMutedColor({ color: ui.mutedColor });
+      }
+      if (ui.cardBackground || ui.cardForeground || ui.cardBorder) {
+        setCardColors({
+          background: ui.cardBackground || '',
+          foreground: ui.cardForeground || '',
+          border: ui.cardBorder || '',
+        });
+      }
+      if (ui.welcomeBackground || ui.welcomeForeground || ui.welcomeBorder) {
+        setWelcomeColors({
+          background: ui.welcomeBackground || '',
+          foreground: ui.welcomeForeground || '',
+          border: ui.welcomeBorder || '',
+        });
+      }
+      setHeaderTextColors({
+        title: ui.headerTitleColorLight || ui.headerTitleColorDark || '',
+        subtitle: ui.headerSubtitleColorLight || ui.headerSubtitleColorDark || '',
+        user: ui.headerUserColorLight || ui.headerUserColorDark || '',
+      });
+      setWelcomeTextColors({
+        title: ui.welcomeTitleColorLight || ui.welcomeTitleColorDark || '',
+        body: ui.welcomeBodyColorLight || ui.welcomeBodyColorDark || '',
+      });
+      setWelcomeTextContent({
+        title: ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました',
+        body: ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。',
+      });
+      const themes = {
+        light: {
+          background: ui.lightBackground || '#f8fafc',
+          border: ui.lightBorder || '#e2e8f0',
+          foreground: ui.lightForeground || '#0f172a',
+        },
+        dark: {
+          background: ui.darkBackground || '#0b1220',
+          border: ui.darkBorder || '#1f2937',
+          foreground: ui.darkForeground || '#e5e7eb',
+        },
+      };
+      setThemeColors(themes);
+      applyColors(isDark, themes);
+      if (shouldPersist && typeof window !== 'undefined') {
+        window.localStorage.setItem('ui-settings-cache', JSON.stringify(ui));
+      }
+    },
+    [applyColors, isDark]
+  );
+
+  // ローカルキャッシュを即適用してフラッシュを抑える
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    const cached = window.localStorage.getItem('ui-settings-cache');
+    if (!cached) return;
+    try {
+      const ui = JSON.parse(cached);
+      applyUiSettings(ui, false);
+    } catch (e) {
+      console.error('UI cache parse error', e);
+    }
+  }, [applyUiSettings]);
+
   // ユーザー情報取得
   useEffect(() => {
     (async () => {
@@ -203,58 +279,7 @@ export default function Home() {
         setBlogPosts(sorted);
       } else setBlogPosts([]);
       if (data?.uiSettings) {
-        const ui = data.uiSettings;
-        setUiSettingsRaw(ui);
-        if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
-        if (ui.appTitle) setAppTitle(ui.appTitle);
-        if (ui.headerBackground || ui.headerForeground) {
-          setHeaderColors({
-            background: ui.headerBackground || '',
-            foreground: ui.headerForeground || '',
-          });
-        }
-        if (ui.mutedColor) {
-          setMutedColor({ color: ui.mutedColor });
-        }
-        if (ui.cardBackground || ui.cardForeground || ui.cardBorder) {
-          setCardColors({
-            background: ui.cardBackground || '',
-            foreground: ui.cardForeground || '',
-            border: ui.cardBorder || '',
-          });
-        }
-        if (ui.welcomeBackground || ui.welcomeForeground || ui.welcomeBorder) {
-          setWelcomeColors({
-            background: ui.welcomeBackground || '',
-            foreground: ui.welcomeForeground || '',
-            border: ui.welcomeBorder || '',
-          });
-        }
-        setHeaderTextColors({
-          title: ui.headerTitleColorLight || ui.headerTitleColorDark || '',
-          subtitle: ui.headerSubtitleColorLight || ui.headerSubtitleColorDark || '',
-          user: ui.headerUserColorLight || ui.headerUserColorDark || '',
-        });
-        setWelcomeTextColors({
-          title: ui.welcomeTitleColorLight || ui.welcomeTitleColorDark || '',
-          body: ui.welcomeBodyColorLight || ui.welcomeBodyColorDark || '',
-        });
-        setWelcomeTextContent({
-          title: ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました',
-          body: ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。',
-        });
-        setThemeColors({
-          light: {
-            background: ui.lightBackground || '#f8fafc',
-            border: ui.lightBorder || '#e2e8f0',
-            foreground: ui.lightForeground || '#0f172a',
-          },
-          dark: {
-            background: ui.darkBackground || '#0b1220',
-            border: ui.darkBorder || '#1f2937',
-            foreground: ui.darkForeground || '#e5e7eb',
-          },
-        });
+        applyUiSettings(data.uiSettings, true);
       }
     } catch (e) {
       console.error('ブログ取得エラー', e);
@@ -262,7 +287,7 @@ export default function Home() {
     } finally {
       setLoadingBlogs(false);
     }
-  }, []);
+  }, [applyUiSettings]);
 
   useEffect(() => {
     loadLogs();
