@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+// 直近データを都度取得するためキャッシュを無効化
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 type SaleRow = {
   id: number;
   sale_date: string;

@@ -102,7 +102,7 @@ export default function AccountingDashboard() {
       if (isInitial) setLoading(true);
       else setRefreshing(true);
       try {
-        const res = await fetch('/api/analytics/sales');
+        const res = await fetch('/api/analytics/sales', { cache: 'no-store' });
         const data = await res.json();
         if (!data.error) setSummary(data);
       } catch (error) {
