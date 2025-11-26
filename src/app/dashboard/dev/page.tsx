@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useUiTheme } from '@/hooks/useUiTheme';
 
-export default function DevDashboardPlaceholder() {
+export default function DevDashboard() {
   useUiTheme();
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -11,7 +11,7 @@ export default function DevDashboardPlaceholder() {
         <div className="flex justify-between items-center">
           <div className="text-left">
             <h1 className="text-2xl font-bold">開発部ダッシュボード</h1>
-            <p className="text-muted-foreground mt-1">メニュー管理と開発KPIのハブ</p>
+            <p className="text-muted-foreground mt-1">メニュー開発・商品運用の入り口一覧です。</p>
           </div>
           <Link href="/" className="inline-flex items-center justify-center px-4 py-3 bg-primary text-primary-foreground rounded-xl">
             ホームへ戻る
@@ -31,16 +31,16 @@ export default function DevDashboardPlaceholder() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              カテゴリー・商品を追加/編集/削除。価格や原価のメンテナンスを行います。
+              カテゴリー・商品を追加/編集/削除。価格やコストのメンテナンスを行います。
             </p>
           </Link>
 
           <div className="p-6 rounded-2xl border border-dashed border-border bg-muted/30">
-            <p className="text-sm text-muted-foreground mb-2">開発KPI（後日追加）</p>
+            <p className="text-sm text-muted-foreground mb-2">今後追加するメニュー</p>
             <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
-              <li>リリース計画・進捗</li>
-              <li>障害/バグ対応件数</li>
-              <li>パフォーマンス目標 など</li>
+              <li>新商品企画ワークスペース</li>
+              <li>在庫・原価シミュレーション</li>
+              <li>テスト販売の記録</li>
             </ul>
           </div>
         </div>

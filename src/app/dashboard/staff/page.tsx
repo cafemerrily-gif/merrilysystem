@@ -137,6 +137,31 @@ export default function StaffDashboard() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [load]);
 
+  const menuCards = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <Link href="/dashboard/staff" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
+        <h2 className="text-lg font-semibold">勤怠ダッシュボード</h2>
+        <p className="text-sm text-muted-foreground">出勤・退勤の記録と履歴を確認</p>
+      </Link>
+      <button
+        onClick={clockIn}
+        disabled={submitting}
+        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition text-left"
+      >
+        <h2 className="text-lg font-semibold">{submitting ? '処理中...' : '出勤を記録'}</h2>
+        <p className="text-sm text-muted-foreground">現在時刻で出勤を打刻</p>
+      </button>
+      <button
+        onClick={clockOut}
+        disabled={submitting}
+        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition text-left"
+      >
+        <h2 className="text-lg font-semibold">{submitting ? '処理中...' : '退勤を記録'}</h2>
+        <p className="text-sm text-muted-foreground">未退勤レコードに現在時刻で退勤を記録</p>
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
@@ -149,17 +174,16 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">店舗スタッフ</h1>
-              <p className="text-sm text-muted-foreground">勤怠管理システム</p>
+              <p className="text-sm text-muted-foreground">勤怠管理と履歴確認</p>
             </div>
           </div>
-          <Link
-            href="/"
-            className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm"
-          >
+          <Link href="/" className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm">
             ホームへ戻る
           </Link>
         </div>
       </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{menuCards}</div>
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -167,12 +191,9 @@ export default function StaffDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold">勤怠を記録</h2>
-                <p className="text-sm text-muted-foreground">ログイン名: {currentUserLabel}</p>
+                <p className="text-sm text-muted-foreground">ログイン中: {currentUserLabel}</p>
               </div>
-              <button
-                onClick={load}
-                className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent"
-              >
+              <button onClick={load} className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent">
                 最新に更新
               </button>
             </div>
@@ -194,7 +215,7 @@ export default function StaffDashboard() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              出勤: 今日の日付と現在時刻で新規レコードを作成します。退勤: 自分の未退勤レコードの「退勤時刻」を現在時刻で更新します。
+              出勤: 今日の日付と現在時刻で新規レコードを作成します。退勤: 直近の未退勤レコードに現在時刻で退勤を付与します。
             </p>
           </div>
 
@@ -211,7 +232,7 @@ export default function StaffDashboard() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              勤務時間は出勤・退勤の差から算出しています。正確な管理が必要な場合は詳細確認をお願いします。
+              勤務時間は出勤・退勤の差から算出しています。正確な管理が必要な場合は詳細を確認してください。
             </p>
           </div>
         </div>
@@ -219,10 +240,7 @@ export default function StaffDashboard() {
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">勤怠履歴</h2>
-            <button
-              onClick={load}
-              className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent"
-            >
+            <button onClick={load} className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent">
               再読み込み
             </button>
           </div>

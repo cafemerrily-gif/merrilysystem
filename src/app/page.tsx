@@ -564,6 +564,39 @@ export default function Home() {
           </div>
         </section>
 
+        {/* 各部ダッシュボードへのメニューカード（タップで遷移） */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {visibleNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
+              style={{
+                backgroundColor: currentCard.background || undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
+                  <span aria-hidden>{item.icon}</span>
+                </div>
+                <div className="text-left">
+                  <h2 className="text-base font-semibold text-foreground leading-tight">{item.title}</h2>
+                  <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-1">{item.desc}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-primary text-xs font-semibold">
+                <span>{item.accent}</span>
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
+
         <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-6">
           <aside className="space-y-4">
             <div className="hidden lg:block text-sm text-muted-foreground mb-2">ダッシュボード</div>

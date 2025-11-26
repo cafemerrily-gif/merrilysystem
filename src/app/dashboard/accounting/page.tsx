@@ -33,7 +33,7 @@ type Summary = {
 const formatRatio = (current: number, previous: number) => {
   if (!previous) return 'N/A';
   const diff = ((current - previous) / previous) * 100;
-  const sign = diff > 0 ? '+' : '';
+  const sign = diff > 0 ? '+ ' : '';
   return `${sign}${diff.toFixed(1)}%`;
 };
 
@@ -66,23 +66,11 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 
   return (
     <svg viewBox={`0 0 ${width} ${height + labelArea}`} className="w-full h-52">
-      <path
-        d={path}
-        fill="none"
-        stroke="hsl(var(--accent))"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d={path} fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
       {points.map(([x, y], i) => (
         <g key={i}>
           <circle cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
-          <text
-            x={x}
-            y={height + 18}
-            textAnchor="middle"
-            className="fill-muted-foreground text-[10px]"
-          >
+          <text x={x} y={height + 18} textAnchor="middle" className="fill-muted-foreground text-[10px]">
             {formatLabel(data[i]?.date)}
           </text>
         </g>
@@ -124,8 +112,31 @@ export default function AccountingDashboard() {
     };
   }, [load]);
 
+  const menuCards = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <Link href="/dashboard/accounting" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
+        <h2 className="text-lg font-semibold">ダッシュボード</h2>
+        <p className="text-sm text-muted-foreground">売上推移・時間帯・ランキングを閲覧</p>
+      </Link>
+      <Link
+        href="/accounting/sales"
+        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition"
+      >
+        <h2 className="text-lg font-semibold">売上入力</h2>
+        <p className="text-sm text-muted-foreground">手動入力で金額と日時を登録</p>
+      </Link>
+      <Link
+        href="/dashboard/accounting#ranking"
+        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition"
+      >
+        <h2 className="text-lg font-semibold">ランキング</h2>
+        <p className="text-sm text-muted-foreground">メニュー別売上トップを確認</p>
+      </Link>
+    </div>
+  );
+
   const timeSlotEntries = useMemo(() => {
-    const hours = [11, 12, 13, 14, 15, 16]; // 営業時間 11:00-16:59 を1時間刻みで表示
+    const hours = [11, 12, 13, 14, 15, 16];
     if (!summary?.timeSlots) return hours.map((h) => [String(h), 0] as [string, number]);
     return hours.map((h) => [String(h), summary.timeSlots[String(h)] ?? 0] as [string, number]);
   }, [summary]);
@@ -189,6 +200,8 @@ export default function AccountingDashboard() {
         </div>
       </div>
 
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">{menuCards}</div>
+
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         {summary && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -205,7 +218,7 @@ export default function AccountingDashboard() {
             <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
               <p className="text-sm text-muted-foreground mb-2">累計売上</p>
               <div className="text-3xl font-bold text-foreground">¥{summary.totalAmount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">原価率試算：{summary.costRate.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">原価率：{summary.costRate.toFixed(1)}%</p>
             </div>
           </div>
         )}
@@ -254,20 +267,15 @@ export default function AccountingDashboard() {
                       <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
                         <p className="text-xs text-muted-foreground mb-1">{hour}</p>
                         <div className="h-24 flex items-end">
-                          <div
-                            className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md"
-                            style={{ height: `${Math.min(100, ratio)}%` }}
-                          />
+                          <div className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md" style={{ height: `${Math.min(100, ratio)}%` }} />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          ¥{Math.round(amount).toLocaleString()} / {ratio.toFixed(1)}%
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">¥{Math.round(amount).toLocaleString()} / {ratio.toFixed(1)}%</p>
                       </div>
                     );
                   })}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  棒の高さは時間帯別の最大値を100%として比較しています（合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
+                  棒の高さは時間帯別の最大値を100%として比べています（合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
                 </p>
               </div>
             )}
@@ -339,7 +347,7 @@ export default function AccountingDashboard() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4" id="ranking">
               <h2 className="text-xl font-semibold">メニュー別 売上ランキング</h2>
               <span className="text-sm text-muted-foreground">TOP 10</span>
             </div>
@@ -348,10 +356,7 @@ export default function AccountingDashboard() {
             ) : (
               <div className="space-y-3">
                 {summary.productRanking.map((p, idx) => (
-                  <div
-                    key={p.productId}
-                    className="flex items-center gap-3 bg-muted/40 border border-border rounded-xl p-3"
-                  >
+                  <div key={p.productId} className="flex items-center gap-3 bg-muted/40 border border-border rounded-xl p-3">
                     <span className="text-sm font-semibold w-6 text-right">{idx + 1}.</span>
                     <div className="flex-1">
                       <div className="font-semibold">{p.name}</div>
