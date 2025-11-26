@@ -84,6 +84,7 @@ const hexToRgb = (hex: string) => {
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
   const [homeIconUrl, setHomeIconUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState('MERRILY');
@@ -134,6 +135,16 @@ export default function Home() {
     []
   );
 
+  // 画面幅でモバイル判定（ボタンはhidden md:flexなのでPCのみ表示）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -142,14 +153,18 @@ export default function Home() {
       document.documentElement.classList.toggle('dark', next);
       applyColors(next, themeColors);
     };
-    applyTheme(media.matches);
-    const handleChange = (event: MediaQueryListEvent) => {
-      if (hasManualPreference) return;
-      applyTheme(event.matches);
-    };
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
-  }, [hasManualPreference, applyColors, themeColors]);
+
+    if (isMobile) {
+      // モバイル: デバイス設定に従う（ボタン非表示）
+      applyTheme(media.matches);
+      const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches);
+      media.addEventListener('change', handleChange);
+      return () => media.removeEventListener('change', handleChange);
+    }
+
+    // PC: デバイス設定は無視し、現在のisDarkを適用（ボタンで切替）
+    applyTheme(isDark);
+  }, [isMobile, isDark, applyColors, themeColors]);
 
   const applyUiSettings = useCallback(
     (ui: any, shouldPersist = true) => {
