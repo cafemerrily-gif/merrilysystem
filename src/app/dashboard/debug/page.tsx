@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 export default function DebugDashboard() {
+  useUiTheme();
   const [endpoint, setEndpoint] = useState('/api/health');
   const [method, setMethod] = useState('GET');
   const [payload, setPayload] = useState('{\n  "ping": true\n}');

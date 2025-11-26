@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Attendance = {
   id: number;
@@ -14,6 +15,7 @@ type Attendance = {
 };
 
 export default function StaffDashboard() {
+  useUiTheme();
   const [records, setRecords] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

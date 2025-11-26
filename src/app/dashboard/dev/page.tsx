@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 export default function DevDashboardPlaceholder() {
+  useUiTheme();
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <div className="max-w-4xl w-full p-8 bg-card border border-border rounded-2xl shadow-lg space-y-6">
@@ -38,7 +40,7 @@ export default function DevDashboardPlaceholder() {
             <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
               <li>リリース計画・進捗</li>
               <li>障害/バグ対応件数</li>
-              <li>パフォーマンス指標など</li>
+              <li>パフォーマンス目標 など</li>
             </ul>
           </div>
         </div>

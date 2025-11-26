@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Daily = { date: string; total: number };
 type Monthly = { month: string; total: number };
@@ -98,6 +99,7 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 }
 
 export default function AccountingDashboard() {
+  useUiTheme();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
