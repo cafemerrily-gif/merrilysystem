@@ -330,6 +330,22 @@ export default function Home() {
     }
   }, [themeColors, isDark, applyColors]);
 
+  // アップロードしたアイコンをそのままホーム画面アイコンに反映
+  useEffect(() => {
+    if (!appIconUrl || typeof document === 'undefined') return;
+    const ensureLink = (rel: string) => {
+      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        document.head.appendChild(link);
+      }
+      link.href = appIconUrl;
+    };
+    ensureLink('icon');
+    ensureLink('apple-touch-icon');
+  }, [appIconUrl]);
+
   const currentHeader = {
     background: isDark
       ? uiSettingsRaw.headerBgDark || uiSettingsRaw.headerBackground || headerColors.background
