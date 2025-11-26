@@ -10,10 +10,7 @@ export default function DevMenu() {
         <p className="text-sm text-muted-foreground">メニュー管理など開発部向けの入口です。</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link
-          href="/dashboard/dev"
-          className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm"
-        >
+        <Link href="/dashboard/dev" className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm">
           <p className="text-sm text-muted-foreground mb-1">メニュー管理</p>
           <h2 className="text-lg font-semibold">カテゴリ・フォルダ・商品を管理</h2>
         </Link>
