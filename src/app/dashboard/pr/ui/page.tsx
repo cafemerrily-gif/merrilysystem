@@ -54,6 +54,66 @@ const defaultColors: UiColors = {
   dark: { background: '#0b1220', border: '#1f2937', foreground: '#e5e7eb' },
 };
 
+// 初期から選べるプリセット（必要に応じて上書き保存可）
+const defaultPresets = [
+  {
+    name: 'デフォルト（ダーク）',
+    appTitle: 'MERRILY',
+    loginIconUrl: '/MERRILY_Simbol.png',
+    appIconUrl: '/MERRILY_Simbol.png',
+    lightBackground: '#f8fafc',
+    lightBorder: '#e2e8f0',
+    lightForeground: '#0f172a',
+    darkBackground: '#0b1220',
+    darkBorder: '#1f2937',
+    darkForeground: '#e5e7eb',
+    headerBgLight: '#f8fafc',
+    headerFgLight: '#0f172a',
+    headerBgDark: '#0b1220',
+    headerFgDark: '#e5e7eb',
+    cardBgLight: '#ffffff',
+    cardFgLight: '#0f172a',
+    cardBorderLight: '#e2e8f0',
+    cardBgDark: '#0b1220',
+    cardFgDark: '#e5e7eb',
+    cardBorderDark: '#1f2937',
+  },
+  {
+    name: 'ライト（グリーン）',
+    appTitle: 'MERRILY',
+    lightBackground: '#f6fff8',
+    lightBorder: '#cfe8d7',
+    lightForeground: '#0f172a',
+    darkBackground: '#0b1220',
+    darkBorder: '#1f2937',
+    darkForeground: '#e5e7eb',
+    headerBgLight: '#ecfdf3',
+    headerFgLight: '#0f172a',
+    cardBgLight: '#ffffff',
+    cardFgLight: '#0f172a',
+    cardBorderLight: '#cfe8d7',
+    welcomeBgLight: '#ffffff',
+    welcomeFgLight: '#0f172a',
+  },
+  {
+    name: 'モノトーン',
+    appTitle: 'MERRILY',
+    lightBackground: '#f5f5f5',
+    lightBorder: '#d4d4d4',
+    lightForeground: '#111827',
+    darkBackground: '#0f172a',
+    darkBorder: '#1f2937',
+    darkForeground: '#e5e7eb',
+    headerBgLight: '#ffffff',
+    headerFgLight: '#111827',
+    cardBgLight: '#ffffff',
+    cardFgLight: '#111827',
+    cardBorderLight: '#d4d4d4',
+    welcomeBgLight: '#ffffff',
+    welcomeFgLight: '#111827',
+  },
+];
+
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
@@ -91,7 +151,12 @@ export default function UiEditor() {
         setHomeIconUrl(ui.homeIconUrl || ui.appIconUrl || '/MERRILY_Simbol.png');
         setWelcomeTitleText(ui.welcomeTitleText || welcomeTitleText);
         setWelcomeBodyText(ui.welcomeBodyText || welcomeBodyText);
-        setPresets(ui.presets || parsedLocalPresets || []);
+        const mergedPresets = (ui.presets && ui.presets.length ? ui.presets : parsedLocalPresets) || [];
+        const mergedWithDefaults = [...defaultPresets, ...mergedPresets].reduce((acc: any[], curr: any) => {
+          if (!acc.some((p) => p.name === curr.name)) acc.push(curr);
+          return acc;
+        }, []);
+        setPresets(mergedWithDefaults);
         setColors({
           light: {
             background: ui.lightBackground || defaultColors.light.background,
