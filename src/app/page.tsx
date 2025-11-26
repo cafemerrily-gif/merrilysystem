@@ -456,6 +456,7 @@ export default function Home() {
                   <button
                     onClick={toggleTheme}
                     className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                    style={{ color: currentCard.foreground || undefined }}
                   >
                     テーマ切替
                   </button>
@@ -464,6 +465,7 @@ export default function Home() {
                       <Link
                         href="/profile"
                         className="block px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                        style={{ color: currentCard.foreground || undefined }}
                         onClick={() => setShowMenu(false)}
                       >
                         プロフィール
@@ -471,6 +473,7 @@ export default function Home() {
                       <Link
                         href="/admin/users"
                         className="block px-3 py-2 rounded-lg hover:bg-muted text-sm"
+                        style={{ color: currentCard.foreground || undefined }}
                         onClick={() => setShowMenu(false)}
                       >
                         メンバー管理
