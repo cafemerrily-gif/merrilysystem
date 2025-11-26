@@ -34,7 +34,11 @@ export default function SalesInputPage() {
   const [activeCollections, setActiveCollections] = useState<CollectionWithProducts[]>([]);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [saleTime, setSaleTime] = useState(() => new Date().toTimeString().split(' ')[0].substring(0, 5));
+  const [saleTime, setSaleTime] = useState(() => {
+    const h = new Date().getHours();
+    return `${String(h).padStart(2, '0')}:00`;
+  });
+  const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`), []);
   const [loading, setLoading] = useState(false);
   const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
 
@@ -205,13 +209,17 @@ export default function SalesInputPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">時間</label>
-              <input
-                type="time"
+              <select
                 value={saleTime}
                 onChange={(e) => setSaleTime(e.target.value)}
-                step={3600}
                 className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-              />
+              >
+                {hours.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="text-sm text-muted-foreground">

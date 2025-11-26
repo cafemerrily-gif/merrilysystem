@@ -57,7 +57,7 @@ const defaultColors: UiColors = {
 // 初期から選べるプリセット（必要に応じて上書き保存可）
 const defaultPresets = [
   {
-    name: 'デフォルト（ダーク）',
+    name: 'ダークベース',
     appTitle: 'MERRILY',
     loginIconUrl: '/MERRILY_Simbol.png',
     appIconUrl: '/MERRILY_Simbol.png',
@@ -74,12 +74,16 @@ const defaultPresets = [
     cardBgLight: '#ffffff',
     cardFgLight: '#0f172a',
     cardBorderLight: '#e2e8f0',
-    cardBgDark: '#0b1220',
+    cardBgDark: '#0f172a',
     cardFgDark: '#e5e7eb',
     cardBorderDark: '#1f2937',
+    welcomeBgLight: '#ffffff',
+    welcomeFgLight: '#0f172a',
+    welcomeBgDark: '#0f172a',
+    welcomeFgDark: '#e5e7eb',
   },
   {
-    name: 'ライト（グリーン）',
+    name: 'ライト&グリーン',
     appTitle: 'MERRILY',
     lightBackground: '#f6fff8',
     lightBorder: '#cfe8d7',
@@ -111,6 +115,23 @@ const defaultPresets = [
     cardBorderLight: '#d4d4d4',
     welcomeBgLight: '#ffffff',
     welcomeFgLight: '#111827',
+  },
+  {
+    name: 'ウォームベージュ',
+    appTitle: 'MERRILY',
+    lightBackground: '#fdf7f2',
+    lightBorder: '#e8d9c7',
+    lightForeground: '#2d1f10',
+    darkBackground: '#1a1410',
+    darkBorder: '#2a221c',
+    darkForeground: '#f1e4d7',
+    headerBgLight: '#fff7ed',
+    headerFgLight: '#2d1f10',
+    cardBgLight: '#ffffff',
+    cardFgLight: '#2d1f10',
+    cardBorderLight: '#e8d9c7',
+    welcomeBgLight: '#fff7ed',
+    welcomeFgLight: '#2d1f10',
   },
 ];
 
@@ -426,6 +447,9 @@ export default function UiEditor() {
     const snapshot = snapshotSettings();
     const next = [...presets.filter((p) => p.name !== presetName.trim()), { name: presetName.trim(), ...snapshot }];
     setPresets(next);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ui-presets', JSON.stringify(next));
+    }
     setPresetName('');
     setMessage('プリセットを保存しました（UI設定の保存も行ってください）');
   };
