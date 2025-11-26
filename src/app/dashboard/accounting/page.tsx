@@ -27,9 +27,6 @@ type Summary = {
   prevMonthSales: number;
   lastYearMonthSales: number;
   costRate: number;
-  customerCount: number | null;
-  averageSpend: number | null;
-
 };
 
 const timeSlotLabels: Record<string, string> = {
@@ -137,10 +134,6 @@ export default function AccountingDashboard() {
     return Object.values(summary.timeSlots).reduce((a, b) => a + b, 0);
   }, [summary]);
 
-  const customerCount = summary?.customerCount ?? null;
-  const averageSpend =
-    summary?.averageSpend ?? (customerCount ? (summary?.todayTotal ?? 0) / customerCount : null);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -164,7 +157,7 @@ export default function AccountingDashboard() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">会計部</h1>
-              <p className="text-sm text-muted-foreground">売上・時間帯別やランキングを確認</p>
+              <p className="text-sm text-muted-foreground">売上・時間帯別・ランキングを確認</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -187,34 +180,24 @@ export default function AccountingDashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         {summary && (
-          <div className="bg-card border border-border rounded-2xl p-5 shadow-lg grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">今日の客数</p>
-              <div className="text-3xl font-bold text-foreground">
-                {summary.customerCount !== null ? `${summary.customerCount.toLocaleString()} 人` : 'データなし'}
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
+              <p className="text-sm text-muted-foreground mb-2">今日の売上</p>
+              <div className="text-3xl font-bold text-foreground">¥{summary.todayTotal.toLocaleString()}</div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">客単価</p>
-              <div className="text-3xl font-bold text-foreground">
-                {summary.customerCount && summary.customerCount > 0
-                  ? `¥${Math.round((summary.todayTotal || 0) / summary.customerCount).toLocaleString()}`
-                  : '計算不可'}
-              </div>
-              <p className="text-xs text-muted-foreground">客単価 = 今日の売上 ÷ 客数</p>
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
+              <p className="text-sm text-muted-foreground mb-2">今月の売上</p>
+              <div className="text-3xl font-bold text-foreground">¥{summary.currentMonthSales.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">前月比 {formatRatio(summary.currentMonthSales, summary.prevMonthSales)}</p>
+              <p className="text-xs text-muted-foreground">前年同月比 {formatRatio(summary.currentMonthSales, summary.lastYearMonthSales)}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">累計客単価</p>
-              <div className="text-3xl font-bold text-foreground">
-                {summary.customerCount && summary.customerCount > 0
-                  ? `¥${Math.round(summary.totalAmount / summary.customerCount).toLocaleString()}`
-                  : '計算不可'}
-              </div>
-              <p className="text-xs text-muted-foreground">総売上 ÷ 総客数</p>
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
+              <p className="text-sm text-muted-foreground mb-2">累計売上</p>
+              <div className="text-3xl font-bold text-foreground">¥{summary.totalAmount.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">原価率試算：{summary.costRate.toFixed(1)}%</p>
             </div>
           </div>
         )}
-
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
@@ -227,7 +210,7 @@ export default function AccountingDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">月次推移（カーブ表示）</h2>
+              <h2 className="text-xl font-semibold">月次推移</h2>
               <span className="text-sm text-muted-foreground">直近6か月</span>
             </div>
             {!summary?.monthlySales?.length ? (
@@ -258,7 +241,7 @@ export default function AccountingDashboard() {
                     <div key={slot} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{timeSlotLabels[slot] || slot}</span>
-                        <span className="text-muted-foreground">\{amount.toLocaleString()} ({ratio.toFixed(1)}%)</span>
+                        <span className="text-muted-foreground">¥{amount.toLocaleString()} ({ratio.toFixed(1)}%)</span>
                       </div>
                       <div className="h-3 rounded-full bg-muted">
                         <div
@@ -275,9 +258,78 @@ export default function AccountingDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+            <h2 className="text-xl font-semibold">詳細分析</h2>
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">時間帯別 売上バー</p>
+              {summary?.timeSlots ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {Object.entries(summary.timeSlots).map(([slot, value]) => (
+                    <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">{timeSlotLabels[slot] || slot}</p>
+                      <div className="h-20 flex items-end">
+                        <div
+                          className="w-full bg-primary/70 rounded-t-md"
+                          style={{ height: Math.min(100, value / Math.max(1, summary.todayTotal || value) * 100) + '%' }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">¥{Math.round(value).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">データなし</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">日次移動平均（7日）</p>
+              {summary?.dailySales?.length ? (
+                <SmoothLineChart
+                  data={summary.dailySales.slice(-30).map((d, idx, arr) => {
+                    const start = Math.max(0, idx - 6);
+                    const slice = arr.slice(start, idx + 1);
+                    const avg = slice.reduce((s, v) => s + v.total, 0) / slice.length;
+                    return { date: d.date, total: Math.round(avg) };
+                  })}
+                  height={180}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">データなし</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">月次成長率</p>
+              {summary?.monthlySales?.length ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {summary.monthlySales
+                    .sort((a, b) => (a.month > b.month ? 1 : -1))
+                    .slice(-6)
+                    .map((m, idx, arr) => {
+                      const prev = idx > 0 ? arr[idx - 1].total : null;
+                      const growth = prev ? ((m.total - prev) / prev) * 100 : null;
+                      return (
+                        <div key={m.month} className="bg-muted/40 rounded-xl p-3 border border-border">
+                          <p className="text-xs text-muted-foreground mb-1">{m.month}</p>
+                          <p className="text-sm font-semibold">¥{m.total.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {growth !== null ? `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%` : 'N/A'}
+                          </p>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">データなし</p>
+              )}
+            </div>
+          </div>
+
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">メニュー別売上ランキング</h2>
+              <h2 className="text-xl font-semibold">メニュー別 売上ランキング</h2>
               <span className="text-sm text-muted-foreground">TOP 10</span>
             </div>
             {!summary?.productRanking?.length ? (
@@ -297,38 +349,13 @@ export default function AccountingDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold">\{p.revenue.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">粗利 \{p.profit.toLocaleString()}</div>
+                      <div className="text-sm font-bold">¥{p.revenue.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">粗利 ¥{p.profit.toLocaleString()}</div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-3">
-            <h2 className="text-xl font-semibold">客数と客単価</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-muted/40 rounded-xl p-4 border border-border">
-                <p className="text-xs text-muted-foreground">客数</p>
-                <p className="text-2xl font-bold">
-                  {customerCount !== null ? `${customerCount.toLocaleString()}` : 'データなし'}
-                </p>
-              </div>
-              <div className="bg-muted/40 rounded-xl p-4 border border-border">
-                <p className="text-xs text-muted-foreground">客単価</p>
-                <p className="text-2xl font-bold">
-                  {averageSpend !== null ? `¥${Math.round(averageSpend).toLocaleString()}` : '計算不可'}
-                </p>
-              </div>
-            </div>
-            <div className="bg-muted/40 rounded-xl p-4 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">原価率（試算）</p>
-              <p className="text-2xl font-bold">{summary?.costRate.toFixed(1)}%</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                原価率が高止まりしていないかを確認してください。
-              </p>
-            </div>
           </div>
         </div>
       </div>
