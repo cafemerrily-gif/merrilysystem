@@ -103,6 +103,8 @@ export default function Home() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [salesSummary, setSalesSummary] = useState<SalesSummary>({ todayTotal: 0, currentMonthSales: 0, totalAmount: 0 });
   const [loadingSales, setLoadingSales] = useState(true);
+  const [quickStartKeys, setQuickStartKeys] = useState<string[]>([]);
+  const [quickStartEditing, setQuickStartEditing] = useState(false);
   const [themeColors, setThemeColors] = useState<UiColors | null>(null);
   const [headerColors, setHeaderColors] = useState<UiHeader>({ background: '', foreground: '' });
   const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
@@ -344,6 +346,28 @@ export default function Home() {
     loadSales();
   }, [loadLogs, loadNotifications, loadBlogs, loadSales]);
 
+  // QuickStart: 全員に表示。編集は管理者のみ。localStorage に保存し、見える項目だけを採用
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('quickstart-config') : null;
+    const parsed: string[] = stored ? JSON.parse(stored) : [];
+    // visibleなnavだけに絞り、無ければデフォルト6件
+    const visibleHrefs = visibleNavItems.map((n) => n.href);
+    const filtered = parsed.filter((href) => visibleHrefs.includes(href));
+    const fallback = visibleNavItems.slice(0, 6).map((n) => n.href);
+    setQuickStartKeys(filtered.length ? filtered : fallback);
+  }, [visibleNavItems]);
+
+  const toggleQuickStartKey = (href: string) => {
+    setQuickStartKeys((prev) => (prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]));
+  };
+
+  const saveQuickStart = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('quickstart-config', JSON.stringify(quickStartKeys));
+    }
+    setQuickStartEditing(false);
+  };
+
   useEffect(() => {
     const handler = () => {
       if (document.visibilityState === 'visible') {
@@ -564,55 +588,71 @@ export default function Home() {
           </div>
         </section>
 
-        {/* クイックスタート */}
+        {/* クイックスタート（表示は全員、編集は管理者のみ） */}
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">クイックスタート</h3>
-            <span className="text-xs text-muted-foreground">よく使うページへショートカット</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>よく使うページへショートカット</span>
+              {isAdmin && (
+                quickStartEditing ? (
+                  <>
+                    <button
+                      className="px-3 py-1 rounded-lg border border-border hover:border-accent"
+                      onClick={saveQuickStart}
+                    >
+                      保存
+                    </button>
+                    <button
+                      className="px-3 py-1 rounded-lg border border-border hover:border-accent"
+                      onClick={() => setQuickStartEditing(false)}
+                    >
+                      キャンセル
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="px-3 py-1 rounded-lg border border-border hover:border-accent"
+                    onClick={() => setQuickStartEditing(true)}
+                  >
+                    編集
+                  </button>
+                )
+              )}
+            </div>
           </div>
+
+          {quickStartEditing && isAdmin && (
+            <div className="border border-border rounded-xl p-3 space-y-2 bg-muted/30">
+              <p className="text-xs text-muted-foreground">表示するクイックスタートを選択（可視メニューのみ）</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {visibleNavItems.map((item) => (
+                  <label key={item.href} className="flex items-center gap-2 text-sm border border-border rounded-lg p-2 bg-background hover:border-accent">
+                    <input
+                      type="checkbox"
+                      checked={quickStartKeys.includes(item.href)}
+                      onChange={() => toggleQuickStartKey(item.href)}
+                    />
+                    <span>{item.title}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Link
-              href="/dashboard/accounting"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">会計部</p>
-              <p className="text-base font-semibold">売上ダッシュボード</p>
-            </Link>
-            <Link
-              href="/accounting/sales"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">会計部</p>
-              <p className="text-base font-semibold">売上入力</p>
-            </Link>
-            <Link
-              href="/admin/menu"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">開発部</p>
-              <p className="text-base font-semibold">メニュー管理</p>
-            </Link>
-            <Link
-              href="/dashboard/pr"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">広報部</p>
-              <p className="text-base font-semibold">広報ダッシュボード</p>
-            </Link>
-            <Link
-              href="/dashboard/staff"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">店舗スタッフ</p>
-              <p className="text-base font-semibold">勤怠ダッシュボード</p>
-            </Link>
-            <Link
-              href="/dashboard/debug"
-              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
-            >
-              <p className="text-sm text-muted-foreground">エンジニア</p>
-              <p className="text-base font-semibold">デバッグツール</p>
-            </Link>
+            {visibleNavItems
+              .filter((item) => quickStartKeys.includes(item.href))
+              .map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+                >
+                  <p className="text-sm text-muted-foreground">{item.subtitle}</p>
+                  <p className="text-base font-semibold">{item.title}</p>
+                </Link>
+              ))}
           </div>
         </div>
 

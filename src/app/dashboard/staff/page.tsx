@@ -138,7 +138,7 @@ export default function StaffDashboard() {
   }, [load]);
 
   const menuCards = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
       <Link href="/dashboard/staff" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
         <h2 className="text-lg font-semibold">勤怠ダッシュボード</h2>
         <p className="text-sm text-muted-foreground">出勤・退勤の記録と履歴を確認</p>
@@ -159,6 +159,10 @@ export default function StaffDashboard() {
         <h2 className="text-lg font-semibold">{submitting ? '処理中...' : '退勤を記録'}</h2>
         <p className="text-sm text-muted-foreground">未退勤レコードに現在時刻で退勤を記録</p>
       </button>
+      <div className="p-4 rounded-2xl border border-dashed border-border bg-muted/30">
+        <h2 className="text-lg font-semibold">今後追加するメニュー</h2>
+        <p className="text-sm text-muted-foreground">シフト管理や連絡事項などを予定しています。</p>
+      </div>
     </div>
   );
 

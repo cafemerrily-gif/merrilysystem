@@ -33,7 +33,7 @@ type Summary = {
 const formatRatio = (current: number, previous: number) => {
   if (!previous) return 'N/A';
   const diff = ((current - previous) / previous) * 100;
-  const sign = diff > 0 ? '+ ' : '';
+  const sign = diff > 0 ? '+' : '';
   return `${sign}${diff.toFixed(1)}%`;
 };
 
@@ -66,7 +66,14 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 
   return (
     <svg viewBox={`0 0 ${width} ${height + labelArea}`} className="w-full h-52">
-      <path d={path} fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={path}
+        fill="none"
+        stroke="hsl(var(--accent))"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       {points.map(([x, y], i) => (
         <g key={i}>
           <circle cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
@@ -113,7 +120,7 @@ export default function AccountingDashboard() {
   }, [load]);
 
   const menuCards = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
       <Link href="/dashboard/accounting" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
         <h2 className="text-lg font-semibold">ダッシュボード</h2>
         <p className="text-sm text-muted-foreground">売上推移・時間帯・ランキングを閲覧</p>
@@ -132,11 +139,15 @@ export default function AccountingDashboard() {
         <h2 className="text-lg font-semibold">ランキング</h2>
         <p className="text-sm text-muted-foreground">メニュー別売上トップを確認</p>
       </Link>
+      <div className="p-4 rounded-2xl border border-dashed border-border bg-muted/30">
+        <h2 className="text-lg font-semibold">今後追加するメニュー</h2>
+        <p className="text-sm text-muted-foreground">分析系の追加メニューをここに並べます。</p>
+      </div>
     </div>
   );
 
   const timeSlotEntries = useMemo(() => {
-    const hours = [11, 12, 13, 14, 15, 16];
+    const hours = [11, 12, 13, 14, 15, 16]; // 営業時間 11:00-16:59 を1時間刻みで表示
     if (!summary?.timeSlots) return hours.map((h) => [String(h), 0] as [string, number]);
     return hours.map((h) => [String(h), summary.timeSlots[String(h)] ?? 0] as [string, number]);
   }, [summary]);
@@ -356,7 +367,10 @@ export default function AccountingDashboard() {
             ) : (
               <div className="space-y-3">
                 {summary.productRanking.map((p, idx) => (
-                  <div key={p.productId} className="flex items-center gap-3 bg-muted/40 border border-border rounded-xl p-3">
+                  <div
+                    key={p.productId}
+                    className="flex items-center gap-3 bg-muted/40 border border-border rounded-xl p-3"
+                  >
                     <span className="text-sm font-semibold w-6 text-right">{idx + 1}.</span>
                     <div className="flex-1">
                       <div className="font-semibold">{p.name}</div>
