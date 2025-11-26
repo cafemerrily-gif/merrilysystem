@@ -134,6 +134,16 @@ export default function AccountingDashboard() {
     return Object.values(summary.timeSlots).reduce((a, b) => a + b, 0);
   }, [summary]);
 
+  const timeSlotEntries = useMemo(() => {
+    if (!summary?.timeSlots) return [];
+    return Object.entries(summary.timeSlots);
+  }, [summary]);
+
+  const maxTimeSlot = useMemo(() => {
+    if (!timeSlotEntries.length) return 0;
+    return Math.max(...timeSlotEntries.map(([, v]) => v));
+  }, [timeSlotEntries]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -235,23 +245,28 @@ export default function AccountingDashboard() {
               <p className="text-muted-foreground">データなし</p>
             ) : (
               <div className="space-y-3">
-                {Object.entries(summary.timeSlots).map(([slot, amount]) => {
-                  const ratio = timeSlotTotal ? (amount / timeSlotTotal) * 100 : 0;
-                  return (
-                    <div key={slot} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{timeSlotLabels[slot] || slot}</span>
-                        <span className="text-muted-foreground">¥{amount.toLocaleString()} ({ratio.toFixed(1)}%)</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {timeSlotEntries.map(([slot, amount]) => {
+                    const ratio = maxTimeSlot ? (amount / maxTimeSlot) * 100 : 0;
+                    return (
+                      <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">{timeSlotLabels[slot] || slot}</p>
+                        <div className="h-24 flex items-end">
+                          <div
+                            className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md"
+                            style={{ height: `${Math.min(100, ratio)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          ¥{Math.round(amount).toLocaleString()} / {ratio.toFixed(1)}%
+                        </p>
                       </div>
-                      <div className="h-3 rounded-full bg-muted">
-                        <div
-                          className="h-3 rounded-full bg-gradient-to-r from-primary to-accent"
-                          style={{ width: `${ratio}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  棒の高さは時間帯別の最大値を100%として相対比較しています（値は合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
+                </p>
               </div>
             )}
           </div>
