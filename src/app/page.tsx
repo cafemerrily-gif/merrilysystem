@@ -387,7 +387,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="w-full max-w-none mx-0 px-0 pb-16">
+      <main className="w-full max-w-none mx-0 px-0 pb-12">
         <header
           className="flex items-center justify-between py-4 px-0 sticky top-0 z-30"
           style={{
@@ -397,9 +397,9 @@ export default function Home() {
           }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
-              <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
-            </div>
+        <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
+          <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
+        </div>
             <div>
               <p
                 className="text-xs uppercase tracking-[0.2em]"
@@ -485,8 +485,8 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <section className="mb-6 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl mt-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6">
+        <section className="mb-4 p-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-primary/60 to-secondary/60 shadow-2xl mt-3">
           <div
             className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center"
             style={{
@@ -509,7 +509,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-6">
           <aside className="space-y-4">
             <div className="hidden lg:block text-sm text-muted-foreground mb-2">ダッシュボード</div>
             <div className="space-y-3">
