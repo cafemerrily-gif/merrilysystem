@@ -21,6 +21,21 @@ type NotificationItem = { id: number; title: string; detail: string | null; crea
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; image?: string; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
+const applyUiToDocument = (ui: any) => {
+  if (typeof document === 'undefined' || !ui) return;
+  const root = document.documentElement;
+  const bg = ui.lightBackground || '#f8fafc';
+  const fg = ui.lightForeground || '#0f172a';
+  const border = ui.lightBorder || '#e2e8f0';
+  const primary = ui.primary || fg;
+  const accent = ui.accent || fg;
+  root.style.setProperty('--background', bg);
+  root.style.setProperty('--foreground', fg);
+  root.style.setProperty('--border', border);
+  root.style.setProperty('--primary', primary);
+  root.style.setProperty('--accent', accent);
+};
+
 const navItems: NavItem[] = [
   { href: '/dashboard/staff/menu', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠管理メニュー', desc: '出勤・退勤の記録など', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
   { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '会計メニュー', desc: '売上ダッシュボード等へ', accent: '会計', requiredTags: ['会計部'] },
@@ -95,12 +110,13 @@ export default function Home() {
         setLoadingNotifications(false);
       }
     };
-    const loadBlogs = async () => {
+        const loadBlogs = async () => {
       try {
         setLoadingBlogs(true);
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         if (data?.uiSettings) {
+          applyUiToDocument(data.uiSettings);
           if (data.uiSettings.appIconUrl) setAppIconUrl(data.uiSettings.appIconUrl);
           if (data.uiSettings.appTitle) setAppTitle(data.uiSettings.appTitle);
         }
@@ -110,6 +126,16 @@ export default function Home() {
             .map((p: any) => {
               const images = Array.isArray(p.images) ? p.images : p.image ? [p.image] : [];
               return { ...p, images, author: p.author || '', image: images[0] || '' };
+            })
+            .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
+          setBlogPosts(sorted);
+        } else {
+          setBlogPosts([]);
+        }
+      } finally {
+        setLoadingBlogs(false);
+      }
+    };
             })
             .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
           setBlogPosts(sorted);
@@ -333,5 +359,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
