@@ -1,16 +1,25 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useUiTheme } from '@/hooks/useUiTheme';
 
-type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
+type BlogPost = {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  images: string[];
+  author?: string;
+};
+
 type Blog = { id: string; name: string; posts: BlogPost[] };
 
 export default function PrBlogsEditor() {
   useUiTheme();
   const supabase = createClientComponentClient();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cooldown, setCooldown] = useState(false);
@@ -46,27 +55,31 @@ export default function PrBlogsEditor() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const text = await res.text();
         const data = text ? JSON.parse(text) : null;
+
         if (data) {
           setPayload(data);
-          if (data.blogs && Array.isArray(data.blogs) && data.blogs.length > 0) {
+          if (Array.isArray(data.blogs) && data.blogs.length > 0) {
             const normalized = data.blogs.map((blog: any, idx: number) => ({
               id: blog.id || `blog-${idx + 1}`,
               name: blog.name || `ブログ${idx + 1}`,
-              posts: (blog.posts ?? []).map((p: any) => ({
-                ...p,
-                image: p.image || '',
+              posts: (blog.posts ?? []).map((p: any, pIdx: number) => ({
+                id: p.id || `post-${pIdx + 1}`,
+                title: p.title || 'タイトル未設定',
+                body: p.body || '',
+                date: p.date || new Date().toISOString().slice(0, 10),
+                images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
                 author: p.author || p.updated_by || meta?.full_name || '',
               })),
             }));
             setBlogs(normalized);
             setActiveBlogId(normalized[0]?.id ?? null);
           } else {
-            const fallbackPosts = (data.blogPosts ?? []).map((p: any, idx: number) => ({
+            const fallbackPosts: BlogPost[] = (data.blogPosts ?? []).map((p: any, idx: number) => ({
               id: p.id || `post-${idx + 1}`,
               title: p.title || 'タイトル未設定',
               body: p.body || '',
               date: p.date || new Date().toISOString().slice(0, 10),
-              image: p.image || '',
+              images: p.image ? [p.image] : [],
               author: p.author || meta?.full_name || '',
             }));
             const defaultBlog: Blog = { id: 'blog-1', name: '既存ブログ', posts: fallbackPosts };
@@ -111,14 +124,14 @@ export default function PrBlogsEditor() {
         title: '新しい記事',
         body: '',
         date: new Date().toISOString().slice(0, 10),
-        image: '',
+        images: [],
         author: userName || 'unknown',
       },
     ];
     setBlogs((prev) => prev.map((b) => (b.id === activeBlog.id ? { ...b, posts: nextPosts } : b)));
   };
 
-  const updateBlogPost = (postId: string, field: keyof BlogPost, value: string) => {
+  const updateBlogPost = (postId: string, field: keyof BlogPost, value: any) => {
     if (!activeBlog) return;
     const nextPosts = activeBlog.posts.map((p) => (p.id === postId ? { ...p, [field]: value } : p));
     setBlogs((prev) => prev.map((b) => (b.id === activeBlog.id ? { ...b, posts: nextPosts } : b)));
@@ -130,23 +143,32 @@ export default function PrBlogsEditor() {
     setBlogs((prev) => prev.map((b) => (b.id === activeBlog.id ? { ...b, posts: nextPosts } : b)));
   };
 
-  const handleUpload = async (postId: string, file?: File | null) => {
-    if (!file) return;
+  const removeImage = (postId: string, idx: number) => {
     if (!activeBlog) return;
+    const nextPosts = activeBlog.posts.map((p) =>
+      p.id === postId ? { ...p, images: p.images.filter((_, i) => i !== idx) } : p
+    );
+    setBlogs((prev) => prev.map((b) => (b.id === activeBlog.id ? { ...b, posts: nextPosts } : b)));
+  };
+
+  const handleUpload = async (postId: string, files?: FileList | null) => {
+    if (!files || files.length === 0 || !activeBlog) return;
     try {
       setUploading(true);
       setError(null);
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `blog-${postId}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('blog-images').upload(fileName, file, { upsert: true });
-      if (uploadError) {
-        setError(uploadError.message || 'アップロードに失敗しました');
-        return;
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const fileName = `blog-${postId}-${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('blog-images').upload(fileName, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from('blog-images').getPublicUrl(fileName);
+        urls.push(data.publicUrl);
       }
-      const { data: publicUrlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
-      const url = publicUrlData.publicUrl;
-      updateBlogPost(postId, 'image', url);
-      setInfo('画像をアップロードしました（保存して反映）');
+      const target = activeBlog.posts.find((p) => p.id === postId);
+      const nextImages = [...(target?.images ?? []), ...urls];
+      updateBlogPost(postId, 'images', nextImages);
+      setInfo('画像をアップロードしました（保存で反映）');
     } catch (e: any) {
       setError(e?.message || 'アップロードに失敗しました');
     } finally {
@@ -167,7 +189,7 @@ export default function PrBlogsEditor() {
         .sort((a, b) => (a.date > b.date ? -1 : 1))
         .map((p) => ({
           ...p,
-          image: p.image || '',
+          images: Array.isArray(p.images) ? p.images : [],
           author: p.author || userName || 'unknown',
         }));
 
@@ -181,6 +203,7 @@ export default function PrBlogsEditor() {
         setError(`保存に失敗しました(${res.status})`);
         return;
       }
+
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
       if (data?.error) {
@@ -192,35 +215,19 @@ export default function PrBlogsEditor() {
           const sortedBlogs = data.blogs.map((b: any, idx: number) => ({
             id: b.id || `blog-${idx + 1}`,
             name: b.name || `ブログ${idx + 1}`,
-            posts: (b.posts ?? []).map((p: any) => ({
-              ...p,
-              image: p.image || '',
+            posts: (b.posts ?? []).map((p: any, pIdx: number) => ({
+              id: p.id || `post-${pIdx + 1}`,
+              title: p.title || 'タイトル未設定',
+              body: p.body || '',
+              date: p.date || new Date().toISOString().slice(0, 10),
+              images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
               author: p.author || userName || '',
             })),
           }));
           setBlogs(sortedBlogs);
           setActiveBlogId(sortedBlogs[0]?.id ?? null);
         }
-        // 最新を再フェッチ
-        const refresh = await fetch('/api/pr/website', { cache: 'no-store' });
-        if (refresh.ok) {
-          const refreshText = await refresh.text();
-          const refreshData = refreshText ? JSON.parse(refreshText) : null;
-          if (refreshData?.blogs) {
-            const sortedBlogs = refreshData.blogs.map((b: any, idx: number) => ({
-              id: b.id || `blog-${idx + 1}`,
-              name: b.name || `ブログ${idx + 1}`,
-              posts: (b.posts ?? []).map((p: any) => ({
-                ...p,
-                image: p.image || '',
-                author: p.author || userName || '',
-              })),
-            }));
-            setBlogs(sortedBlogs);
-            setActiveBlogId(sortedBlogs[0]?.id ?? null);
-          }
-        }
-        await logClientActivity('広報: ブログを保存');
+        await logClientActivity('PR: ブログを保存');
       }
     } catch (e: any) {
       setError(e?.message || '保存に失敗しました');
@@ -247,7 +254,7 @@ export default function PrBlogsEditor() {
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg text-xl">📰</div>
             <div>
               <h1 className="text-2xl font-bold">広報 ブログ管理</h1>
-              <p className="text-sm text-muted-foreground">複数のブログを作成し、記事を管理できます</p>
+              <p className="text-sm text-muted-foreground">複数のブログを作成し、記事を管理できます。</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -314,7 +321,7 @@ export default function PrBlogsEditor() {
 
             <div className="space-y-3">
               {activeBlog.posts.map((post) => (
-                <div key={post.id} className="border border-border rounded-xl p-4 bg-muted/30 space-y-2">
+                <div key={post.id} className="border border-border rounded-xl p-4 bg-muted/30 space-y-3">
                   <div className="flex gap-2 flex-col sm:flex-row">
                     <input
                       value={post.title}
@@ -338,22 +345,31 @@ export default function PrBlogsEditor() {
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                     placeholder="執筆者"
                   />
-                  <input
-                    value={post.image || ''}
-                    onChange={(e) => updateBlogPost(post.id, 'image', e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                    placeholder="画像URL（任意）"
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    {(post.images || []).map((url, idx) => (
+                      <div key={`${post.id}-img-${idx}`} className="relative">
+                        <img src={url} alt={`${post.title}-${idx}`} className="h-20 w-28 object-cover rounded-lg border border-border" />
+                        <button
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 text-xs"
+                          onClick={() => removeImage(post.id, idx)}
+                          aria-label="削除"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-accent">
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         className="hidden"
-                        onChange={(e) => handleUpload(post.id, e.target.files?.[0])}
+                        onChange={(e) => handleUpload(post.id, e.target.files)}
                         disabled={uploading}
                       />
-                      <span>画像をアップロード</span>
+                      <span>画像をアップロード（複数可）</span>
                     </label>
                     {uploading && <span>アップロード中...</span>}
                   </div>
@@ -378,29 +394,24 @@ export default function PrBlogsEditor() {
           {blogs.map((blog) => (
             <div key={blog.id} className="space-y-2 border border-border rounded-xl p-3 bg-muted/30">
               <h3 className="text-lg font-semibold">{blog.name}</h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {blog.posts
                   .slice()
                   .sort((a, b) => (a.date > b.date ? -1 : 1))
                   .map((post) => (
-                    <div
-                      key={post.id}
-                      className="border border-border rounded-lg p-4 bg-card space-y-3 shadow-sm hover:shadow transition"
-                    >
+                    <div key={post.id} className="rounded-lg bg-card border border-border space-y-2 p-3">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
                         <span>{post.author || userName || '不明なユーザー'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
-                      {post.image ? (
-                        <div className="bg-background rounded-lg border border-border overflow-hidden">
-                          <img
-                            src={post.image}
-                            alt={post.title}
-                            className="w-full h-64 object-cover"
-                          />
+                      {(post.images || []).length > 0 && (
+                        <div className="space-y-3">
+                          {post.images.map((url, idx) => (
+                            <img key={`${post.id}-preview-${idx}`} src={url} alt={post.title} className="w-full max-h-[420px] object-contain rounded-lg" />
+                          ))}
                         </div>
-                      ) : null}
+                      )}
                       <p className="text-sm text-muted-foreground leading-relaxed">{post.body}</p>
                     </div>
                   ))}
