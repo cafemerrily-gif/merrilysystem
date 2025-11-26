@@ -209,6 +209,7 @@ export default function SalesInputPage() {
                 type="time"
                 value={saleTime}
                 onChange={(e) => setSaleTime(e.target.value)}
+                step={3600}
                 className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
               />
             </div>

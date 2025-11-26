@@ -67,7 +67,7 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 
   const formatLabel = (raw: string) => {
     if (!raw) return '';
-    return raw.length >= 10 ? raw.slice(5) : raw; // 日次はMM-DD、月次はYYYY-MM
+    return raw.length >= 10 ? raw.slice(5) : raw; // 日次:MM-DD / 月次:YYYY-MM
   };
 
   return (
@@ -123,26 +123,31 @@ export default function AccountingDashboard() {
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;
     load(true);
-    timer = setInterval(() => load(false), 30000); // 定期リフレッシュでグラフを自動反映
+    timer = setInterval(() => load(false), 30000);
     return () => {
       if (timer) clearInterval(timer);
     };
   }, [load]);
-
-  const timeSlotTotal = useMemo(() => {
-    if (!summary?.timeSlots) return 0;
-    return Object.values(summary.timeSlots).reduce((a, b) => a + b, 0);
-  }, [summary]);
 
   const timeSlotEntries = useMemo(() => {
     if (!summary?.timeSlots) return [];
     return Object.entries(summary.timeSlots);
   }, [summary]);
 
+  const timeSlotTotal = useMemo(() => {
+    if (!timeSlotEntries.length) return 0;
+    return timeSlotEntries.reduce((sum, [, v]) => sum + v, 0);
+  }, [timeSlotEntries]);
+
   const maxTimeSlot = useMemo(() => {
     if (!timeSlotEntries.length) return 0;
     return Math.max(...timeSlotEntries.map(([, v]) => v));
   }, [timeSlotEntries]);
+
+  const topDays = useMemo(() => {
+    if (!summary?.dailySales?.length) return [];
+    return [...summary.dailySales].sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [summary]);
 
   if (loading) {
     return (
@@ -241,7 +246,7 @@ export default function AccountingDashboard() {
               <h2 className="text-xl font-semibold">時間帯別売上</h2>
               <span className="text-sm text-muted-foreground">比率</span>
             </div>
-            {!summary?.timeSlots ? (
+            {!timeSlotEntries.length ? (
               <p className="text-muted-foreground">データなし</p>
             ) : (
               <div className="space-y-3">
@@ -265,7 +270,7 @@ export default function AccountingDashboard() {
                   })}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  棒の高さは時間帯別の最大値を100%として相対比較しています（値は合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
+                  棒の高さは時間帯別の最大値を100%として比較しています（合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
                 </p>
               </div>
             )}
@@ -275,28 +280,6 @@ export default function AccountingDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
             <h2 className="text-xl font-semibold">詳細分析</h2>
-
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">時間帯別 売上バー</p>
-              {summary?.timeSlots ? (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {Object.entries(summary.timeSlots).map(([slot, value]) => (
-                    <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
-                      <p className="text-xs text-muted-foreground mb-1">{timeSlotLabels[slot] || slot}</p>
-                      <div className="h-20 flex items-end">
-                        <div
-                          className="w-full bg-primary/70 rounded-t-md"
-                          style={{ height: Math.min(100, value / Math.max(1, summary.todayTotal || value) * 100) + '%' }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">¥{Math.round(value).toLocaleString()}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">データなし</p>
-              )}
-            </div>
 
             <div>
               <p className="text-sm text-muted-foreground mb-2">日次移動平均（7日）</p>
@@ -310,6 +293,22 @@ export default function AccountingDashboard() {
                   })}
                   height={180}
                 />
+              ) : (
+                <p className="text-sm text-muted-foreground">データなし</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">売上トップ日（直近30日）</p>
+              {topDays.length ? (
+                <div className="space-y-2">
+                  {topDays.map((d, i) => (
+                    <div key={d.date} className="flex items-center justify-between bg-muted/30 border border-border rounded-lg p-3">
+                      <span className="text-sm text-muted-foreground">#{i + 1} {d.date}</span>
+                      <span className="text-sm font-semibold text-foreground">¥{d.total.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">データなし</p>
               )}
