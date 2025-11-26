@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Section = { id: string; title: string; body: string };
 type MenuItem = { id: string; name: string; price: string; desc: string };
 type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
 
 export default function PrWebsiteEditor() {
+  useUiTheme();
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

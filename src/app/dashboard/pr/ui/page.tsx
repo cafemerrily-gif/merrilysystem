@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type UiColors = {
   light: { background: string; border: string; foreground: string };
@@ -165,6 +166,7 @@ const defaultPresets = [
 ];
 
 export default function UiEditor() {
+  useUiTheme();
   const supabase = createClientComponentClient();
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');

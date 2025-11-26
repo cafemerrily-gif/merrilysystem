@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Product = {
   id: number;
@@ -30,6 +31,7 @@ type RecentSale = {
 };
 
 export default function SalesInputPage() {
+  useUiTheme();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [activeCollections, setActiveCollections] = useState<CollectionWithProducts[]>([]);
   const [quantities, setQuantities] = useState<Record<number, number>>({});

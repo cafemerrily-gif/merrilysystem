@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
 type Blog = { id: string; name: string; posts: BlogPost[] };
 
 export default function PrBlogsEditor() {
+  useUiTheme();
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
