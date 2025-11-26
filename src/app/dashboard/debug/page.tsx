@@ -131,6 +131,9 @@ export default function DebugDashboard() {
                   <option>PUT</option>
                   <option>DELETE</option>
                 </select>
+                <p className="text-xs text-muted-foreground pt-1">
+                  GET=取得のみ / POST=新規・検索 / PUT=更新 / DELETE=削除 を目安に選びます。
+                </p>
               </label>
               {method !== 'GET' && (
                 <label className="text-sm text-muted-foreground space-y-1 block flex-1">
@@ -152,6 +155,9 @@ export default function DebugDashboard() {
                 rows={3}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono"
               />
+              <p className="text-xs text-muted-foreground pt-1">
+                例: Authorization: Bearer xxxxx, X-API-Key: your-key, Prefer: return=representation
+              </p>
             </label>
             <button
               onClick={runRequest}
