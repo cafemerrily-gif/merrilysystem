@@ -32,6 +32,14 @@ export default function PrDashboard() {
             UIを編集
           </Link>
         </div>
+        <div className="flex justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center px-4 py-2 bg-card text-foreground rounded-xl border border-border hover:border-accent text-sm"
+          >
+            ホームへ戻る
+          </Link>
+        </div>
         <p className="text-sm text-muted-foreground">配色・アイコンはホームで設定済みのものが適用されます。</p>
       </div>
     </div>
