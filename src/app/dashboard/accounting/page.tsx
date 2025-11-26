@@ -308,25 +308,20 @@ export default function AccountingDashboard() {
 
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-3">
             <h2 className="text-xl font-semibold">客数と客単価</h2>
-            {summary?.customerCount == null ? (
-              <div className="p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-xl text-sm text-yellow-900 dark:text-yellow-200">
-                客数データがスキーマに無いため計算できません。<br />
-                対応するには: sales テーブルに guest_count を追加し、入力フォームに項目を足してください。
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-muted/40 rounded-xl p-4 border border-border">
+                <p className="text-xs text-muted-foreground">客数</p>
+                <p className="text-2xl font-bold">
+                  {customerCount !== null ? `${customerCount.toLocaleString()}` : 'データなし'}
+                </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/40 rounded-xl p-4 border border-border">
-                  <p className="text-xs text-muted-foreground">客数</p>
-                  <p className="text-2xl font-bold">{summary.customerCount}</p>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-4 border border-border">
-                  <p className="text-xs text-muted-foreground">客単価</p>
-                  <p className="text-2xl font-bold">
-                    {summary.averageSpend !== null ? `\\${summary.averageSpend.toLocaleString()}` : 'N/A'}
-                  </p>
-                </div>
+              <div className="bg-muted/40 rounded-xl p-4 border border-border">
+                <p className="text-xs text-muted-foreground">客単価</p>
+                <p className="text-2xl font-bold">
+                  {averageSpend !== null ? `¥${Math.round(averageSpend).toLocaleString()}` : '計算不可'}
+                </p>
               </div>
-            )}
+            </div>
             <div className="bg-muted/40 rounded-xl p-4 border border-border">
               <p className="text-xs text-muted-foreground mb-1">原価率（試算）</p>
               <p className="text-2xl font-bold">{summary?.costRate.toFixed(1)}%</p>
