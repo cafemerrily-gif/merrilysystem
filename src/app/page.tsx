@@ -333,6 +333,3 @@ export default function Home() {
     </div>
   );
 }
-'@
-$newText=$text.Substring(0,$pos)+$new
-Set-Content -Path $path -Value $newText -Encoding UTF8
