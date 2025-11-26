@@ -14,9 +14,21 @@ export default function StaffMenu() {
           ホームへ戻る
         </Link>
       </div>
-      <div className="rounded-xl border border-border bg-card/50 p-6 text-center text-muted-foreground">
-        現在準備中です。必要な機能が決まり次第ここにメニューを配置します。
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          href="/dashboard/staff"
+          className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm"
+        >
+          <p className="text-sm text-muted-foreground mb-1">勤怠管理</p>
+          <h2 className="text-lg font-semibold">出勤・退勤を記録</h2>
+        </Link>
+        <div className="rounded-xl border border-border bg-card/50 p-4 shadow-sm">
+          <p className="text-sm text-muted-foreground mb-1">シフト管理</p>
+          <h2 className="text-lg font-semibold text-foreground">（準備中）</h2>
+          <p className="text-sm text-muted-foreground mt-2">シフト登録・確認機能をここに追加予定です。</p>
+        </div>
       </div>
     </div>
   );
 }
+
