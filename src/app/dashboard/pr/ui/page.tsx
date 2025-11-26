@@ -74,6 +74,10 @@ const defaultPresets = [
     headerUserColorLight: '#334155',
     headerBgDark: '#0b1220',
     headerFgDark: '#e5e7eb',
+    welcomeBgDark: '#0f172a',
+    welcomeFgDark: '#e5e7eb',
+    welcomeTitleColorDark: '#f8fafc',
+    welcomeBodyColorDark: '#cbd5e1',
     headerTitleColorDark: '#e5e7eb',
     headerSubtitleColorDark: '#cbd5e1',
     headerUserColorDark: '#cbd5e1',
@@ -107,6 +111,10 @@ const defaultPresets = [
     cardBorderLight: '#cfe8d7',
     welcomeBgLight: '#ffffff',
     welcomeFgLight: '#0f172a',
+    welcomeBgDark: '#0b1220',
+    welcomeFgDark: '#e5e7eb',
+    welcomeTitleColorDark: '#e5e7eb',
+    welcomeBodyColorDark: '#cbd5e1',
   },
   {
     name: 'モノトーン',
@@ -127,6 +135,10 @@ const defaultPresets = [
     cardBorderLight: '#d4d4d4',
     welcomeBgLight: '#ffffff',
     welcomeFgLight: '#111827',
+    welcomeBgDark: '#0f172a',
+    welcomeFgDark: '#e5e7eb',
+    welcomeTitleColorDark: '#e5e7eb',
+    welcomeBodyColorDark: '#cbd5e1',
   },
   {
     name: 'ウォームベージュ',
@@ -147,6 +159,10 @@ const defaultPresets = [
     cardBorderLight: '#e8d9c7',
     welcomeBgLight: '#fff7ed',
     welcomeFgLight: '#2d1f10',
+    welcomeBgDark: '#1a1410',
+    welcomeFgDark: '#f1e4d7',
+    welcomeTitleColorDark: '#f1e4d7',
+    welcomeBodyColorDark: '#e6d5c1',
   },
 ];
 
