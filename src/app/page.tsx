@@ -603,13 +603,22 @@ export default function Home() {
                         <span>{post.author || 'ブログ'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
-                      {post.images && post.images[0] ? (
-                        <img
-                          src={post.images[0]}
-                          alt={post.title}
-                          className="w-full rounded-lg border border-border object-contain max-h-64 bg-background mb-2"
-                        />
-                      ) : null}
+                      {(() => {
+                        const imgs = post.images && post.images.length > 0 ? post.images : post.image ? [post.image] : [];
+                        if (imgs.length === 0) return null;
+                        return (
+                          <div className="space-y-2 mb-2">
+                            {imgs.map((url: string, idx: number) => (
+                              <img
+                                key={`${post.id}-img-${idx}`}
+                                src={url}
+                                alt={post.title}
+                                className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
+                              />
+                            ))}
+                          </div>
+                        );
+                      })()}
                       <p className="text-muted-foreground line-clamp-2">{post.body}</p>
                     </div>
                   ))
