@@ -18,31 +18,89 @@ type NavItem = {
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
-type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; image?: string; author?: string };
+type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
-const applyUiToDocument = (ui: any) => {
-  if (typeof document === 'undefined' || !ui) return;
-  const root = document.documentElement;
-  const bg = ui.lightBackground || '#f8fafc';
-  const fg = ui.lightForeground || '#0f172a';
-  const border = ui.lightBorder || '#e2e8f0';
-  const primary = ui.primary || fg;
-  const accent = ui.accent || fg;
-  root.style.setProperty('--background', bg);
-  root.style.setProperty('--foreground', fg);
-  root.style.setProperty('--border', border);
-  root.style.setProperty('--primary', primary);
-  root.style.setProperty('--accent', accent);
-};
-
 const navItems: NavItem[] = [
-  { href: '/dashboard/staff/menu', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠管理メニュー', desc: '出勤・退勤の記録など', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
-  { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '会計メニュー', desc: '売上ダッシュボード等へ', accent: '会計', requiredTags: ['会計部'] },
-  { href: '/dashboard/dev/menu', icon: '🛠️', title: '開発部', subtitle: '開発メニュー', desc: 'メニュー管理など', accent: '開発', requiredTags: ['開発部'] },
-  { href: '/dashboard/pr/menu', icon: '📣', title: '広報部', subtitle: '広報メニュー', desc: 'ホームページ編集・ブログ', accent: '広報', requiredTags: ['広報部'] },
-  { href: '/dashboard/debug/menu', icon: '🐛', title: 'デバッグ', subtitle: 'デバッグメニュー', desc: 'テスト・API・ツール', accent: 'デバッグ', requiredTags: ['エンジニアチーム'] },
+  {
+    href: '/dashboard/staff/menu',
+    icon: '👥',
+    title: '店舗スタッフ',
+    subtitle: '勤怠・シフト',
+    desc: '出勤/退勤の記録とシフト確認',
+    accent: 'スタッフ',
+    requiredTags: ['店舗スタッフ'],
+  },
+  {
+    href: '/dashboard/accounting/menu',
+    icon: '📊',
+    title: '会計部',
+    subtitle: '会計メニュー',
+    desc: '売上ダッシュボードや入力',
+    accent: '会計',
+    requiredTags: ['会計部'],
+  },
+  {
+    href: '/dashboard/dev/menu',
+    icon: '🛠️',
+    title: '開発部',
+    subtitle: 'メニュー管理',
+    desc: 'カテゴリ/フォルダ/商品を管理',
+    accent: '開発',
+    requiredTags: ['開発部'],
+  },
+  {
+    href: '/dashboard/pr/menu',
+    icon: '📣',
+    title: '広報部',
+    subtitle: 'ホームページ編集',
+    desc: '配色・アイコン・ブログ編集',
+    accent: '広報',
+    requiredTags: ['広報部'],
+  },
+  {
+    href: '/dashboard/debug/menu',
+    icon: '🐛',
+    title: 'デバッグ',
+    subtitle: 'テスト/チェック',
+    desc: 'APIテストやヘルスチェック',
+    accent: 'デバッグ',
+    requiredTags: ['エンジニアチーム'],
+  },
 ];
+
+const applyUiToDocument = (ui: any, isDark: boolean) => {
+  if (typeof document === 'undefined' || !ui) return;
+  const light = {
+    background: ui.lightBackground || '#f8fafc',
+    foreground: ui.lightForeground || '#0f172a',
+    border: ui.lightBorder || '#e2e8f0',
+    cardBg: ui.cardBgLight || ui.cardBackground || '#ffffff',
+    cardFg: ui.cardFgLight || ui.cardForeground || '#0f172a',
+    cardBorder: ui.cardBorderLight || ui.cardBorder || '#e2e8f0',
+    muted: ui.mutedColorLight || ui.mutedColor || '#64748b',
+  };
+  const dark = {
+    background: ui.darkBackground || '#0b1220',
+    foreground: ui.darkForeground || '#e5e7eb',
+    border: ui.darkBorder || '#1f2937',
+    cardBg: ui.cardBgDark || ui.cardBackground || '#0f172a',
+    cardFg: ui.cardFgDark || ui.cardForeground || '#e5e7eb',
+    cardBorder: ui.cardBorderDark || ui.cardBorder || '#1f2937',
+    muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
+  };
+  const mode = isDark ? dark : light;
+  const root = document.documentElement;
+  root.style.setProperty('--background', mode.background);
+  root.style.setProperty('--foreground', mode.foreground);
+  root.style.setProperty('--border', mode.border);
+  root.style.setProperty('--card', mode.cardBg);
+  root.style.setProperty('--card-foreground', mode.cardFg);
+  root.style.setProperty('--muted', mode.muted);
+  root.style.setProperty('--muted-foreground', mode.cardFg);
+  root.style.setProperty('--accent', ui.accent || mode.foreground);
+  root.style.setProperty('--primary', ui.primary || mode.foreground);
+};
 
 export default function Home() {
   const supabase = createClientComponentClient();
@@ -59,6 +117,7 @@ export default function Home() {
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [loadingSales, setLoadingSales] = useState(true);
+  const [uiSettings, setUiSettings] = useState<any>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem('ui-is-dark');
@@ -68,6 +127,7 @@ export default function Home() {
   });
 
   const privileged = useMemo(() => ['職員', 'マネジメント部', 'エンジニアチーム'], []);
+
   const visibleNavItems = useMemo(() => {
     return navItems.filter((item) => {
       if (!item.requiredTags || item.requiredTags.length === 0) return true;
@@ -100,6 +160,7 @@ export default function Home() {
         setLoadingLogs(false);
       }
     };
+
     const loadNotifications = async () => {
       try {
         setLoadingNotifications(true);
@@ -110,23 +171,26 @@ export default function Home() {
         setLoadingNotifications(false);
       }
     };
-        const loadBlogs = async () => {
+
+    const loadBlogs = async () => {
       try {
         setLoadingBlogs(true);
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         if (data?.uiSettings) {
-          applyUiToDocument(data.uiSettings);
+          setUiSettings(data.uiSettings);
           if (data.uiSettings.appIconUrl) setAppIconUrl(data.uiSettings.appIconUrl);
           if (data.uiSettings.appTitle) setAppTitle(data.uiSettings.appTitle);
+          applyUiToDocument(data.uiSettings, isDark);
         }
         if (data?.blogPosts) {
           const sorted = data.blogPosts
             .slice()
-            .map((p: any) => {
-              const images = Array.isArray(p.images) ? p.images : p.image ? [p.image] : [];
-              return { ...p, images, author: p.author || '', image: images[0] || '' };
-            })
+            .map((p: any) => ({
+              ...p,
+              images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
+              author: p.author || '',
+            }))
             .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
           setBlogPosts(sorted);
         } else {
@@ -136,16 +200,7 @@ export default function Home() {
         setLoadingBlogs(false);
       }
     };
-            })
-            .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
-          setBlogPosts(sorted);
-        } else {
-          setBlogPosts([]);
-        }
-      } finally {
-        setLoadingBlogs(false);
-      }
-    };
+
     const loadSales = async () => {
       try {
         setLoadingSales(true);
@@ -167,12 +222,14 @@ export default function Home() {
     loadNotifications();
     loadBlogs();
     loadSales();
-  }, []);
+  }, [isDark]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
+    if (uiSettings) applyUiToDocument(uiSettings, isDark);
+    window.localStorage.setItem('ui-is-dark', isDark ? 'true' : 'false');
+  }, [isDark, uiSettings]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -185,7 +242,9 @@ export default function Home() {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cafe Management System</p>
               <h1 className="text-2xl font-bold">{appTitle}</h1>
-              <p className="text-sm text-muted-foreground">{userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}</p>
+              <p className="text-sm text-muted-foreground">
+                {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -264,7 +323,7 @@ export default function Home() {
           <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">最新ブログ</h3>
-              <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
+              <span className="text-xs text-muted-foreground">広報ページの投稿を表示</span>
             </div>
             <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
               {loadingBlogs ? (
@@ -272,31 +331,28 @@ export default function Home() {
               ) : blogPosts.length === 0 ? (
                 <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
               ) : (
-                blogPosts.map((post) => {
-                  const imgs = post.images && post.images.length > 0 ? post.images : post.image ? [post.image] : [];
-                  return (
-                    <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                        <span>{post.author || 'ブログ'}</span>
-                      </div>
-                      <p className="font-semibold text-foreground">{post.title}</p>
-                      {imgs.length > 0 ? (
-                        <div className="space-y-2 mb-2">
-                          {imgs.map((url: string, idx: number) => (
-                            <img
-                              key={`${post.id}-img-${idx}`}
-                              src={url}
-                              alt={post.title}
-                              className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                      <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                blogPosts.map((post) => (
+                  <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                      <span>{post.author || 'ブログ'}</span>
                     </div>
-                  );
-                })
+                    <p className="font-semibold text-foreground">{post.title}</p>
+                    {post.images && post.images.length > 0 ? (
+                      <div className="space-y-2 mb-2">
+                        {post.images.map((url, idx) => (
+                          <img
+                            key={`${post.id}-img-${idx}`}
+                            src={url}
+                            alt={post.title}
+                            className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                  </div>
+                ))
               )}
             </div>
             <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
@@ -359,6 +415,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
