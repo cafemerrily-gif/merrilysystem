@@ -510,6 +510,12 @@ export default function UiEditor() {
             <p className="text-muted-foreground text-sm">先にライト/ダークを選択し、そのモードの色を編集してください。</p>
           </div>
           <div className="flex gap-2">
+            <Link
+              href="/dashboard/pr/menu"
+              className="px-4 py-2 rounded-lg border border-border bg-card hover:border-accent"
+            >
+              広報トップへ
+            </Link>
             <button
               onClick={handleSave}
               disabled={saving}
@@ -517,12 +523,6 @@ export default function UiEditor() {
             >
               {saving ? '保存中...' : '保存'}
             </button>
-            <Link
-              href="/dashboard/pr"
-              className="px-4 py-2 rounded-lg border border-border bg-card hover:border-accent"
-            >
-              戻る
-            </Link>
           </div>
         </div>
 

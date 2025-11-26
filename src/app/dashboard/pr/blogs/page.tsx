@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -265,7 +265,7 @@ export default function PrBlogsEditor() {
             >
               {saving ? '保存中...' : '保存'}
             </button>
-            <Link href="/dashboard/pr" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
+            <Link href="/dashboard/pr/menu" className="px-4 py-2 rounded-xl border border-border bg-card hover:border-accent text-sm">
               広報部へ戻る
             </Link>
           </div>
