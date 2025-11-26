@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 export default function PrMenu() {
+  useUiTheme();
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
       <div className="flex items-center justify-between">
@@ -17,7 +19,7 @@ export default function PrMenu() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link href="/dashboard/pr/website" className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm">
           <p className="text-sm text-muted-foreground mb-1">ホームページ編集</p>
-          <h2 className="text-lg font-semibold">公式サイト・キャンペーン編集</h2>
+          <h2 className="text-lg font-semibold">トップ・ヘッダー・内容編集</h2>
         </Link>
         <Link href="/dashboard/pr/ui" className="rounded-xl border border-border bg-card hover:bg-muted transition p-4 shadow-sm">
           <p className="text-sm text-muted-foreground mb-1">UI編集</p>

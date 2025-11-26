@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useUiTheme } from '@/hooks/useUiTheme';
 
 export default function StaffMenu() {
+  useUiTheme();
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
       <div className="flex items-center justify-between">
