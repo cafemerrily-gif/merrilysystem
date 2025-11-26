@@ -186,6 +186,16 @@ export default function UiEditor() {
   const [error, setError] = useState<string | null>(null);
   const [basePayload, setBasePayload] = useState<any>({});
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const mode = colors[selectedMode];
+    document.documentElement.style.setProperty('--background', mode.background);
+    document.documentElement.style.setProperty('--foreground', mode.foreground);
+    document.documentElement.style.setProperty('--border', mode.border);
+    document.documentElement.style.setProperty('--primary', mode.foreground);
+    document.documentElement.style.setProperty('--accent', mode.foreground);
+  }, [colors, selectedMode]);
   const [presets, setPresets] = useState<any[]>([]);
   const [presetName, setPresetName] = useState('');
 
