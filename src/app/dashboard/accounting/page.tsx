@@ -29,6 +29,7 @@ type Summary = {
   costRate: number;
   customerCount: number | null;
   averageSpend: number | null;
+
 };
 
 const timeSlotLabels: Record<string, string> = {
@@ -136,6 +137,10 @@ export default function AccountingDashboard() {
     return Object.values(summary.timeSlots).reduce((a, b) => a + b, 0);
   }, [summary]);
 
+  const customerCount = summary?.customerCount ?? null;
+  const averageSpend =
+    summary?.averageSpend ?? (customerCount ? (summary?.todayTotal ?? 0) / customerCount : null);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -182,24 +187,34 @@ export default function AccountingDashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         {summary && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">今日の売上</p>
-              <div className="text-3xl font-bold text-foreground">\{summary.todayTotal.toLocaleString()}</div>
+          <div className="bg-card border border-border rounded-2xl p-5 shadow-lg grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">今日の客数</p>
+              <div className="text-3xl font-bold text-foreground">
+                {summary.customerCount !== null ? `${summary.customerCount.toLocaleString()} 人` : 'データなし'}
+              </div>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">今月の売上</p>
-              <div className="text-3xl font-bold text-foreground">\{summary.currentMonthSales.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">前月比 {formatRatio(summary.currentMonthSales, summary.prevMonthSales)}</p>
-              <p className="text-xs text-muted-foreground">前年同月比 {formatRatio(summary.currentMonthSales, summary.lastYearMonthSales)}</p>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">客単価</p>
+              <div className="text-3xl font-bold text-foreground">
+                {summary.customerCount && summary.customerCount > 0
+                  ? `¥${Math.round((summary.todayTotal || 0) / summary.customerCount).toLocaleString()}`
+                  : '計算不可'}
+              </div>
+              <p className="text-xs text-muted-foreground">客単価 = 今日の売上 ÷ 客数</p>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">累計売上</p>
-              <div className="text-3xl font-bold text-foreground">\{summary.totalAmount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">原価率（試算） {summary.costRate.toFixed(1)}%</p>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">累計客単価</p>
+              <div className="text-3xl font-bold text-foreground">
+                {summary.customerCount && summary.customerCount > 0
+                  ? `¥${Math.round(summary.totalAmount / summary.customerCount).toLocaleString()}`
+                  : '計算不可'}
+              </div>
+              <p className="text-xs text-muted-foreground">総売上 ÷ 総客数</p>
             </div>
           </div>
         )}
+
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
