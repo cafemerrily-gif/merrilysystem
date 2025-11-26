@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
 
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
-type BlogPost = { id: string; title: string; body: string; date: string; image?: string; author?: string };
+type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; image?: string; author?: string };
 type UiColors = {
   light: { background: string; border: string; foreground: string };
   dark: { background: string; border: string; foreground: string };
@@ -297,7 +297,10 @@ export default function Home() {
       if (data?.blogPosts) {
         const sorted = data.blogPosts
           .slice()
-          .map((p: any) => ({ ...p, author: p.author || '' }))
+          .map((p: any) => {
+            const images = Array.isArray(p.images) ? p.images : p.image ? [p.image] : [];
+            return { ...p, images, author: p.author || '', image: images[0] || '' };
+          })
           .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
         setBlogPosts(sorted);
       } else setBlogPosts([]);
@@ -600,7 +603,13 @@ export default function Home() {
                         <span>{post.author || 'ブログ'}</span>
                       </div>
                       <p className="font-semibold text-foreground">{post.title}</p>
-                      {post.image ? <img src={post.image} alt={post.title} className="w-full rounded-lg border border-border object-contain max-h-64 bg-background mb-2" /> : null}
+                      {post.images && post.images[0] ? (
+                        <img
+                          src={post.images[0]}
+                          alt={post.title}
+                          className="w-full rounded-lg border border-border object-contain max-h-64 bg-background mb-2"
+                        />
+                      ) : null}
                       <p className="text-muted-foreground line-clamp-2">{post.body}</p>
                     </div>
                   ))
