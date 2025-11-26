@@ -125,9 +125,9 @@ export default function AccountingDashboard() {
   }, [load]);
 
   const timeSlotEntries = useMemo(() => {
-    if (!summary?.timeSlots) return [];
-    // 時間キーを昇順（0-23）でソートし、1時間刻みの棒を生成
-    return Object.entries(summary.timeSlots).sort(([a], [b]) => parseInt(a) - parseInt(b));
+    const hours = [11, 12, 13, 14, 15, 16]; // 営業時間 11:00-16:59 を1時間刻みで表示
+    if (!summary?.timeSlots) return hours.map((h) => [String(h), 0] as [string, number]);
+    return hours.map((h) => [String(h), summary.timeSlots[String(h)] ?? 0] as [string, number]);
   }, [summary]);
 
   const timeSlotTotal = useMemo(() => {
