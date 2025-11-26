@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -162,354 +162,126 @@ export default function Home() {
     const update = () => setIsMobile(mq.matches);
     update();
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const applyTheme = (next: boolean) => {
-      setIsDark(next);
-      document.documentElement.classList.toggle('dark', next);
-      applyColors(next, themeColors);
-    };
-
-    if (isMobile) {
-      // モバイル: デバイス設定に従う（ボタン非表示）
-      applyTheme(media.matches);
-      const handleChange = (event: MediaQueryListEvent) => applyTheme(event.matches);
-      media.addEventListener('change', handleChange);
-      return () => media.removeEventListener('change', handleChange);
-    }
-
-    // PC: デバイス設定は無視し、現在のisDarkを適用（ボタンで切替）
-    applyTheme(isDark);
-  }, [isMobile, isDark, applyColors, themeColors]);
-
-  const applyUiSettings = useCallback(
-    (ui: any, shouldPersist = true) => {
-      if (!ui) return;
-      setUiSettingsRaw(ui);
-      if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
-        if (ui.appTitle) setAppTitle(ui.appTitle);
-        if (ui.homeIconUrl) setHomeIconUrl(ui.homeIconUrl);
-      if (ui.headerBackground || ui.headerForeground) {
-        setHeaderColors({
-          background: ui.headerBackground || '',
-          foreground: ui.headerForeground || '',
-        });
-      }
-      if (ui.mutedColor) {
-        setMutedColor({ color: ui.mutedColor });
-      }
-      if (ui.cardBackground || ui.cardForeground || ui.cardBorder) {
-        setCardColors({
-          background: ui.cardBackground || '',
-          foreground: ui.cardForeground || '',
-          border: ui.cardBorder || '',
-        });
-      }
-      if (ui.welcomeBackground || ui.welcomeForeground || ui.welcomeBorder) {
-        setWelcomeColors({
-          background: ui.welcomeBackground || '',
-          foreground: ui.welcomeForeground || '',
-          border: ui.welcomeBorder || '',
-        });
-      }
-      setHeaderTextColors({
-        title: ui.headerTitleColorLight || ui.headerTitleColorDark || '',
-        subtitle: ui.headerSubtitleColorLight || ui.headerSubtitleColorDark || '',
-        user: ui.headerUserColorLight || ui.headerUserColorDark || '',
-      });
-      setWelcomeTextColors({
-        title: ui.welcomeTitleColorLight || ui.welcomeTitleColorDark || '',
-        body: ui.welcomeBodyColorLight || ui.welcomeBodyColorDark || '',
-      });
-      setWelcomeTextContent({
-        title: ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました',
-        body: ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。',
-      });
-      const themes = {
-        light: {
-          background: ui.lightBackground || '#f8fafc',
-          border: ui.lightBorder || '#e2e8f0',
-          foreground: ui.lightForeground || '#0f172a',
-        },
-        dark: {
-          background: ui.darkBackground || '#0b1220',
-          border: ui.darkBorder || '#1f2937',
-          foreground: ui.darkForeground || '#e5e7eb',
-        },
-      };
-      setThemeColors(themes);
-      applyColors(isDark, themes);
-      if (shouldPersist && typeof window !== 'undefined') {
-        window.localStorage.setItem('ui-settings-cache', JSON.stringify(ui));
-      }
-    },
-    [applyColors, isDark]
-  );
-
-  // ローカルキャッシュを即適用してフラッシュを抑える
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-    const cached = window.localStorage.getItem('ui-settings-cache');
-    if (!cached) return;
-    try {
-      const ui = JSON.parse(cached);
-      applyUiSettings(ui, false);
-    } catch (e) {
-      console.error('UI cache parse error', e);
-    }
-  }, [applyUiSettings]);
-
-  // ユーザー情報取得
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const meta = data.user?.user_metadata;
-      if (meta?.full_name) setUserName(meta.full_name);
-      if (Array.isArray(meta?.departments)) setUserDepartments(meta.departments);
-      if (meta?.is_admin === true || meta?.role === 'admin') setIsAdmin(true);
-    })();
-  }, [supabase]);
-
-  const loadLogs = useCallback(async () => {
-    try {
-      setLoadingLogs(true);
-      const res = await fetch('/api/logs');
-      const data = await res.json();
-      if (!data.error) {
-        const sorted = data.slice().sort((a: any, b: any) => (a.created_at > b.created_at ? -1 : 1));
-        setLogs(sorted);
-      }
-    } catch (e) {
-      console.error('ログ取得エラー', e);
-    } finally {
-      setLoadingLogs(false);
-    }
-  }, []);
-
-  const loadNotifications = useCallback(async () => {
-    try {
-      setLoadingNotifications(true);
-      const res = await fetch('/api/notifications');
-      const data = await res.json();
-      if (!data.error) setNotifications(data);
-    } catch (e) {
-      console.error('通知取得エラー', e);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  }, []);
-
-  const loadBlogs = useCallback(async () => {
-    try {
-      setLoadingBlogs(true);
-      const res = await fetch('/api/pr/website', { cache: 'no-store' });
-      const data = await res.json();
-      if (data?.blogPosts) {
-        const sorted = data.blogPosts
-          .slice()
-          .map((p: any) => {
-            const images = Array.isArray(p.images) ? p.images : p.image ? [p.image] : [];
-            return { ...p, images, author: p.author || '', image: images[0] || '' };
-          })
-          .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
-        setBlogPosts(sorted);
-      } else setBlogPosts([]);
-      if (data?.uiSettings) {
-        applyUiSettings(data.uiSettings, true);
-      }
-    } catch (e) {
-      console.error('ブログ取得エラー', e);
-      setBlogPosts([]);
-    } finally {
-      setLoadingBlogs(false);
-    }
-  }, [applyUiSettings]);
-
-  const loadSales = useCallback(async () => {
-    try {
-      setLoadingSales(true);
-      const res = await fetch('/api/analytics/sales', { cache: 'no-store' });
-      const data = await res.json();
-      if (!data.error) {
-        setSalesSummary({
-          todayTotal: Number(data.todayTotal || 0),
-          currentMonthSales: Number(data.currentMonthSales || 0),
-          totalAmount: Number(data.totalAmount || 0),
-        });
-      }
-    } catch (e) {
-      console.error('売上サマリー取得エラー', e);
-    } finally {
-      setLoadingSales(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadLogs();
-    loadNotifications();
-    loadBlogs();
-    loadSales();
-  }, [loadLogs, loadNotifications, loadBlogs, loadSales]);
-
-  // QuickStart: 全員に表示。編集は管理者のみ。localStorage に保存し、見える項目だけを採用
-  useEffect(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('quickstart-config') : null;
-    const parsed: string[] = stored ? JSON.parse(stored) : [];
-    // visibleなnavだけに絞り、無ければデフォルト6件
-    const visibleHrefs = visibleNavItems.map((n) => n.href);
-    const filtered = parsed.filter((href) => visibleHrefs.includes(href));
-    const fallback = visibleNavItems.slice(0, 6).map((n) => n.href);
-    setQuickStartKeys(filtered.length ? filtered : fallback);
-  }, [visibleNavItems]);
-
-  const toggleQuickStartKey = (href: string) => {
-    setQuickStartKeys((prev) => (prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]));
-  };
-
-  const saveQuickStart = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('quickstart-config', JSON.stringify(quickStartKeys));
-    }
-    setQuickStartEditing(false);
-  };
-
-  useEffect(() => {
-    const handler = () => {
-      if (document.visibilityState === 'visible') {
-        loadLogs();
-        loadNotifications();
-        loadBlogs();
-      }
-    };
-    document.addEventListener('visibilitychange', handler);
-    return () => document.removeEventListener('visibilitychange', handler);
-  }, [loadLogs, loadNotifications, loadBlogs]);
-            <div
-                          <div
-              className="rounded-2xl p-6 shadow-lg border"
-              style={{
-                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
-                color: currentCard.foreground || undefined,
-                borderColor: currentCard.border || undefined,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">最新ブログ</h3>
-                <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
-              </div>
-              <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
-                {loadingBlogs ? (
-                  <p className="text-muted-foreground">読み込み中...</p>
-                ) : blogPosts.length === 0 ? (
-                  <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
-                ) : (
-                  blogPosts.map((post) => {
-                    const imgs = post.images && post.images.length > 0 ? post.images : post.image ? [post.image] : [];
-                    return (
-                      <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                          <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                          <span>{post.author || 'ブログ'}</span>
-                        </div>
-                        <p className="font-semibold text-foreground">{post.title}</p>
-                        {imgs.length > 0 ? (
-                          <div className="space-y-2 mb-2">
-                            {imgs.map((url: string, idx: number) => (
-                              <img
-                                key={`${post.id}-img-${idx}`}
-                                src={url}
-                                alt={post.title}
-                                className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                        <p className="text-muted-foreground line-clamp-2">{post.body}</p>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
-            </div>
-
-            <div
-              className="rounded-2xl p-6 shadow-lg border"
-              style={{
-                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
-                color: currentCard.foreground || undefined,
-                borderColor: currentCard.border || undefined,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">操作ログ</h3>
-                <span className="text-xs text-muted-foreground">最新50件</span>
-              </div>
-              <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1 scrollbar-thin">
-                {loadingLogs ? (
-                  <p className="text-muted-foreground">読み込み中...</p>
-                ) : logs.length === 0 ? (
-                  <p className="text-muted-foreground">ログはまだありません。</p>
-                ) : (
-                  logs.map((log) => (
-                    <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
-                      <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('ja-JP')}</p>
-                        <p className="text-foreground">
-                          <span className="font-semibold">{log.user_name || '不明なユーザー'}</span>：{log.message}
-                        </p>
-                      </div>
+    return (
+  <div className="min-h-screen bg-background text-foreground">
+    <main className="max-w-6xl mx-auto px-4 pb-12">
+      <section className="space-y-6 mt-4">
+        <div
+          className="rounded-2xl p-6 shadow-lg border"
+          style={{
+            backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
+            color: currentCard.foreground || undefined,
+            borderColor: currentCard.border || undefined,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">最新ブログ</h3>
+            <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
+          </div>
+          <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+            {loadingBlogs ? (
+              <p className="text-muted-foreground">読み込み中...</p>
+            ) : blogPosts.length === 0 ? (
+              <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
+            ) : (
+              blogPosts.map((post) => {
+                const imgs = post.images && post.images.length > 0 ? post.images : post.image ? [post.image] : [];
+                return (
+                  <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
+                      <span>{post.author || 'ブログ'}</span>
                     </div>
-                  ))
-                )}
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
-            </div>
-
-            <div
-              className="rounded-2xl p-6 shadow-lg border"
-              style={{
-                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
-                color: currentCard.foreground || undefined,
-                borderColor: currentCard.border || undefined,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">通知</h3>
-                <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>
-              </div>
-              <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1 scrollbar-thin">
-                {loadingNotifications ? (
-                  <p className="text-muted-foreground">読み込み中...</p>
-                ) : notifications.length === 0 ? (
-                  <p className="text-muted-foreground">通知はまだありません。</p>
-                ) : (
-                  notifications.map((n) => (
-                    <div key={n.id} className="border border-border rounded-lg p-3 bg-muted/30">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>{new Date(n.created_at).toLocaleString('ja-JP')}</span>
-                        <span>通知</span>
+                    <p className="font-semibold text-foreground">{post.title}</p>
+                    {imgs.length > 0 ? (
+                      <div className="space-y-2 mb-2">
+                        {imgs.map((url: string, idx: number) => (
+                          <img
+                            key={`${post.id}-img-${idx}`}
+                            src={url}
+                            alt={post.title}
+                            className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
+                          />
+                        ))}
                       </div>
-                      <p className="font-semibold text-foreground">{n.title}</p>
-                      <p className="text-muted-foreground">{n.detail || ''}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
-            </div></section>
+                    ) : null}
+                    <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
+        </div>
 
+        <div
+          className="rounded-2xl p-6 shadow-lg border"
+          style={{
+            backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
+            color: currentCard.foreground || undefined,
+            borderColor: currentCard.border || undefined,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">操作ログ</h3>
+            <span className="text-xs text-muted-foreground">最新50件</span>
+          </div>
+          <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1 scrollbar-thin">
+            {loadingLogs ? (
+              <p className="text-muted-foreground">読み込み中...</p>
+            ) : logs.length === 0 ? (
+              <p className="text-muted-foreground">ログはまだありません。</p>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
+                  <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('ja-JP')}</p>
+                    <p className="text-foreground">
+                      <span className="font-semibold">{log.user_name || '不明なユーザー'}</span>：{log.message}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
         </div>
+
+        <div
+          className="rounded-2xl p-6 shadow-lg border"
+          style={{
+            backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
+            color: currentCard.foreground || undefined,
+            borderColor: currentCard.border || undefined,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">通知</h3>
+            <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>
+          </div>
+          <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+            {loadingNotifications ? (
+              <p className="text-muted-foreground">読み込み中...</p>
+            ) : notifications.length === 0 ? (
+              <p className="text-muted-foreground">通知はまだありません。</p>
+            ) : (
+              notifications.map((n) => (
+                <div key={n.id} className="border border-border rounded-lg p-3 bg-muted/30">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>{new Date(n.created_at).toLocaleString('ja-JP')}</span>
+                    <span>通知</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{n.title}</p>
+                  <p className="text-muted-foreground">{n.detail || ''}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
         </div>
-      </main>
-    </div>
-  );
+      </section>
+    </main>
+  </div>
+);
 }
-
-
-
