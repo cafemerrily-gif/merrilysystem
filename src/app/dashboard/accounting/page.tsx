@@ -30,13 +30,6 @@ type Summary = {
   costRate: number;
 };
 
-const timeSlotLabels: Record<string, string> = {
-  morning: 'モーニング',
-  lunch: 'ランチ',
-  afternoon: '午後',
-  evening: '夜',
-};
-
 const formatRatio = (current: number, previous: number) => {
   if (!previous) return 'N/A';
   const diff = ((current - previous) / previous) * 100;
@@ -133,7 +126,8 @@ export default function AccountingDashboard() {
 
   const timeSlotEntries = useMemo(() => {
     if (!summary?.timeSlots) return [];
-    return Object.entries(summary.timeSlots);
+    // 時間キーを昇順（0-23）でソートし、1時間刻みの棒を生成
+    return Object.entries(summary.timeSlots).sort(([a], [b]) => parseInt(a) - parseInt(b));
   }, [summary]);
 
   const timeSlotTotal = useMemo(() => {
@@ -246,18 +240,19 @@ export default function AccountingDashboard() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">時間帯別売上</h2>
-              <span className="text-sm text-muted-foreground">比率</span>
+              <span className="text-sm text-muted-foreground">1時間刻み</span>
             </div>
             {!timeSlotEntries.length ? (
               <p className="text-muted-foreground">データなし</p>
             ) : (
               <div className="space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                   {timeSlotEntries.map(([slot, amount]) => {
                     const ratio = maxTimeSlot ? (amount / maxTimeSlot) * 100 : 0;
+                    const hour = Number.isFinite(Number(slot)) ? `${String(parseInt(slot)).padStart(2, '0')}:00` : slot;
                     return (
                       <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
-                        <p className="text-xs text-muted-foreground mb-1">{timeSlotLabels[slot] || slot}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{hour}</p>
                         <div className="h-24 flex items-end">
                           <div
                             className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md"
