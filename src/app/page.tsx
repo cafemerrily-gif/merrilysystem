@@ -564,37 +564,56 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 各部ダッシュボードへのメニューカード（タップで遷移） */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {visibleNavItems.map((item) => (
+        {/* クイックスタート */}
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">クイックスタート</h3>
+            <span className="text-xs text-muted-foreground">よく使うページへショートカット</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <Link
-              key={item.href}
-              href={item.href}
-              className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
-              style={{
-                backgroundColor: currentCard.background || undefined,
-                color: currentCard.foreground || undefined,
-                borderColor: currentCard.border || undefined,
-              }}
+              href="/dashboard/accounting"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
-                  <span aria-hidden>{item.icon}</span>
-                </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-foreground leading-tight">{item.title}</h2>
-                  <p className="text-xs text-muted-foreground">{item.subtitle}</p>
-                  <p className="text-[11px] text-muted-foreground line-clamp-1">{item.desc}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-primary text-xs font-semibold">
-                <span>{item.accent}</span>
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
+              <p className="text-sm text-muted-foreground">会計部</p>
+              <p className="text-base font-semibold">売上ダッシュボード</p>
             </Link>
-          ))}
+            <Link
+              href="/accounting/sales"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+            >
+              <p className="text-sm text-muted-foreground">会計部</p>
+              <p className="text-base font-semibold">売上入力</p>
+            </Link>
+            <Link
+              href="/admin/menu"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+            >
+              <p className="text-sm text-muted-foreground">開発部</p>
+              <p className="text-base font-semibold">メニュー管理</p>
+            </Link>
+            <Link
+              href="/dashboard/pr"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+            >
+              <p className="text-sm text-muted-foreground">広報部</p>
+              <p className="text-base font-semibold">広報ダッシュボード</p>
+            </Link>
+            <Link
+              href="/dashboard/staff"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+            >
+              <p className="text-sm text-muted-foreground">店舗スタッフ</p>
+              <p className="text-base font-semibold">勤怠ダッシュボード</p>
+            </Link>
+            <Link
+              href="/dashboard/debug"
+              className="p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow transition"
+            >
+              <p className="text-sm text-muted-foreground">エンジニア</p>
+              <p className="text-base font-semibold">デバッグツール</p>
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col lg:grid lg:grid-cols-[320px,1fr] gap-6">
