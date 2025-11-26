@@ -32,6 +32,14 @@ const defaultBase: Record<ModeKey, BaseColors> = {
   dark: { background: '#0b1220', backgroundAlpha: 1, backgroundGradient: '', border: '#1f2937', foreground: '#e5e7eb' },
 };
 
+const gradientOptions = [
+  { label: 'なし', value: '' },
+  { label: 'Night sky', value: 'linear-gradient(135deg, #0b1220, #1f2937)' },
+  { label: 'Sunset', value: 'linear-gradient(135deg, #ff8a00, #e52e71)' },
+  { label: 'Mint', value: 'linear-gradient(135deg, #a8ff78, #78ffd6)' },
+  { label: 'Ocean', value: 'linear-gradient(135deg, #00c6ff, #0072ff)' },
+];
+
 const defaultModeValues: ModeValues = {
   header: {
     bg: '#0b1220',
@@ -592,8 +600,7 @@ export default function UiEditor() {
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               グラデーション (linear-gradient など)
-              <input
-                type="text"
+              <select
                 value={currentBase.backgroundGradient}
                 onChange={(e) =>
                   setBaseColors((c) => ({
@@ -602,8 +609,13 @@ export default function UiEditor() {
                   }))
                 }
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                placeholder="linear-gradient(135deg, #0b1220, #1f2937)"
-              />
+              >
+                {gradientOptions.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               枠線色

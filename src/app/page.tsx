@@ -121,6 +121,7 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--muted-foreground', mode.cardFg);
   root.style.setProperty('--accent', ui.accent || mode.foreground);
   root.style.setProperty('--primary', ui.primary || mode.foreground);
+  root.classList.toggle('dark', isDark);
 };
 
 export default function Home() {
@@ -200,9 +201,9 @@ export default function Home() {
         const data = await res.json();
         if (data?.uiSettings) {
           setUiSettings(data.uiSettings);
+          applyUiToDocument(data.uiSettings, isDark);
           if (data.uiSettings.appIconUrl) setAppIconUrl(data.uiSettings.appIconUrl);
           if (data.uiSettings.appTitle) setAppTitle(data.uiSettings.appTitle);
-          applyUiToDocument(data.uiSettings, isDark);
         }
         if (data?.blogPosts) {
           const sorted = data.blogPosts
@@ -249,7 +250,9 @@ export default function Home() {
     if (typeof document === 'undefined') return;
     document.documentElement.classList.toggle('dark', isDark);
     if (uiSettings) applyUiToDocument(uiSettings, isDark);
-    window.localStorage.setItem('ui-is-dark', isDark ? 'true' : 'false');
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ui-is-dark', isDark ? 'true' : 'false');
+    }
   }, [isDark, uiSettings]);
 
   return (
