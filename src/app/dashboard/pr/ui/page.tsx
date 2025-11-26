@@ -78,6 +78,8 @@ export default function UiEditor() {
   const [loading, setLoading] = useState(true);
   const [basePayload, setBasePayload] = useState<any>({});
   const [uploading, setUploading] = useState(false);
+  const [presets, setPresets] = useState<any[]>([]);
+  const [presetName, setPresetName] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -159,6 +161,8 @@ export default function UiEditor() {
             },
           },
         });
+        const loadedPresets = ui.presets && Array.isArray(ui.presets) ? ui.presets : [];
+        setPresets(loadedPresets);
         setBasePayload(data || {});
       } catch (e: any) {
         setError(e?.message || '設定の取得に失敗しました');
@@ -268,6 +272,153 @@ export default function UiEditor() {
   const currentBase = baseColors[selectedMode];
   const currentSection = sections[selectedMode];
 
+  const makePreset = () => ({
+    name: presetName || `プリセット${presets.length + 1}`,
+    appTitle,
+    welcomeTitleText: welcomeTitle,
+    welcomeBodyText: welcomeBody,
+    loginIconUrl,
+    appIconUrl,
+    homeIconUrl,
+    lightBackground: baseColors.light.background,
+    lightBackgroundAlpha: baseColors.light.backgroundAlpha,
+    lightBackgroundGradient: baseColors.light.backgroundGradient,
+    lightBorder: baseColors.light.border,
+    lightForeground: baseColors.light.foreground,
+    darkBackground: baseColors.dark.background,
+    darkBackgroundAlpha: baseColors.dark.backgroundAlpha,
+    darkBackgroundGradient: baseColors.dark.backgroundGradient,
+    darkBorder: baseColors.dark.border,
+    darkForeground: baseColors.dark.foreground,
+    headerBgLight: sections.light.header.bg,
+    headerBgAlphaLight: sections.light.header.bgAlpha,
+    headerFgLight: sections.light.header.fg,
+    headerBorderLight: sections.light.header.border,
+    headerTitleColorLight: sections.light.header.title,
+    headerSubtitleColorLight: sections.light.header.subtitle,
+    headerUserColorLight: sections.light.header.user,
+    headerBgDark: sections.dark.header.bg,
+    headerBgAlphaDark: sections.dark.header.bgAlpha,
+    headerFgDark: sections.dark.header.fg,
+    headerBorderDark: sections.dark.header.border,
+    headerTitleColorDark: sections.dark.header.title,
+    headerSubtitleColorDark: sections.dark.header.subtitle,
+    headerUserColorDark: sections.dark.header.user,
+    welcomeBgLight: sections.light.welcome.bg,
+    welcomeBgAlphaLight: sections.light.welcome.bgAlpha,
+    welcomeFgLight: sections.light.welcome.fg,
+    welcomeBorderLight: sections.light.welcome.border,
+    welcomeTitleColorLight: sections.light.welcome.title,
+    welcomeBodyColorLight: sections.light.welcome.body,
+    welcomeBgDark: sections.dark.welcome.bg,
+    welcomeBgAlphaDark: sections.dark.welcome.bgAlpha,
+    welcomeFgDark: sections.dark.welcome.fg,
+    welcomeBorderDark: sections.dark.welcome.border,
+    welcomeTitleColorDark: sections.dark.welcome.title,
+    welcomeBodyColorDark: sections.dark.welcome.body,
+    cardBgLight: sections.light.card.bg,
+    cardBgAlphaLight: sections.light.card.bgAlpha,
+    cardFgLight: sections.light.card.fg,
+    cardBorderLight: sections.light.card.border,
+    cardBgDark: sections.dark.card.bg,
+    cardBgAlphaDark: sections.dark.card.bgAlpha,
+    cardFgDark: sections.dark.card.fg,
+    cardBorderDark: sections.dark.card.border,
+  });
+
+  const applyPreset = (p: any) => {
+    if (!p) return;
+    setAppTitle(p.appTitle || appTitle);
+    setWelcomeTitle(p.welcomeTitleText || welcomeTitle);
+    setWelcomeBody(p.welcomeBodyText || welcomeBody);
+    setLoginIconUrl(p.loginIconUrl || loginIconUrl);
+    setAppIconUrl(p.appIconUrl || appIconUrl);
+    setHomeIconUrl(p.homeIconUrl || homeIconUrl);
+    setBaseColors({
+      light: {
+        background: p.lightBackground || baseColors.light.background,
+        backgroundAlpha: p.lightBackgroundAlpha ?? baseColors.light.backgroundAlpha,
+        backgroundGradient: p.lightBackgroundGradient || baseColors.light.backgroundGradient,
+        border: p.lightBorder || baseColors.light.border,
+        foreground: p.lightForeground || baseColors.light.foreground,
+      },
+      dark: {
+        background: p.darkBackground || baseColors.dark.background,
+        backgroundAlpha: p.darkBackgroundAlpha ?? baseColors.dark.backgroundAlpha,
+        backgroundGradient: p.darkBackgroundGradient || baseColors.dark.backgroundGradient,
+        border: p.darkBorder || baseColors.dark.border,
+        foreground: p.darkForeground || baseColors.dark.foreground,
+      },
+    });
+    setSections({
+      light: {
+        header: {
+          bg: p.headerBgLight || sections.light.header.bg,
+          bgAlpha: p.headerBgAlphaLight ?? sections.light.header.bgAlpha,
+          fg: p.headerFgLight || sections.light.header.fg,
+          border: p.headerBorderLight || sections.light.header.border,
+          title: p.headerTitleColorLight || sections.light.header.title,
+          subtitle: p.headerSubtitleColorLight || sections.light.header.subtitle,
+          user: p.headerUserColorLight || sections.light.header.user,
+        },
+        welcome: {
+          bg: p.welcomeBgLight || sections.light.welcome.bg,
+          bgAlpha: p.welcomeBgAlphaLight ?? sections.light.welcome.bgAlpha,
+          fg: p.welcomeFgLight || sections.light.welcome.fg,
+          border: p.welcomeBorderLight || sections.light.welcome.border,
+          title: p.welcomeTitleColorLight || sections.light.welcome.title,
+          body: p.welcomeBodyColorLight || sections.light.welcome.body,
+        },
+        card: {
+          bg: p.cardBgLight || sections.light.card.bg,
+          bgAlpha: p.cardBgAlphaLight ?? sections.light.card.bgAlpha,
+          fg: p.cardFgLight || sections.light.card.fg,
+          border: p.cardBorderLight || sections.light.card.border,
+        },
+      },
+      dark: {
+        header: {
+          bg: p.headerBgDark || sections.dark.header.bg,
+          bgAlpha: p.headerBgAlphaDark ?? sections.dark.header.bgAlpha,
+          fg: p.headerFgDark || sections.dark.header.fg,
+          border: p.headerBorderDark || sections.dark.header.border,
+          title: p.headerTitleColorDark || sections.dark.header.title,
+          subtitle: p.headerSubtitleColorDark || sections.dark.header.subtitle,
+          user: p.headerUserColorDark || sections.dark.header.user,
+        },
+        welcome: {
+          bg: p.welcomeBgDark || sections.dark.welcome.bg,
+          bgAlpha: p.welcomeBgAlphaDark ?? sections.dark.welcome.bgAlpha,
+          fg: p.welcomeFgDark || sections.dark.welcome.fg,
+          border: p.welcomeBorderDark || sections.dark.welcome.border,
+          title: p.welcomeTitleColorDark || sections.dark.welcome.title,
+          body: p.welcomeBodyColorDark || sections.dark.welcome.body,
+        },
+        card: {
+          bg: p.cardBgDark || sections.dark.card.bg,
+          bgAlpha: p.cardBgAlphaDark ?? sections.dark.card.bgAlpha,
+          fg: p.cardFgDark || sections.dark.card.fg,
+          border: p.cardBorderDark || sections.dark.card.border,
+        },
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ui-presets', JSON.stringify(presets));
+    }
+  }, [presets]);
+
+  const savePresetSnapshot = () => {
+    const next = makePreset();
+    setPresets((prev) => {
+      const filtered = prev.filter((p) => p.name !== next.name);
+      return [...filtered, next];
+    });
+    setMessage('プリセットを保存しました（保存ボタンで永続化）');
+  };
+
   const setSection = (key: keyof ModeValues, field: keyof SectionColors | 'title' | 'subtitle' | 'user' | 'body', value: any) => {
     setSections((prev) => ({
       ...prev,
@@ -322,6 +473,38 @@ export default function UiEditor() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground">選んだモードの色だけが変更されます。</p>
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-2">
+            <input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm w-full sm:w-48"
+              placeholder="プリセット名"
+            />
+            <div className="flex gap-2">
+              <button onClick={savePresetSnapshot} className="px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm">
+                プリセット保存
+              </button>
+              {presets.length > 0 && (
+                <select
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  onChange={(e) => {
+                    const p = presets.find((pr) => pr.name === e.target.value);
+                    applyPreset(p);
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    適用するプリセット
+                  </option>
+                  {presets.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -488,7 +671,11 @@ export default function UiEditor() {
             <h2 className="font-semibold">小さい文字（muted）</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               色
-              <input type="color" value={currentSection.header.subtitle} onChange={(e) => setSection('header', 'subtitle', e.target.value)} />
+              <input
+                type="color"
+                value={currentSection.header.subtitle}
+                onChange={(e) => setSection('header', 'subtitle', e.target.value)}
+              />
             </label>
           </div>
 
