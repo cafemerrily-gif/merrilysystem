@@ -89,8 +89,6 @@ const defaultPresets = [
     cardBorderDark: '#1f2937',
     welcomeBgLight: '#ffffff',
     welcomeFgLight: '#0f172a',
-    welcomeBgDark: '#0f172a',
-    welcomeFgDark: '#e5e7eb',
   },
   {
     name: 'ライト&グリーン',
