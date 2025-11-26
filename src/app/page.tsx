@@ -27,6 +27,7 @@ const navItems: NavItem[] = [
 type LogItem = { id: number; user_name: string | null; message: string; created_at: string };
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; image?: string; author?: string };
+type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 type UiColors = {
   light: { background: string; border: string; foreground: string };
   dark: { background: string; border: string; foreground: string };
@@ -100,6 +101,8 @@ export default function Home() {
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [salesSummary, setSalesSummary] = useState<SalesSummary>({ todayTotal: 0, currentMonthSales: 0, totalAmount: 0 });
+  const [loadingSales, setLoadingSales] = useState(true);
   const [themeColors, setThemeColors] = useState<UiColors | null>(null);
   const [headerColors, setHeaderColors] = useState<UiHeader>({ background: '', foreground: '' });
   const [mutedColor, setMutedColor] = useState<UiMuted>({ color: '' });
@@ -315,11 +318,31 @@ export default function Home() {
     }
   }, [applyUiSettings]);
 
+  const loadSales = useCallback(async () => {
+    try {
+      setLoadingSales(true);
+      const res = await fetch('/api/analytics/sales', { cache: 'no-store' });
+      const data = await res.json();
+      if (!data.error) {
+        setSalesSummary({
+          todayTotal: Number(data.todayTotal || 0),
+          currentMonthSales: Number(data.currentMonthSales || 0),
+          totalAmount: Number(data.totalAmount || 0),
+        });
+      }
+    } catch (e) {
+      console.error('売上サマリー取得エラー', e);
+    } finally {
+      setLoadingSales(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadLogs();
     loadNotifications();
     loadBlogs();
-  }, [loadLogs, loadNotifications, loadBlogs]);
+    loadSales();
+  }, [loadLogs, loadNotifications, loadBlogs, loadSales]);
 
   useEffect(() => {
     const handler = () => {
@@ -578,6 +601,40 @@ export default function Home() {
           </aside>
 
           <section className="space-y-6">
+            <div
+              className="rounded-2xl p-6 shadow-lg border"
+              style={{
+                backgroundColor: currentCard.background ? `rgba(${hexToRgb(currentCard.background)}, ${currentCard.backgroundAlpha ?? 1})` : undefined,
+                color: currentCard.foreground || undefined,
+                borderColor: currentCard.border || undefined,
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">売上サマリー</h3>
+                <span className="text-xs text-muted-foreground">最新データ</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">今日</p>
+                  <p className="text-xl font-bold">
+                    {loadingSales ? '…' : `¥${salesSummary.todayTotal.toLocaleString()}`}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">今月</p>
+                  <p className="text-xl font-bold">
+                    {loadingSales ? '…' : `¥${salesSummary.currentMonthSales.toLocaleString()}`}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">累計</p>
+                  <p className="text-xl font-bold">
+                    {loadingSales ? '…' : `¥${salesSummary.totalAmount.toLocaleString()}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div
               className="rounded-2xl p-6 shadow-lg border"
               style={{
