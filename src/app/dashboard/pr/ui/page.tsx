@@ -58,6 +58,7 @@ export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
+  const [homeIconUrl, setHomeIconUrl] = useState('/MERRILY_Simbol.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [welcomeTitleText, setWelcomeTitleText] = useState('バー形式で全ダッシュボードをまとめました');
   const [welcomeBodyText, setWelcomeBodyText] = useState('最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。');
@@ -87,6 +88,7 @@ export default function UiEditor() {
         setLoginIconUrl(ui.loginIconUrl || '/MERRILY_Simbol.png');
         setAppIconUrl(ui.appIconUrl || '/MERRILY_Simbol.png');
         setAppTitle(ui.appTitle || 'MERRILY');
+        setHomeIconUrl(ui.homeIconUrl || ui.appIconUrl || '/MERRILY_Simbol.png');
         setWelcomeTitleText(ui.welcomeTitleText || welcomeTitleText);
         setWelcomeBodyText(ui.welcomeBodyText || welcomeBodyText);
         setPresets(ui.presets || parsedLocalPresets || []);
@@ -160,6 +162,7 @@ export default function UiEditor() {
         ...(basePayload || {}),
         uiSettings: {
           appTitle,
+          homeIconUrl,
           welcomeTitleText,
           welcomeBodyText,
           loginIconUrl,
@@ -222,7 +225,7 @@ export default function UiEditor() {
     }
   };
 
-  const handleUpload = async (target: 'login' | 'app', file?: File | null) => {
+  const handleUpload = async (target: 'login' | 'app' | 'home', file?: File | null) => {
     if (!file) return;
     setUploading(true);
     setError(null);
@@ -235,6 +238,7 @@ export default function UiEditor() {
       const { data } = supabase.storage.from('ui-icons').getPublicUrl(fileName);
       if (target === 'login') setLoginIconUrl(data.publicUrl);
       if (target === 'app') setAppIconUrl(data.publicUrl);
+      if (target === 'home') setHomeIconUrl(data.publicUrl);
       setMessage('アップロードしました（保存で反映）');
     } catch (e: any) {
       setError(e?.message || 'アップロードに失敗しました');
@@ -454,7 +458,7 @@ export default function UiEditor() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-            <h2 className="font-semibold">アイコン・題名</h2>
+          <h2 className="font-semibold">アイコン・題名</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               アプリの題名
               <input
@@ -492,6 +496,21 @@ export default function UiEditor() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-accent">
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('app', e.target.files?.[0])} disabled={uploading} />
+                <span>デバイスからアップロード</span>
+              </label>
+            </div>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              ホーム画面追加用アイコンURL
+              <input
+                value={homeIconUrl}
+                onChange={(e) => setHomeIconUrl(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                placeholder="https://example.com/home-icon.png"
+              />
+            </label>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:border-accent">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('home', e.target.files?.[0])} disabled={uploading} />
                 <span>デバイスからアップロード</span>
               </label>
             </div>

@@ -85,6 +85,7 @@ export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
+  const [homeIconUrl, setHomeIconUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [userName, setUserName] = useState<string>('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
@@ -155,7 +156,8 @@ export default function Home() {
       if (!ui) return;
       setUiSettingsRaw(ui);
       if (ui.appIconUrl) setAppIconUrl(ui.appIconUrl);
-      if (ui.appTitle) setAppTitle(ui.appTitle);
+        if (ui.appTitle) setAppTitle(ui.appTitle);
+        if (ui.homeIconUrl) setHomeIconUrl(ui.homeIconUrl);
       if (ui.headerBackground || ui.headerForeground) {
         setHeaderColors({
           background: ui.headerBackground || '',
@@ -340,11 +342,13 @@ export default function Home() {
         link.rel = rel;
         document.head.appendChild(link);
       }
-      link.href = appIconUrl;
+      link.href = targetIcon;
     };
+    const targetIcon = homeIconUrl || appIconUrl;
+    if (!targetIcon) return;
     ensureLink('icon');
     ensureLink('apple-touch-icon');
-  }, [appIconUrl]);
+  }, [appIconUrl, homeIconUrl]);
 
   const currentHeader = {
     background: isDark
