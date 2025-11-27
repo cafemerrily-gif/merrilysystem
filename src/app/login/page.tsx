@@ -98,20 +98,28 @@ function LoginPageInner() {
     })();
   }, [router, supabase, redirectedFrom]);
 
-  // テーマ: デバイス設定＋PCでは手動トグル
+  // テーマ: スマホはデバイス設定、PC/タブレットは手動切り替え可能
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    
     const applyTheme = (next: boolean) => {
       setIsDark(next);
       document.documentElement.classList.toggle('dark', next);
       applyColors(next, themeColors);
     };
+    
     applyTheme(media.matches);
+    
     const handleChange = (event: MediaQueryListEvent) => {
-      if (hasManualPreference) return;
-      applyTheme(event.matches);
+      // スマホの場合は常にデバイス設定に従う
+      // PC/タブレットの場合は手動設定がなければデバイス設定に従う
+      if (isMobile || !hasManualPreference) {
+        applyTheme(event.matches);
+      }
     };
+    
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
   }, [hasManualPreference, applyColors, themeColors]);
@@ -140,15 +148,15 @@ function LoginPageInner() {
               background: ui.lightBackground || '#f8fafc',
               border: ui.lightBorder || '#e2e8f0',
               foreground: ui.lightForeground || '#0f172a',
-              headerBg: ui.headerBackground || '#ffffff',
-              headerFg: ui.headerForeground || '#0f172a',
+              headerBg: ui.headerBgLight || '#ffffff',
+              headerFg: ui.headerFgLight || '#0f172a',
             },
             dark: {
               background: ui.darkBackground || '#0b1220',
               border: ui.darkBorder || '#1f2937',
               foreground: ui.darkForeground || '#e5e7eb',
-              headerBg: ui.headerBackgroundDark || '#1f2937',
-              headerFg: ui.headerForegroundDark || '#e5e7eb',
+              headerBg: ui.headerBgDark || '#1f2937',
+              headerFg: ui.headerFgDark || '#e5e7eb',
             },
           });
         }
@@ -254,15 +262,19 @@ function LoginPageInner() {
       <div className="hidden md:block fixed top-4 right-4">
         <button
           onClick={toggleTheme}
-          className="p-3 rounded-xl bg-card border border-border shadow-lg hover:shadow-xl transition-all duration-200 group"
+          className="p-3 rounded-xl border shadow-lg hover:shadow-xl transition-all duration-200 group"
+          style={{
+            backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+            borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
+          }}
           aria-label="テーマを切り替え"
         >
           {isDark ? (
-            <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 group-hover:opacity-70 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: themeColors ? themeColors.dark.headerFg : undefined }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           ) : (
-            <svg className="w-6 h-6 text-foreground group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 group-hover:opacity-70 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: themeColors ? themeColors.light.headerFg : undefined }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           )}
