@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -171,7 +171,7 @@ export default function UiEditor() {
   const [saving, setSaving] = useState(false);
   const [presets, setPresets] = useState<Preset[]>(defaultPresets);
   const [presetName, setPresetName] = useState('Custom Preset');
-  const [selectedPreset, setSelectedPreset] = useState<string>(defaultPresets[0].name);
+  const [selectedPreset, setSelectedPreset] = useState<string>(() => defaultPresets[0].name);
   const [basePayload, setBasePayload] = useState<any>({});
 
   useEffect(() => {
@@ -227,18 +227,18 @@ export default function UiEditor() {
   const headerTextColor = currentSection.header.fg;
   const welcomeTextColor = currentSection.welcome.fg;
 
-const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string) => {
-  setSections((prev) => ({
-    ...prev,
-    [selectedMode]: {
-      ...prev[selectedMode],
-      [section]: {
-        ...prev[selectedMode][section],
-        [field]: value,
+  const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string) => {
+    setSections((prev) => ({
+      ...prev,
+      [selectedMode]: {
+        ...prev[selectedMode],
+        [section]: {
+          ...prev[selectedMode][section],
+          [field]: value,
+        },
       },
-    },
-  }));
-};
+    }));
+  };
 
   const handleUpload = async (target: 'login' | 'app' | 'home', file?: File | null) => {
     if (!file) return;
@@ -328,7 +328,7 @@ const updateSection = (section: keyof ModeSections, field: keyof SectionColors, 
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
             placeholder="新規プリセット名"
           />
-          <button className="rounded-lg border border-accent px-3 py-2 text-sm text-accent hover:bg-accent/10" onClick={savePreset}>
+          <button type="button" className="rounded-lg border border-accent px-3 py-2 text-sm text-accent hover:bg-accent/10" onClick={savePreset}>
             プリセット保存
           </button>
         </div>
@@ -405,7 +405,7 @@ const updateSection = (section: keyof ModeSections, field: keyof SectionColors, 
             </label>
             <label className="text-sm block">
               グラデーション
-              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w-full">
+              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w/full">
                 {gradientOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
