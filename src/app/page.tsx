@@ -51,8 +51,9 @@ const hexToHslTriplet = (hex: string) => {
   return `${Math.round(hDeg)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-const toHsla = (triplet: string, alpha = 1) => {
-  const normalized = triplet.replace(/\s+/g, ', ');
+const toHsla = (triplet: string = '0 0% 100%', alpha = 1) => {
+  const safeTriplet = triplet || '0 0% 100%';
+  const normalized = safeTriplet.replace(/\s+/g, ', ');
   return `hsla(${normalized}, ${alpha})`;
 };
 
