@@ -344,8 +344,15 @@ export default function UiEditor() {
   const headerTextColor = currentSection.header.fg;
   const welcomeTextColor = currentSection.welcome.fg;
 
-  const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string) => {
-    setSections((prev) => ({
-      ...
-    }));
-  };
+const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string) => {
+  setSections((prev) => ({
+    ...prev,
+    [selectedMode]: {
+      ...prev[selectedMode],
+      [section]: {
+        ...prev[selectedMode][section],
+        [field]: value,
+      },
+    },
+  }));
+};
