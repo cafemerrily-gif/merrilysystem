@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useUiTheme } from '@/hooks/useUiTheme';
 
 type HistoryItem = { ts: string; endpoint: string; method: string; status: number | null; ms: number | null };
+type GuideCheck = { label: string; detail: string };
 
 const presetEndpoints = [
   { label: 'Health', url: '/api/health', method: 'GET' },
@@ -15,6 +16,25 @@ const presetEndpoints = [
 
 export default function DebugDashboard() {
   useUiTheme();
+
+  const guideChecks: GuideCheck[] = [
+    {
+      label: '環境変数を確認',
+      detail: 'NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SUPABASE_SERVICE_ROLE_KEY が Vercel・Cloudflare の環境変数に登録されているか確認してください。',
+    },
+    {
+      label: 'API 応答のチェック',
+      detail: '/api/health や /api/analytics/sales が 200 を返すかを上段ボタンで確認してください。失敗する場合は Supabase の接続情報を見直して。',
+    },
+    {
+      label: 'UI 設定の整合性',
+      detail: '/api/pr/website の `uiSettings.sections` が Light/Dark で両方あるか確認。空ならデフォルトを再投入してください。',
+    },
+    {
+      label: 'ビルドログを添える',
+      detail: 'npm run build のログ出力をここにメモすると、どこでエラーが出ているか整理できます。',
+    },
+  ];
 
   const menuCards = (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -34,6 +54,7 @@ export default function DebugDashboard() {
   const [headers, setHeaders] = useState('Content-Type: application/json');
   const [payload, setPayload] = useState('{\n  "ping": true\n}');
   const [responseLog, setResponseLog] = useState('ここにレスポンスを表示します');
+  const [guideLog, setGuideLog] = useState('指示に従って各チェックを行いましょう');
   const [running, setRunning] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -80,6 +101,22 @@ export default function DebugDashboard() {
       ]);
     } finally {
       setRunning(false);
+    }
+  };
+
+  const runGuideCheck = async () => {
+    setGuideLog('設定をチェックしています...');
+    try {
+      const res = await fetch('/api/pr/website', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`APIエラー ${res.status}`);
+      const data = await res.json();
+      if (!data?.uiSettings?.sections) {
+        setGuideLog('uiSettings.sections が不足しています。デフォルト値を再投入してください。');
+        return;
+      }
+      setGuideLog('uiSettings.sections（Light/Dark）が存在します。UI設定を再適用してください。');
+    } catch (err: any) {
+      setGuideLog(`チェック中のエラー：${err?.message || err}`);
     }
   };
 
