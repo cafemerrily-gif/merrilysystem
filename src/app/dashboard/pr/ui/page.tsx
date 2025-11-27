@@ -767,7 +767,8 @@ export default function UiEditor() {
           </label>
         </div>
 
-        <div className="rounded-2xl border bg-card p-4 space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="rounded-2xl border bg-card p-4 space-y-4 order-first lg:order-last lg:w-1/3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">トップ画面プレビュー</h2>
             <div className="flex gap-2 text-xs">
@@ -826,9 +827,9 @@ export default function UiEditor() {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
+          </div>
+          <div className="space-y-4 order-last lg:order-first lg:flex-1">
+            <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
             <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
             <label className="text-sm block mb-2">
@@ -993,6 +994,7 @@ export default function UiEditor() {
                 ))}
               </select>
             </label>
+          </div>
           </div>
         </div>
 
