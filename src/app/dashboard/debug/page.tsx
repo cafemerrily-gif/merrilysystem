@@ -20,41 +20,28 @@ export default function DebugDashboard() {
   const guideChecks: GuideCheck[] = [
     {
       label: '環境変数を確認',
-      detail: 'NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SUPABASE_SERVICE_ROLE_KEY が Vercel・Cloudflare の環境変数に登録されているか確認してください。',
+      detail: 'NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SUPABASE_SERVICE_ROLE_KEY を Vercel と Cloudflare の両方で登録してあるか確認してください。',
     },
     {
-      label: 'API 応答のチェック',
-      detail: '/api/health や /api/analytics/sales が 200 を返すかを上段ボタンで確認してください。失敗する場合は Supabase の接続情報を見直して。',
+      label: 'API の応答をチェック',
+      detail: '/api/health や /api/analytics/sales が 200 を返すと正常。失敗するなら Supabase 接続情報や RLS を確認します。',
     },
     {
-      label: 'UI 設定の整合性',
-      detail: '/api/pr/website の `uiSettings.sections` が Light/Dark で両方あるか確認。空ならデフォルトを再投入してください。',
+      label: 'uiSettings の整合性',
+      detail: '/api/pr/website で uiSettings.sections に Light / Dark 両方があるかを確認。欠けていれば defaultModeSections を再投入してください。',
     },
     {
-      label: 'ビルドログを添える',
-      detail: 'npm run build のログ出力をここにメモすると、どこでエラーが出ているか整理できます。',
+      label: 'ビルドログを記録',
+      detail: 'npm run build でエラーが出たら、この画面のログ欄にコピーして担当者と共有すると早く直せます。',
     },
   ];
-
-  const menuCards = (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-      <Link href="/dashboard/debug" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
-        <h2 className="text-lg font-semibold">APIテスト</h2>
-        <p className="text-sm text-muted-foreground">Health/Logs/Notifications などを確認</p>
-      </Link>
-      <Link href="/" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
-        <h2 className="text-lg font-semibold">ホームへ戻る</h2>
-        <p className="text-sm text-muted-foreground">トップページへ移動します</p>
-      </Link>
-    </div>
-  );
 
   const [endpoint, setEndpoint] = useState('/api/health');
   const [method, setMethod] = useState('GET');
   const [headers, setHeaders] = useState('Content-Type: application/json');
   const [payload, setPayload] = useState('{\n  "ping": true\n}');
   const [responseLog, setResponseLog] = useState('ここにレスポンスを表示します');
-  const [guideLog, setGuideLog] = useState('指示に従って各チェックを行いましょう');
+  const [guideLog, setGuideLog] = useState('チェックを順番に実行しながら状況を記録してください。');
   const [running, setRunning] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -105,18 +92,24 @@ export default function DebugDashboard() {
   };
 
   const runGuideCheck = async () => {
-    setGuideLog('設定をチェックしています...');
+    setGuideLog('uiSettings を確認中...');
     try {
       const res = await fetch('/api/pr/website', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`APIエラー ${res.status}`);
+      if (!res.ok) throw new Error(`API エラー ${res.status}`);
       const data = await res.json();
-      if (!data?.uiSettings?.sections) {
-        setGuideLog('uiSettings.sections が不足しています。デフォルト値を再投入してください。');
+      if (!data?.uiSettings) {
+        setGuideLog('uiSettings が返っていません。Supabase 側の保存データを確認してください。');
         return;
       }
-      setGuideLog('uiSettings.sections（Light/Dark）が存在します。UI設定を再適用してください。');
+      const sections = data.uiSettings.sections;
+      const presets = data.uiSettings.presets;
+      if (!sections?.light || !sections?.dark) {
+        setGuideLog('sections.light / sections.dark が欠けています。デフォルト構造を再投入してください。');
+        return;
+      }
+      setGuideLog(`sections は OK（light:${Boolean(sections.light)}, dark:${Boolean(sections.dark)}）、presets:${Array.isArray(presets) ? 'あり' : 'なし'}。`);
     } catch (err: any) {
-      setGuideLog(`チェック中のエラー：${err?.message || err}`);
+      setGuideLog(`チェック失敗: ${err?.message || err}`);
     }
   };
 
@@ -127,7 +120,7 @@ export default function DebugDashboard() {
           <div>
             <h1 className="text-2xl font-bold">デバッグダッシュボード</h1>
             <p className="text-sm text-muted-foreground">
-              文系の方でも「今、動いているか」を確認できるツールです。1) ステータス確認 2) 気になるAPIをテスト 3) ガイドを見る、の順で使ってください。
+              文系でも扱えるチェックリストと API テストを同時に並べたガイド付きです。
             </p>
           </div>
           <Link href="/" className="px-3 py-2 rounded-lg border border-border bg-card hover:border-accent text-sm">
@@ -135,7 +128,16 @@ export default function DebugDashboard() {
           </Link>
         </div>
 
-        {menuCards}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          <Link href="/dashboard/debug" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
+            <h2 className="text-lg font-semibold">API テスト</h2>
+            <p className="text-sm text-muted-foreground">Health / Logs / Notifications などを順番に確認できます。</p>
+          </Link>
+          <Link href="/" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
+            <h2 className="text-lg font-semibold">トップへ戻る</h2>
+            <p className="text-sm text-muted-foreground">アプリのホーム画面に移動します。</p>
+          </Link>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {presetEndpoints.map((c) => (
@@ -149,7 +151,7 @@ export default function DebugDashboard() {
                   setMethod(c.method);
                 }}
               >
-                このAPIをテスト
+                この API をテスト
               </button>
             </div>
           ))}
@@ -158,11 +160,11 @@ export default function DebugDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="border border-border rounded-xl p-4 bg-card space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">かんたんAPIテスト</h2>
-              <span className="text-xs text-muted-foreground">URLを入れて送信するだけ</span>
+              <h2 className="text-lg font-semibold">簡単 API テスト</h2>
+              <span className="text-xs text-muted-foreground">URL を入力して実行</span>
             </div>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              送り先URL
+              対象 URL
               <input
                 value={endpoint}
                 onChange={(e) => setEndpoint(e.target.value)}
@@ -183,12 +185,12 @@ export default function DebugDashboard() {
                   <option>DELETE</option>
                 </select>
                 <p className="text-xs text-muted-foreground pt-1">
-                  GET=取得 / POST=新規・検索 / PUT=更新 / DELETE=削除 の目安
+                  GET=取得 / POST=登録 / PUT=更新 / DELETE=削除
                 </p>
               </label>
               {method !== 'GET' && (
                 <label className="text-sm text-muted-foreground space-y-1 block flex-1">
-                  送りたい内容（JSON）
+                  送信 JSON
                   <textarea
                     value={payload}
                     onChange={(e) => setPayload(e.target.value)}
@@ -199,7 +201,7 @@ export default function DebugDashboard() {
               )}
             </div>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              追加ヘッダー（1行に1つ, 例 Authorization: Bearer xxx）
+              追加ヘッダー
               <textarea
                 value={headers}
                 onChange={(e) => setHeaders(e.target.value)}
@@ -207,7 +209,7 @@ export default function DebugDashboard() {
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono"
               />
               <p className="text-xs text-muted-foreground pt-1">
-                例: Authorization: Bearer xxxxx / X-API-Key: your-key / Prefer: return=representation
+                例: Authorization: Bearer xxxxx / X-API-Key: your-key
               </p>
             </label>
             <button
@@ -222,32 +224,33 @@ export default function DebugDashboard() {
             </div>
           </div>
 
-          <div className="border border-border rounded-xl p-4 bg-card space-y-3 shadow-sm">
-            <h2 className="text-lg font-semibold">使い方ガイド（文系向け）</h2>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
-              <li>上の「主要API」をクリックしてURLをセットする</li>
-              <li>「テスト実行」を押す（必要ならヘッダーやボディを入力）</li>
-              <li>レスポンスのステータスと本文を見て、異常なら担当へ共有</li>
-            </ol>
-            <p className="text-xs text-muted-foreground">
-              500: サーバー内でエラー / 429: リクエスト多すぎ / 401/403: 認証が通ってない / 404: URLが違う・機能がない
-            </p>
-            <div className="bg-muted/30 border border-border rounded-lg p-3 text-xs space-y-1">
-              <p className="font-semibold">よくある確認</p>
-              <p>・/api/health で 200 なら Next.js は動いています</p>
-              <p>・/api/analytics/sales で 200 なら売上集計APIは生きています</p>
-              <p>・/api/logs や /api/notifications が落ちる場合は Supabase 側を確認</p>
+          <div className="border border-border rounded-xl p-4 bg-gradient-to-br from-card/80 to-background space-y-3 shadow-sm">
+            <h2 className="text-lg font-semibold">文系でもわかるデバッグガイド</h2>
+            <div className="space-y-2 text-sm text-foreground">
+              {guideChecks.map((step) => (
+                <div key={step.label} className="rounded-lg border border-border bg-muted/30 p-2">
+                  <p className="font-semibold">{step.label}</p>
+                  <p className="text-muted-foreground text-xs">{step.detail}</p>
+                </div>
+              ))}
             </div>
+            <p className="text-xs font-mono text-muted-foreground">最新チェック: {guideLog}</p>
+            <button
+              onClick={runGuideCheck}
+              className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm text-primary hover:bg-primary/20"
+            >
+              uiSettings を再確認
+            </button>
           </div>
         </div>
 
         <div className="border border-border rounded-xl p-4 bg-card space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">履歴（最新20件）</h2>
-            <span className="text-xs text-muted-foreground">テストの足跡として残ります</span>
+            <span className="text-xs text-muted-foreground">テストの足跡として残します</span>
           </div>
           {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">まだ履歴はありません。</p>
+            <p className="text-sm text-muted-foreground">まだ履歴はありません</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
