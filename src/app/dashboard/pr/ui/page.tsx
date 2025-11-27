@@ -273,7 +273,7 @@ export default function UiEditor() {
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">UI編集</h1>
-          <Link href="/dashboard/pr" className="text-sm text-muted-foreground hover:text-accent">
+          <Link href="/dashboard/pr/menu" className="text-sm text-muted-foreground hover:text-accent">
             広報トップへ戻る
           </Link>
         </div>
@@ -301,7 +301,9 @@ export default function UiEditor() {
           {(['light', 'dark'] as ModeKey[]).map((mode) => (
             <button
               key={mode}
-              onClick={() => setSelectedMode(mode)}
+              onClick={() => {
+                setSelectedMode(mode);
+              }}
               className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primary bg-primary/10' : 'border-border'}`}
             >
               {mode === 'light' ? 'ライトモード' : 'ダークモード'}
