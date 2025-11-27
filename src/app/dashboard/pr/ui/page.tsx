@@ -167,6 +167,13 @@ const mergePresetsWithDefaults = (storedPresets?: Preset[]) => {
   return merged;
 };
 
+const selectInitialPresetName = (storedPresets?: Preset[]) => {
+  if (Array.isArray(storedPresets) && storedPresets.length) {
+    return storedPresets[storedPresets.length - 1].name;
+  }
+  return defaultPresets[0].name;
+};
+
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
@@ -205,7 +212,7 @@ export default function UiEditor() {
         });
         const mergedPresets = mergePresetsWithDefaults(ui.presets);
         setPresets(mergedPresets);
-        setSelectedPreset(mergedPresets[0].name);
+        setSelectedPreset(selectInitialPresetName(ui.presets));
         setBasePayload(data || {});
       } catch (e: any) {
         setError(e?.message || '設定の取得に失敗しました');
