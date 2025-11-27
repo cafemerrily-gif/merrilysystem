@@ -31,6 +31,7 @@ type UiPayload = {
   uiSettings?: {
     appTitle?: string;
     loginIconUrl?: string;
+    appIconUrl?: string;
     appIconLightUrl?: string;
     appIconDarkUrl?: string;
     homeIconUrl?: string;

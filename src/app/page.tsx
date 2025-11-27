@@ -514,12 +514,15 @@ export default function Home() {
                     {post.images && post.images.length > 0 ? (
                       <div className="space-y-2 mb-2">
                         {post.images.map((url, idx) => (
-                          <img
-                            key={`${post.id}-img-${idx}`}
-                            src={url}
-                            alt={post.title}
-                            className="w-full rounded-lg border border-border object-contain max-h-64 bg-background"
-                          />
+                          <div key={`${post.id}-img-${idx}`} className="relative w-full rounded-lg border border-border overflow-hidden bg-background" style={{ minHeight: '200px', maxHeight: '256px' }}>
+                            <Image
+                              src={url}
+                              alt={post.title}
+                              fill
+                              className="object-contain"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
                         ))}
                       </div>
                     ) : null}
