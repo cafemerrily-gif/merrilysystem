@@ -174,6 +174,40 @@ const selectInitialPresetName = (storedPresets?: Preset[]) => {
   return defaultPresets[0].name;
 };
 
+const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
+  const out: Record<string, string | number> = {};
+  (['light', 'dark'] as ModeKey[]).forEach((mode) => {
+    const suffix = mode === 'light' ? 'Light' : 'Dark';
+    const section = sections[mode];
+    const { header, card, welcome } = section;
+
+    out[`headerBg${suffix}`] = header.bg;
+    out[`headerBgAlpha${suffix}`] = header.bgAlpha;
+    out[`headerBgGradient${suffix}`] = header.gradient;
+    out[`headerFg${suffix}`] = header.fg;
+    out[`headerBorder${suffix}`] = header.border;
+    out[`headerTitleColor${suffix}`] = header.title;
+    out[`headerSubtitleColor${suffix}`] = header.subtitle;
+    out[`headerUserColor${suffix}`] = header.user;
+
+    out[`cardBg${suffix}`] = card.bg;
+    out[`cardBgAlpha${suffix}`] = card.bgAlpha;
+    out[`cardBgGradient${suffix}`] = card.gradient;
+    out[`cardFg${suffix}`] = card.fg;
+    out[`cardBorder${suffix}`] = card.border;
+
+    out[`welcomeBg${suffix}`] = welcome.bg;
+    out[`welcomeBgAlpha${suffix}`] = welcome.bgAlpha;
+    out[`welcomeBgGradient${suffix}`] = welcome.gradient;
+    out[`welcomeFg${suffix}`] = welcome.fg;
+    out[`welcomeBorder${suffix}`] = welcome.border;
+    out[`welcomeTitleColor${suffix}`] = welcome.title;
+    out[`welcomeBodyColor${suffix}`] = welcome.body;
+  });
+
+  return out;
+};
+
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
@@ -293,17 +327,20 @@ export default function UiEditor() {
     setSaving(true);
     setError(null);
     try {
-      const payload = {
-        ...basePayload,
-        uiSettings: {
-          appTitle,
-          loginIconUrl,
-          appIconUrl,
-          homeIconUrl,
-          sections,
-          presets,
-        },
-      };
+    const payload = {
+      ...basePayload,
+      uiSettings: {
+        appTitle,
+        loginIconUrl,
+        appIconUrl,
+        homeIconUrl,
+        welcomeTitleText: welcomeTitle,
+        welcomeBodyText: welcomeBody,
+        sections,
+        presets,
+        ...sectionsToUiSettings(sections),
+      },
+    };
       const res = await fetch('/api/pr/website', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
