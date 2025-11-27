@@ -286,12 +286,12 @@ export default function Home() {
     borderColor: currentCard.border,
   };
 
+  const headerAlpha = Math.max(0.1, currentHeader.bgAlpha ?? 1); // 最低限の不透明度を確保
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
-    // ヘッダーは常に実色を持たせ、グラデ指定時は背景色＋gradient両方を併用して透過を防ぐ
-    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
+    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${headerAlpha})`,
     color: currentHeader.fg,
-    borderColor: currentHeader.border,
+    border: `1px solid ${currentHeader.border}`,
   };
 
   const welcomeStyle = {
