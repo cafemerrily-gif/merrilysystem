@@ -19,6 +19,7 @@ type ModeSections = {
   header: SectionColors & { title: string; subtitle: string; user: string };
   welcome: SectionColors & { title: string; body: string };
   card: SectionColors;
+  content: { textColor: string }; // カード以外の本文エリアの文字色
 };
 
 type Preset = {
@@ -30,7 +31,8 @@ type UiPayload = {
   uiSettings?: {
     appTitle?: string;
     loginIconUrl?: string;
-    appIconUrl?: string;
+    appIconLightUrl?: string;
+    appIconDarkUrl?: string;
     homeIconUrl?: string;
     sections?: Record<ModeKey, ModeSections>;
     presets?: Preset[];
@@ -145,6 +147,9 @@ const defaultModeSections: ModeSections = {
     fg: '#e5e7eb',
     border: '#1f2937',
   },
+  content: {
+    textColor: '#e5e7eb',
+  },
 };
 
 const cloneSections = (sections?: ModeSections): ModeSections => {
@@ -153,6 +158,7 @@ const cloneSections = (sections?: ModeSections): ModeSections => {
     header: { ...source.header, gradientType: source.header.gradientType || 'none' },
     welcome: { ...source.welcome, gradientType: source.welcome.gradientType || 'none' },
     card: { ...source.card, gradientType: source.card.gradientType || 'none' },
+    content: { textColor: source.content?.textColor || defaultModeSections.content.textColor },
   };
 };
 
@@ -162,210 +168,6 @@ const defaultPresets: Preset[] = [
     sections: {
       light: cloneSections(defaultModeSections),
       dark: cloneSections(defaultModeSections),
-    },
-  },
-  {
-    name: 'Sunrise',
-    sections: {
-      light: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#ffe3b8',
-          fg: '#1f2937',
-          gradient: resolveGradient('sunrise', '#ffe3b8'),
-          gradientType: 'sunrise',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#fff9f1',
-          fg: '#1f2937',
-          gradient: resolveGradient('sunrise', '#fff9f1'),
-          gradientType: 'sunrise',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#fff5ed',
-          fg: '#1f2937',
-          gradient: resolveGradient('sunrise', '#fff5ed'),
-          gradientType: 'sunrise',
-        },
-      },
-      dark: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#1f1c2c',
-          fg: '#f0c987',
-          gradient: resolveGradient('nightSky', '#1f1c2c'),
-          gradientType: 'nightSky',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#0d0b19',
-          fg: '#f0c987',
-          gradient: resolveGradient('nightSky', '#0d0b19'),
-          gradientType: 'nightSky',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#0f1220',
-          fg: '#f0c987',
-          gradient: resolveGradient('nightSky', '#0f1220'),
-          gradientType: 'nightSky',
-        },
-      },
-    },
-  },
-  {
-    name: 'Midnight Bloom',
-    sections: {
-      light: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#f0f4ff',
-          fg: '#1f2937',
-          gradient: resolveGradient('pastelGlow', '#f0f4ff'),
-          gradientType: 'pastelGlow',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#ffffff',
-          fg: '#1f2937',
-          gradient: resolveGradient('pastelGlow', '#ffffff'),
-          gradientType: 'pastelGlow',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#eff1ff',
-          fg: '#1f2937',
-          gradient: resolveGradient('pastelGlow', '#eff1ff'),
-          gradientType: 'pastelGlow',
-        },
-      },
-      dark: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#0f172a',
-          fg: '#a5b4fc',
-          gradient: resolveGradient('nightSky', '#0f172a'),
-          gradientType: 'nightSky',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#090e1a',
-          fg: '#a5b4fc',
-          gradient: resolveGradient('nightSky', '#090e1a'),
-          gradientType: 'nightSky',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#0b1220',
-          fg: '#c7d2fe',
-          gradient: resolveGradient('nightSky', '#0b1220'),
-          gradientType: 'nightSky',
-        },
-      },
-    },
-  },
-  {
-    name: 'Coastal Mist',
-    sections: {
-      light: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#d7efff',
-          fg: '#0c1e2a',
-          gradient: resolveGradient('calmTeal', '#d7efff'),
-          gradientType: 'calmTeal',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#ecf6ff',
-          fg: '#0c1e2a',
-          gradient: resolveGradient('calmTeal', '#ecf6ff'),
-          gradientType: 'calmTeal',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#f5fbff',
-          fg: '#0c1e2a',
-          gradient: resolveGradient('calmTeal', '#f5fbff'),
-          gradientType: 'calmTeal',
-        },
-      },
-      dark: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#0b1f2f',
-          fg: '#b3d4ff',
-          gradient: resolveGradient('forestHaze', '#0b1f2f'),
-          gradientType: 'forestHaze',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#09121f',
-          fg: '#b3d4ff',
-          gradient: resolveGradient('forestHaze', '#09121f'),
-          gradientType: 'forestHaze',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#0f1825',
-          fg: '#d6e6ff',
-          gradient: resolveGradient('forestHaze', '#0f1825'),
-          gradientType: 'forestHaze',
-        },
-      },
-    },
-  },
-  {
-    name: 'Solar Harvest',
-    sections: {
-      light: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#fff4e1',
-          fg: '#4b2e0f',
-          gradient: resolveGradient('sunsetGlow', '#fff4e1'),
-          gradientType: 'sunsetGlow',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#fff9f1',
-          fg: '#4b2e0f',
-          gradient: resolveGradient('sunsetGlow', '#fff9f1'),
-          gradientType: 'sunsetGlow',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#fff7ee',
-          fg: '#4b2e0f',
-          gradient: resolveGradient('sunsetGlow', '#fff7ee'),
-          gradientType: 'sunsetGlow',
-        },
-      },
-      dark: {
-        header: {
-          ...defaultModeSections.header,
-          bg: '#2b1f00',
-          fg: '#ffe9d5',
-          gradient: resolveGradient('sunsetGlow', '#2b1f00'),
-          gradientType: 'sunsetGlow',
-        },
-        welcome: {
-          ...defaultModeSections.welcome,
-          bg: '#1a1204',
-          fg: '#ffe9d5',
-          gradient: resolveGradient('sunsetGlow', '#1a1204'),
-          gradientType: 'sunsetGlow',
-        },
-        card: {
-          ...defaultModeSections.card,
-          bg: '#1c1004',
-          fg: '#ffe9d5',
-          gradient: resolveGradient('sunsetGlow', '#1c1004'),
-          gradientType: 'sunsetGlow',
-        },
-      },
     },
   },
 ];
@@ -413,7 +215,7 @@ const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
   (['light', 'dark'] as ModeKey[]).forEach((mode) => {
     const suffix = mode === 'light' ? 'Light' : 'Dark';
     const section = sections[mode];
-    const { header, card, welcome } = section;
+    const { header, card, welcome, content } = section;
 
     out[`headerBg${suffix}`] = header.bg;
     out[`headerBgAlpha${suffix}`] = header.bgAlpha;
@@ -437,6 +239,8 @@ const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
     out[`welcomeBorder${suffix}`] = welcome.border;
     out[`welcomeTitleColor${suffix}`] = welcome.title;
     out[`welcomeBodyColor${suffix}`] = welcome.body;
+
+    out[`contentTextColor${suffix}`] = content.textColor;
   });
 
   return out;
@@ -464,7 +268,8 @@ export default function UiEditor() {
   const [welcomeBody, setWelcomeBody] = useState('色やアイコン、グラデーションを自由に設定できます。');
   const [previewMode, setPreviewMode] = useState<ModeKey>('light');
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
-  const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appIconLightUrl, setAppIconLightUrl] = useState('/MERRILY_Simbol.png');
+  const [appIconDarkUrl, setAppIconDarkUrl] = useState('/MERRILY_Simbol.png');
   const [homeIconUrl, setHomeIconUrl] = useState('/MERRILY_Simbol.png');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -479,30 +284,31 @@ export default function UiEditor() {
     (async () => {
       try {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
-      const data: UiPayload = await res.json();
-      const ui = data?.uiSettings || {};
+        const data: UiPayload = await res.json();
+        const ui = data?.uiSettings || {};
         setAppTitle((prev) => ui.appTitle || prev);
         setLoginIconUrl((prev) => ui.loginIconUrl || prev);
-        setAppIconUrl((prev) => ui.appIconUrl || prev);
+        setAppIconLightUrl((prev) => ui.appIconLightUrl || ui.appIconUrl || prev);
+        setAppIconDarkUrl((prev) => ui.appIconDarkUrl || ui.appIconUrl || prev);
         setHomeIconUrl((prev) => ui.homeIconUrl || prev);
-      setSections({
-        light: cloneSections(ui.sections?.light),
-        dark: cloneSections(ui.sections?.dark),
-      });
-      setBaseBackgrounds({
-        light: {
-          bg: ui.lightBackground || defaultBaseBackgrounds.light.bg,
-          bgAlpha: typeof ui.lightBackgroundAlpha === 'number' ? ui.lightBackgroundAlpha : defaultBaseBackgrounds.light.bgAlpha,
-          gradient: ui.lightBackgroundGradient || defaultBaseBackgrounds.light.gradient,
-        },
-        dark: {
-          bg: ui.darkBackground || defaultBaseBackgrounds.dark.bg,
-          bgAlpha: typeof ui.darkBackgroundAlpha === 'number' ? ui.darkBackgroundAlpha : defaultBaseBackgrounds.dark.bgAlpha,
-          gradient: ui.darkBackgroundGradient || defaultBaseBackgrounds.dark.gradient,
-        },
-      });
-      const mergedPresets = mergePresetsWithDefaults(ui.presets);
-      setPresets(mergedPresets);
+        setSections({
+          light: cloneSections(ui.sections?.light),
+          dark: cloneSections(ui.sections?.dark),
+        });
+        setBaseBackgrounds({
+          light: {
+            bg: ui.lightBackground || defaultBaseBackgrounds.light.bg,
+            bgAlpha: typeof ui.lightBackgroundAlpha === 'number' ? ui.lightBackgroundAlpha : defaultBaseBackgrounds.light.bgAlpha,
+            gradient: ui.lightBackgroundGradient || defaultBaseBackgrounds.light.gradient,
+          },
+          dark: {
+            bg: ui.darkBackground || defaultBaseBackgrounds.dark.bg,
+            bgAlpha: typeof ui.darkBackgroundAlpha === 'number' ? ui.darkBackgroundAlpha : defaultBaseBackgrounds.dark.bgAlpha,
+            gradient: ui.darkBackgroundGradient || defaultBaseBackgrounds.dark.gradient,
+          },
+        });
+        const mergedPresets = mergePresetsWithDefaults(ui.presets);
+        setPresets(mergedPresets);
         setSelectedPreset(selectInitialPresetName(ui.presets));
         setBasePayload(data || {});
       } catch (e: any) {
@@ -533,8 +339,6 @@ export default function UiEditor() {
   const currentSection = sections[selectedMode];
   const cardTextColor = currentSection.card.fg;
   const cardBorderColor = currentSection.card.border;
-  const headerTextColor = currentSection.header.fg;
-  const welcomeTextColor = currentSection.welcome.fg;
   const currentBaseBackground = baseBackgrounds[selectedMode];
   const previewSection = sections[previewMode];
   const previewBase = baseBackgrounds[previewMode];
@@ -552,18 +356,18 @@ export default function UiEditor() {
     overflow: 'hidden',
   };
 
-  const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string | number) => {
+  const updateSection = (section: keyof ModeSections, field: string, value: string | number) => {
     const parsedValue = field === 'bgAlpha' ? Number(value) : value;
     setSections((prev) => {
       const updatedSection = {
         ...prev[selectedMode][section],
         [field]: parsedValue,
       };
-      if (field === 'bg') {
-        const gradientType = updatedSection.gradientType || 'none';
+      if (field === 'bg' && section !== 'content') {
+        const gradientType = (updatedSection as any).gradientType || 'none';
         const preset = getGradientPreset(gradientType);
         if (preset.dependsOnBase) {
-          updatedSection.gradient = preset.resolve(String(parsedValue));
+          (updatedSection as any).gradient = preset.resolve(String(parsedValue));
         }
       }
       return {
@@ -577,6 +381,7 @@ export default function UiEditor() {
   };
 
   const handleGradientSelection = (section: keyof ModeSections, type: string) => {
+    if (section === 'content') return;
     setSections((prev) => {
       const sectionState = { ...prev[selectedMode][section] };
       const preset = getGradientPreset(type);
@@ -586,9 +391,9 @@ export default function UiEditor() {
           ...prev[selectedMode],
           [section]: {
             ...sectionState,
-            gradient: preset.resolve(sectionState.bg),
+            gradient: preset.resolve((sectionState as any).bg),
             gradientType: type,
-          },
+          } as any,
         },
       };
     });
@@ -605,7 +410,7 @@ export default function UiEditor() {
     }));
   };
 
-  const handleUpload = async (target: 'login' | 'app' | 'home', file?: File | null) => {
+  const handleUpload = async (target: 'login' | 'appLight' | 'appDark' | 'home', file?: File | null) => {
     if (!file) return;
     try {
       const ext = file.name.split('.').pop() || 'png';
@@ -614,7 +419,8 @@ export default function UiEditor() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from('ui-icons').getPublicUrl(fileName);
       if (target === 'login') setLoginIconUrl(data.publicUrl);
-      if (target === 'app') setAppIconUrl(data.publicUrl);
+      if (target === 'appLight') setAppIconLightUrl(data.publicUrl);
+      if (target === 'appDark') setAppIconDarkUrl(data.publicUrl);
       if (target === 'home') setHomeIconUrl(data.publicUrl);
     } catch (e: any) {
       setError(e?.message || 'アイコンのアップロードに失敗しました');
@@ -645,7 +451,8 @@ export default function UiEditor() {
         uiSettings: {
           appTitle,
           loginIconUrl,
-          appIconUrl,
+          appIconLightUrl,
+          appIconDarkUrl,
           homeIconUrl,
           welcomeTitleText: welcomeTitle,
           welcomeBodyText: welcomeBody,
@@ -769,234 +576,236 @@ export default function UiEditor() {
 
         <div className="flex flex-col gap-4 lg:flex-row">
           <div className="rounded-2xl border bg-card p-4 space-y-4 order-first lg:order-last lg:w-1/3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">トップ画面プレビュー</h2>
-            <div className="flex gap-2 text-xs">
-              {(['light', 'dark'] as ModeKey[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setPreviewMode(mode)}
-                  className={`rounded-full px-3 py-1 border text-muted-foreground ${previewMode === mode ? 'border-primary text-primary' : 'border-border'}`}
-                >
-                  {mode === 'light' ? 'ライト' : 'ダーク'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={previewContainerStyle} className="border bg-transparent p-0">
-            <div style={previewSectionStyle(previewSection.header)} className="px-4 py-3 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.header.subtitle }}>
-                    Welcome
-                  </p>
-                  <h3 className="text-lg font-semibold" style={{ color: previewSection.header.title }}>
-                    {appTitle}
-                  </h3>
-                </div>
-                <span className="text-xs" style={{ color: previewSection.header.user }}>
-                  {previewSection.header.user}
-                </span>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">トップ画面プレビュー</h2>
+              <div className="flex gap-2 text-xs">
+                {(['light', 'dark'] as ModeKey[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setPreviewMode(mode)}
+                    className={`rounded-full px-3 py-1 border text-muted-foreground ${previewMode === mode ? 'border-primary text-primary' : 'border-border'}`}
+                  >
+                    {mode === 'light' ? 'ライト' : 'ダーク'}
+                  </button>
+                ))}
               </div>
             </div>
-            <div style={previewSectionStyle(previewSection.welcome)} className="px-4 py-3 border-b">
-              <p className="text-sm font-semibold">{welcomeTitle || 'MERRILY'}</p>
-              <p className="text-xs text-muted-foreground">{welcomeBody || '最新メトリクスを一瞥できます。'}</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
-              {[1, 2, 3].map((idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl border bg-opacity-80 p-3"
-                  style={{
-                    ...previewSectionStyle(previewSection.card),
-                    borderColor: previewSection.card.border,
-                  }}
-                >
-                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.card.border }}>
-                    Card {idx}
-                  </p>
-                  <p className="text-sm font-semibold" style={{ color: previewSection.card.fg }}>
-                    {idx === 1 ? 'Sales' : idx === 2 ? 'Logs' : 'Notifications'}
-                  </p>
-                  <p className="text-xs" style={{ color: previewSection.card.fg }}>
-                    最新アップデート
-                  </p>
+            <div style={previewContainerStyle} className="border bg-transparent p-0">
+              <div style={previewSectionStyle(previewSection.header)} className="px-4 py-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.header.subtitle }}>
+                      Welcome
+                    </p>
+                    <h3 className="text-lg font-semibold" style={{ color: previewSection.header.title }}>
+                      {appTitle}
+                    </h3>
+                  </div>
+                  <span className="text-xs" style={{ color: previewSection.header.user }}>
+                    {previewSection.header.user}
+                  </span>
                 </div>
-              ))}
+              </div>
+              <div style={previewSectionStyle(previewSection.welcome)} className="px-4 py-3 border-b">
+                <p className="text-sm font-semibold">{welcomeTitle || 'MERRILY'}</p>
+                <p className="text-xs text-muted-foreground">{welcomeBody || '最新メトリクスを一瞥できます。'}</p>
+              </div>
+              <div className="p-4" style={{ color: previewSection.content.textColor }}>
+                <p className="text-sm mb-2">本文エリアのサンプルテキスト</p>
+                <p className="text-xs">カード以外の文字色が適用されます</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
+                {[1, 2, 3].map((idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border bg-opacity-80 p-3"
+                    style={{
+                      ...previewSectionStyle(previewSection.card),
+                      borderColor: previewSection.card.border,
+                    }}
+                  >
+                    <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.card.border }}>
+                      Card {idx}
+                    </p>
+                    <p className="text-sm font-semibold" style={{ color: previewSection.card.fg }}>
+                      {idx === 1 ? 'Sales' : idx === 2 ? 'Logs' : 'Notifications'}
+                    </p>
+                    <p className="text-xs" style={{ color: previewSection.card.fg }}>
+                      最新アップデート
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
           </div>
           <div className="space-y-4 order-last lg:order-first lg:flex-1">
             <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
-            <label className="text-sm block mb-2">
-              ログイン画面アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
-            </label>
-            <label className="text-sm block mb-2">
-              透明度
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={Math.round(currentSection.card.bgAlpha * 100)}
-                  onChange={(e) => updateSection('card', 'bgAlpha', Number(e.target.value) / 100)}
-                  className="mt-1 w-full"
-                />
-                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.card.bgAlpha * 100)}%</span>
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+                <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
+                <label className="text-sm block mb-2">
+                  ログイン画面アイコン
+                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
+                </label>
+                <label className="text-sm block mb-2">
+                  ライトモード アイコン
+                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('appLight', e.target.files?.[0])} />
+                </label>
+                <label className="text-sm block mb-2">
+                  ダークモード アイコン
+                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('appDark', e.target.files?.[0])} />
+                </label>
+                <label className="text-sm block">
+                  ホーム追加用アイコン
+                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
+                </label>
               </div>
-            </label>
-            <label className="text-sm block mb-2">
-              ログイン後アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('app', e.target.files?.[0])} />
-            </label>
-            <label className="text-sm block">
-              ホーム追加用アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
-            </label>
-          </div>
 
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">カード全体</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.card.bg} onChange={(e) => updateSection('card', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              枠線色
-              <input type="color" value={currentSection.card.border} onChange={(e) => updateSection('card', 'border', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-                <select
-                  value={currentSection.card.gradientType || 'none'}
-                  onChange={(e) => handleGradientSelection('card', e.target.value)}
-                  className="mt-1 w-full"
-                >
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ウェルカムテキスト</h2>
-            <input
-              className="mb-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              value={welcomeTitle}
-              onChange={(e) => setWelcomeTitle(e.target.value)}
-              placeholder="ウェルカムタイトル"
-            />
-            <textarea
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              rows={3}
-              value={welcomeBody}
-              onChange={(e) => setWelcomeBody(e.target.value)}
-              placeholder="ウェルカム本文"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: headerTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ヘッダー</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              透明度
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={Math.round(currentSection.header.bgAlpha * 100)}
-                  onChange={(e) => updateSection('header', 'bgAlpha', Number(e.target.value) / 100)}
-                  className="mt-1 w-full"
-                />
-                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.header.bgAlpha * 100)}%</span>
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+                <h2 className="text-lg font-semibold mb-3">カード全体</h2>
+                <label className="text-sm block mb-2">
+                  背景色
+                  <input type="color" value={currentSection.card.bg} onChange={(e) => updateSection('card', 'bg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block mb-2">
+                  文字色
+                  <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block mb-2">
+                  枠線色
+                  <input type="color" value={currentSection.card.border} onChange={(e) => updateSection('card', 'border', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block">
+                  グラデーション
+                  <select
+                    value={currentSection.card.gradientType || 'none'}
+                    onChange={(e) => handleGradientSelection('card', e.target.value)}
+                    className="mt-1 w-full"
+                  >
+                    {gradientOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-              <select
-                value={currentSection.header.gradientType || 'none'}
-                onChange={(e) => handleGradientSelection('header', e.target.value)}
-                className="mt-1 w-full"
-              >
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
 
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: welcomeTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ウェルカムカード</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              透明度
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={Math.round(currentSection.welcome.bgAlpha * 100)}
-                  onChange={(e) => updateSection('welcome', 'bgAlpha', Number(e.target.value) / 100)}
-                  className="mt-1 w-full"
-                />
-                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.welcome.bgAlpha * 100)}%</span>
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+                <h2 className="text-lg font-semibold mb-3">本文エリア文字色</h2>
+                <p className="text-xs text-muted-foreground mb-3">カード以外のページタイトルや説明文の色</p>
+                <label className="text-sm block">
+                  文字色
+                  <input type="color" value={currentSection.content.textColor} onChange={(e) => updateSection('content', 'textColor', e.target.value)} className="mt-1 w-full" />
+                </label>
               </div>
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              枠線色
-              <input type="color" value={currentSection.welcome.border} onChange={(e) => updateSection('welcome', 'border', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-              <select
-                value={currentSection.welcome.gradientType || 'none'}
-                onChange={(e) => handleGradientSelection('welcome', e.target.value)}
-                className="mt-1 w-full"
-              >
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor }}>
+                <h2 className="text-lg font-semibold mb-3">ヘッダー</h2>
+                <label className="text-sm block mb-2">
+                  背景色
+                  <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block mb-2">
+                  透明度
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round(currentSection.header.bgAlpha * 100)}
+                      onChange={(e) => updateSection('header', 'bgAlpha', Number(e.target.value) / 100)}
+                      className="mt-1 w-full"
+                    />
+                    <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.header.bgAlpha * 100)}%</span>
+                  </div>
+                </label>
+                <label className="text-sm block mb-2">
+                  文字色
+                  <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block">
+                  グラデーション
+                  <select
+                    value={currentSection.header.gradientType || 'none'}
+                    onChange={(e) => handleGradientSelection('header', e.target.value)}
+                    className="mt-1 w-full"
+                  >
+                    {gradientOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor }}>
+                <h2 className="text-lg font-semibold mb-3">ウェルカムカード</h2>
+                <label className="text-sm block mb-2">
+                  背景色
+                  <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block mb-2">
+                  透明度
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round(currentSection.welcome.bgAlpha * 100)}
+                      onChange={(e) => updateSection('welcome', 'bgAlpha', Number(e.target.value) / 100)}
+                      className="mt-1 w-full"
+                    />
+                    <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.welcome.bgAlpha * 100)}%</span>
+                  </div>
+                </label>
+                <label className="text-sm block mb-2">
+                  文字色
+                  <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block mb-2">
+                  枠線色
+                  <input type="color" value={currentSection.welcome.border} onChange={(e) => updateSection('welcome', 'border', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block">
+                  グラデーション
+                  <select
+                    value={currentSection.welcome.gradientType || 'none'}
+                    onChange={(e) => handleGradientSelection('welcome', e.target.value)}
+                    className="mt-1 w-full"
+                  >
+                    {gradientOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+              <h2 className="text-lg font-semibold mb-3">ウェルカムテキスト</h2>
+              <input
+                className="mb-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                value={welcomeTitle}
+                onChange={(e) => setWelcomeTitle(e.target.value)}
+                placeholder="ウェルカムタイトル"
+              />
+              <textarea
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                rows={3}
+                value={welcomeBody}
+                onChange={(e) => setWelcomeBody(e.target.value)}
+                placeholder="ウェルカム本文"
+              />
+            </div>
           </div>
-          </div>
-        </div>
         </div>
 
         <button
