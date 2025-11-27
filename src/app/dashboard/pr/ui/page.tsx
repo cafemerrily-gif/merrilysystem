@@ -440,7 +440,10 @@ export default function UiEditor() {
     );
   }
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+    >
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>

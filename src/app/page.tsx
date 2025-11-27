@@ -100,6 +100,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--muted-foreground', hexToHslTriplet(mode.muted));
   root.style.setProperty('--accent', hexToHslTriplet(ui.accent || mode.foreground));
   root.style.setProperty('--primary', hexToHslTriplet(ui.primary || mode.foreground));
+  root.style.setProperty('--card-foreground-hex', mode.cardFg);
+  root.style.setProperty('--card-background-hex', mode.cardBg);
 
   if (mode.backgroundGradient) {
     document.body.style.backgroundImage = mode.backgroundGradient;
