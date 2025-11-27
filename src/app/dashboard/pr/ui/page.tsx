@@ -444,14 +444,14 @@ export default function UiEditor() {
       className="min-h-screen"
       style={{
         backgroundColor: 'var(--background)',
-        color: 'var(--card-foreground-hex, #0f172a)',
+        color: 'var(--foreground, #0f172a)',
       }}
     >
       <div
         className="max-w-4xl mx-auto px-4 py-8 space-y-6"
         style={{
           backgroundColor: 'var(--background)',
-          color: 'var(--card-foreground-hex, #0f172a)',
+          color: 'var(--foreground, #0f172a)',
           '--card-border-color': 'var(--border)',
         } as React.CSSProperties}
       >
