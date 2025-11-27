@@ -20,8 +20,11 @@
    card: SectionColors;
  };
 
- type UiPayload = {
-   appTitle?: string;
+type UiPayload = {
+  uiSettings?: {
+    [key: string]: any;
+  };
+  appTitle?: string;
    homeIconUrl?: string;
    loginIconUrl?: string;
    appIconUrl?: string;
@@ -116,9 +119,9 @@
    useEffect(() => {
      (async () => {
        try {
-         const res = await fetch('/api/pr/website', { cache: 'no-store' });
-         const data: UiPayload = await res.json();
-         const ui = data?.uiSettings || {};
+          const res = await fetch('/api/pr/website', { cache: 'no-store' });
+          const data: UiPayload = await res.json();
+          const ui = data?.uiSettings || {};
          setAppTitle(ui.appTitle || appTitle);
          setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
          setAppIconUrl(ui.appIconUrl || appIconUrl);
