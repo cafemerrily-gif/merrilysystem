@@ -25,6 +25,17 @@ type Preset = {
   sections: Record<ModeKey, ModeSections>;
 };
 
+type UiPayload = {
+  uiSettings?: {
+    appTitle?: string;
+    loginIconUrl?: string;
+    appIconUrl?: string;
+    homeIconUrl?: string;
+    sections?: Record<ModeKey, ModeSections>;
+    presets?: Preset[];
+  };
+};
+
 const gradientOptions = [
   { label: 'なし', value: '' },
   { label: 'Night sky', value: 'linear-gradient(135deg, #0b1220, #1f2937)' },
@@ -252,11 +263,6 @@ export default function UiEditor() {
         light: cloneSections(sections.light),
         dark: cloneSections(sections.dark),
       },
-      base: {
-        background: currentSection.card.bg,
-        foreground: currentSection.card.fg,
-        border: currentSection.card.border,
-      },
     };
     setPresets((prev) => {
       const filtered = prev.filter((p) => p.name !== nextPreset.name);
@@ -295,9 +301,7 @@ export default function UiEditor() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">読み込み中...</div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">読み込み中...</div>;
   }
 
   return (
@@ -334,7 +338,7 @@ export default function UiEditor() {
             <button
               key={mode}
               onClick={() => setSelectedMode(mode)}
-              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primary bg-primary/10' : 'border-border'}`}
+              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primarybg-primary/10' : 'border-border'}`}
             >
               {mode === 'light' ? 'ライトモード' : 'ダークモード'}
             </button>
