@@ -23,6 +23,7 @@ type ModeSections = {
 type Preset = {
   name: string;
   sections: Record<ModeKey, ModeSections>;
+  base?: { background: string; foreground: string; border: string };
 };
 
 type UiPayload = {
