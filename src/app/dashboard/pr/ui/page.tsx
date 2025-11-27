@@ -476,7 +476,10 @@ export default function UiEditor() {
 
         <div
           className="bg-card border rounded-xl p-4 space-y-3"
-          style={{ borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))' }}
+          style={{
+            borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))',
+            color: 'var(--card-foreground-hex, #0f172a)',
+          }}
         >
           <h2 className="font-semibold">編集するモード</h2>
           <div className="flex gap-2">
@@ -528,7 +531,10 @@ export default function UiEditor() {
         <div className="grid gap-4 md:grid-cols-2">
             <div
               className="bg-card border rounded-xl p-4 space-y-3"
-              style={{ borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))' }}
+              style={{
+                borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))',
+                color: 'var(--card-foreground-hex, #0f172a)',
+              }}
             >
             <h2 className="font-semibold">アイコン・題名</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
@@ -584,7 +590,10 @@ export default function UiEditor() {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div
+            className="bg-card border border-border rounded-xl p-4 space-y-3"
+            style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+          >
             <h2 className="font-semibold">ベース色（背景/透明度/グラデーション）</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
@@ -648,7 +657,10 @@ export default function UiEditor() {
             </label>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div
+            className="bg-card border border-border rounded-xl p-4 space-y-3"
+            style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+          >
             <h2 className="font-semibold">ヘッダー</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
@@ -702,7 +714,10 @@ export default function UiEditor() {
             </label>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div
+            className="bg-card border border-border rounded-xl p-4 space-y-3"
+            style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+          >
             <h2 className="font-semibold">Welcomeカードの内容</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               タイトル
@@ -723,7 +738,10 @@ export default function UiEditor() {
             </label>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div
+            className="bg-card border border-border rounded-xl p-4 space-y-3"
+            style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+          >
             <h2 className="font-semibold">Welcomeカードの色</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
