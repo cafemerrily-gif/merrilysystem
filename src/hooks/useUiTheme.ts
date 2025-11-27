@@ -141,6 +141,10 @@ export function useUiTheme() {
         document.body.style.backgroundImage = 'none';
         document.body.style.backgroundColor = hexToRgba(mode.background, mode.backgroundAlpha ?? 1);
       }
+      
+      // 読み込み完了のマーク
+      document.body.classList.remove('loading');
+      document.body.classList.add('loaded');
     };
 
     const loadColorsFromSettings = (ui: UiSettings): UiColors => {
@@ -187,7 +191,7 @@ export function useUiTheme() {
     // スマホは常にデバイス設定、PC/タブレットは保存された設定またはデバイス設定
     const initialIsDark = isMobile ? media.matches : (storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches);
 
-    // キャッシュから即座に適用
+    // キャッシュから即座に適用（ThemeScriptで既に適用済みだが、再度確実に）
     const cached = window.localStorage.getItem('ui-settings-cache');
     const cachedUi: UiSettings = cached ? (() => { try { return JSON.parse(cached); } catch { return {}; } })() : {};
     const cachedColors = loadColorsFromSettings(cachedUi);
@@ -204,7 +208,8 @@ export function useUiTheme() {
         
         // 現在のテーマ設定を再確認して適用
         const currentPref = window.localStorage.getItem('ui-is-dark');
-        const currentIsDark = currentPref === 'true' ? true : currentPref === 'false' ? false : media.matches;
+        const isMobileNow = window.matchMedia('(max-width: 768px)').matches;
+        const currentIsDark = isMobileNow ? media.matches : (currentPref === 'true' ? true : currentPref === 'false' ? false : media.matches);
         applyColors(currentIsDark, latestColors);
         
         window.localStorage.setItem('ui-settings-cache', JSON.stringify(ui));
