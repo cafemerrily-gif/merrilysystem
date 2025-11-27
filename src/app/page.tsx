@@ -286,6 +286,7 @@ export default function Home() {
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
     backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
+    backgroundBlendMode: 'normal',
     color: currentHeader.fg,
     borderColor: currentHeader.border,
   };
@@ -336,6 +337,12 @@ export default function Home() {
                   </Link>
                 </>
               )}
+              <Link
+                href="/dashboard/pr/ui"
+                className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+              >
+                UI編集
+              </Link>
               <LogoutButton />
             </div>
           </div>
