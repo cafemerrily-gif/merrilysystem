@@ -20,9 +20,8 @@ type LogItem = { id: number; user_name: string | null; message: string; created_
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
-type UiSettings = any;
 
-// Tailwind hsl(var(--background)) に合わせた "h s% l%" 形式
+// convert hex -> "h s% l%" for Tailwind hsl(var(--background))
 const hexToHslTriplet = (hex: string) => {
   const h = hex.replace('#', '');
   if (h.length !== 6) return '0 0% 100%';
@@ -98,6 +97,7 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--accent', hexToHslTriplet(ui.accent || mode.foreground));
   root.style.setProperty('--primary', hexToHslTriplet(ui.primary || mode.foreground));
 
+  // body 背景（グラデーション優先、なければ色+透明度）
   if (mode.backgroundGradient) {
     document.body.style.backgroundImage = mode.backgroundGradient;
     document.body.style.backgroundColor = 'transparent';
@@ -125,7 +125,7 @@ export default function Home() {
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [loadingSales, setLoadingSales] = useState(true);
-  const [uiSettings, setUiSettings] = useState<UiSettings | null>(null);
+  const [uiSettings, setUiSettings] = useState<any>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem('ui-is-dark');
@@ -241,7 +241,7 @@ export default function Home() {
     }
   }, [isDark, uiSettings]);
 
-  // UI設定から現在のセクション色を算出
+  // derive colors from uiSettings
   const currentHeader = (() => {
     const ui = uiSettings || {};
     const bg = isDark ? ui.headerBgDark || ui.headerBackground || '#0b1220' : ui.headerBgLight || ui.headerBackground || '#f8fafc';
@@ -303,17 +303,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-12">
-        <header
-          className="flex items-center justify-between py-4 sticky top-0 z-30"
-          style={headerStyle}
-        >
+        <header className="flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>Cafe Management System</p>
-              <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>{appTitle}</h1>
+              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>
+                Cafe Management System
+              </p>
+              <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>
+                {appTitle}
+              </h1>
               <p className="text-sm" style={{ color: currentHeader.user }}>
                 {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
               </p>
@@ -343,15 +344,18 @@ export default function Home() {
           </div>
         </header>
 
-        <section
-          className="mb-6 p-[1px] rounded-2xl shadow-lg border"
-          style={welcomeStyle}
-        >
+        <section className="mb-6 p-[1px] rounded-2xl shadow-lg border" style={welcomeStyle}>
           <div className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
             <div className="col-span-2 space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentHeader.subtitle }}>Welcome</p>
-              <h2 className="text-2xl font-bold" style={{ color: currentWelcome.title }}>{currentWelcome.textTitle}</h2>
-              <p className="text-sm" style={{ color: currentWelcome.body }}>{currentWelcome.textBody}</p>
+              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentHeader.subtitle }}>
+                Welcome
+              </p>
+              <h2 className="text-2xl font-bold" style={{ color: currentWelcome.title }}>
+                {currentWelcome.textTitle}
+              </h2>
+              <p className="text-sm" style={{ color: currentWelcome.body }}>
+                {currentWelcome.textBody}
+              </p>
             </div>
             <div className="justify-self-end text-sm text-muted-foreground flex flex-col items-end gap-2">
               <div className="flex items-center gap-2">
@@ -368,24 +372,23 @@ export default function Home() {
               key={item.href}
               href={item.href}
               className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
-              style={{
-                backgroundImage: currentCard.bgGradient || undefined,
-                backgroundColor: currentCard.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
-                color: currentCard.fg,
-                borderColor: currentCard.border,
-              }}
+              style={cardStyle}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
                   <span aria-hidden>{item.icon}</span>
                 </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-foreground leading-tight">{item.title}</h2>
-                  <p className="text-xs text-muted-foreground">{item.subtitle}</p>
-                  <p className="text-[11px] text-muted-foreground line-clamp-1">{item.desc}</p>
+                <div className="text-left" style={{ color: currentCard.fg }}>
+                  <h2 className="text-base font-semibold leading-tight">{item.title}</h2>
+                  <p className="text-xs" style={{ color: currentCard.fg }}>
+                    {item.subtitle}
+                  </p>
+                  <p className="text-[11px] line-clamp-1" style={{ color: currentCard.fg }}>
+                    {item.desc}
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-primary text-xs font-semibold">
+              <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: currentCard.fg }}>
                 <span>{item.accent}</span>
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -398,8 +401,12 @@ export default function Home() {
         <section className="space-y-6">
           <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">売上サマリー</h3>
-              <span className="text-xs text-muted-foreground">最新データ</span>
+              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
+                売上サマリー
+              </h3>
+              <span className="text-xs" style={{ color: currentCard.fg }}>
+                最新データ
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-muted/30 p-3">
@@ -419,8 +426,12 @@ export default function Home() {
 
           <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">最新ブログ</h3>
-              <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
+              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
+                最新ブログ
+              </h3>
+              <span className="text-xs" style={{ color: currentCard.fg }}>
+                ホームページの投稿を表示
+              </span>
             </div>
             <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
               {loadingBlogs ? (
@@ -457,8 +468,12 @@ export default function Home() {
 
           <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">操作ログ</h3>
-              <span className="text-xs text-muted-foreground">最新50件</span>
+              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
+                操作ログ
+              </h3>
+              <span className="text-xs" style={{ color: currentCard.fg }}>
+                最新50件
+              </span>
             </div>
             <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1 scrollbar-thin">
               {loadingLogs ? (
@@ -484,8 +499,12 @@ export default function Home() {
 
           <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">通知</h3>
-              <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>
+              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
+                通知
+              </h3>
+              <span className="text-xs" style={{ color: currentCard.fg }}>
+                最新50件（全員/個別を含む）
+              </span>
             </div>
             <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1 scrollbar-thin">
               {loadingNotifications ? (
