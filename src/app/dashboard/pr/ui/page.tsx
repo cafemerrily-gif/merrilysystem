@@ -33,6 +33,12 @@ type UiPayload = {
     homeIconUrl?: string;
     sections?: Record<ModeKey, ModeSections>;
     presets?: Preset[];
+    lightBackground?: string;
+    lightBackgroundAlpha?: number;
+    lightBackgroundGradient?: string;
+    darkBackground?: string;
+    darkBackgroundAlpha?: number;
+    darkBackgroundGradient?: string;
   };
 };
 
@@ -268,10 +274,10 @@ export default function UiEditor() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data: UiPayload = await res.json();
       const ui = data?.uiSettings || {};
-      setAppTitle(ui.appTitle || appTitle);
-      setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
-      setAppIconUrl(ui.appIconUrl || appIconUrl);
-      setHomeIconUrl(ui.homeIconUrl || homeIconUrl);
+        setAppTitle((prev) => ui.appTitle || prev);
+        setLoginIconUrl((prev) => ui.loginIconUrl || prev);
+        setAppIconUrl((prev) => ui.appIconUrl || prev);
+        setHomeIconUrl((prev) => ui.homeIconUrl || prev);
       setSections({
         light: cloneSections(ui.sections?.light),
         dark: cloneSections(ui.sections?.dark),
