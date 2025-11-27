@@ -150,6 +150,7 @@ export default function Home() {
     if (stored === 'false') return false;
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const privileged = useMemo(() => ['職員', 'マネジメント部', 'エンジニアチーム'], []);
 
@@ -363,6 +364,43 @@ export default function Home() {
               UI編集
             </Link>
             <LogoutButton />
+          </div>
+          <div className="relative sm:hidden">
+            <button
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="rounded-lg border border-border bg-card/60 p-2"
+              aria-label="メニュー"
+            >
+              <svg className="h-5 w-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            {mobileMenuOpen && (
+              <div className="absolute right-0 z-20 mt-2 w-44 space-y-2 rounded-xl border border-border bg-card p-3 shadow-lg">
+                <button
+                  onClick={() => {
+                    setIsDark((prev) => !prev);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                >
+                  {isDark ? 'ライトに切替' : 'ダークに切替'}
+                </button>
+                {isAdmin && (
+                  <>
+                    <Link href="/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
+                      プロフィール
+                    </Link>
+                    <Link href="/admin/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
+                      メンバー管理
+                    </Link>
+                  </>
+                )}
+                <div className="px-3 py-2">
+                  <LogoutButton />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>

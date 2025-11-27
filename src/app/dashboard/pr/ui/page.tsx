@@ -194,9 +194,11 @@ type UiPayload = {
      })();
    }, []);
 
-   const currentSection = sections[selectedMode];
-   const cardTextColor = currentSection.card.fg;
-   const cardBorderColor = currentSection.card.border;
+  const currentSection = sections[selectedMode];
+  const cardTextColor = currentSection.card.fg;
+  const cardBorderColor = currentSection.card.border;
+  const headerTextColor = currentSection.header.fg;
+  const welcomeTextColor = currentSection.welcome.fg;
 
    const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string | number) => {
      setSections((prev) => ({
@@ -271,11 +273,11 @@ type UiPayload = {
            ))}
          </div>
 
-         <div
-           className="rounded-2xl border bg-card p-5 shadow"
-           style={{ color: cardTextColor, borderColor: cardBorderColor }}
-         >
-           <h2 className="text-lg font-semibold mb-3">カード全体</h2>
+        <div
+          className="rounded-2xl border bg-card p-5 shadow"
+          style={{ color: cardTextColor, borderColor: cardBorderColor }}
+        >
+          <h2 className="text-lg font-semibold mb-3">カード全体</h2>
            <div className="grid gap-3 md:grid-cols-3">
              <label className="text-sm space-y-1">
                文字色
@@ -298,20 +300,80 @@ type UiPayload = {
                  ))}
                </select>
              </label>
-           </div>
-         </div>
+          </div>
+        </div>
 
-         <button
-           onClick={handleSave}
-           disabled={saving}
+        <div
+          className="rounded-2xl border bg-card p-5 shadow"
+          style={{ color: headerTextColor, borderColor: cardBorderColor }}
+        >
+          <h2 className="text-lg font-semibold mb-3">ヘッダー</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="text-sm space-y-1">
+              背景色
+              <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} />
+            </label>
+            <label className="text-sm space-y-1">
+              文字色
+              <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} />
+            </label>
+            <label className="text-sm space-y-1">
+              グラデーション
+              <select
+                value={currentSection.header.gradient}
+                onChange={(e) => updateSection('header', 'gradient', e.target.value)}
+              >
+                {gradientOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl border bg-card p-5 shadow"
+          style={{ color: welcomeTextColor, borderColor: cardBorderColor }}
+        >
+          <h2 className="text-lg font-semibold mb-3">ウェルカム</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="text-sm space-y-1">
+              背景色
+              <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} />
+            </label>
+            <label className="text-sm space-y-1">
+              文字色
+              <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} />
+            </label>
+            <label className="text-sm space-y-1">
+              グラデーション
+              <select
+                value={currentSection.welcome.gradient}
+                onChange={(e) => updateSection('welcome', 'gradient', e.target.value)}
+              >
+                {gradientOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
            className="w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
          >
            {saving ? '保存中...' : 'UI設定を保存'}
          </button>
 
-         {message && <p className="text-sm text-foreground">{message}</p>}
-         {error && <p className="text-sm text-destructive">{error}</p>}
-       </div>
-     </div>
-   );
- }
+        {message && <p className="text-sm text-foreground">{message}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    </div>
+  );
+}
