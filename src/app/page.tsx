@@ -21,7 +21,6 @@ type NotificationItem = { id: number; title: string; detail: string | null; crea
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
-// convert hex -> "h s% l%" for Tailwind hsl(var(--background))
 const hexToHslTriplet = (hex: string) => {
   const h = hex.replace('#', '');
   if (h.length !== 6) return '0 0% 100%';
@@ -97,7 +96,6 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--accent', hexToHslTriplet(ui.accent || mode.foreground));
   root.style.setProperty('--primary', hexToHslTriplet(ui.primary || mode.foreground));
 
-  // body 背景（グラデーション優先、なければ色+透明度）
   if (mode.backgroundGradient) {
     document.body.style.backgroundImage = mode.backgroundGradient;
     document.body.style.backgroundColor = 'transparent';
@@ -241,7 +239,6 @@ export default function Home() {
     }
   }, [isDark, uiSettings]);
 
-  // derive colors from uiSettings
   const currentHeader = (() => {
     const ui = uiSettings || {};
     const bg = isDark ? ui.headerBgDark || ui.headerBackground || '#0b1220' : ui.headerBgLight || ui.headerBackground || '#f8fafc';
@@ -281,22 +278,21 @@ export default function Home() {
 
   const cardStyle = {
     backgroundImage: currentCard.bgGradient || undefined,
-    backgroundColor: currentCard.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
+    backgroundColor: `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
     color: currentCard.fg,
     borderColor: currentCard.border,
   };
 
-  const headerAlpha = Math.max(0.1, currentHeader.bgAlpha ?? 1); // 最低限の不透明度を確保
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
-    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${headerAlpha})`,
+    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
     color: currentHeader.fg,
-    border: `1px solid ${currentHeader.border}`,
+    borderColor: currentHeader.border,
   };
 
   const welcomeStyle = {
     backgroundImage: currentWelcome.bgGradient || undefined,
-    backgroundColor: currentWelcome.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentWelcome.bg)}, ${currentWelcome.bgAlpha ?? 1})`,
+    backgroundColor: `hsla(${hexToHslTriplet(currentWelcome.bg)}, ${currentWelcome.bgAlpha ?? 1})`,
     color: currentWelcome.fg,
     borderColor: currentWelcome.border,
   };
@@ -304,7 +300,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-12">
-        <header className="flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
+        <header className="flex items-center justify-between py-4 sticky top-0 z-30 border" style={headerStyle}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
