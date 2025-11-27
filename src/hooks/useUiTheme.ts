@@ -102,17 +102,6 @@ const hexToRgba = (hex: string, alpha = 1) => {
 
 export function useUiTheme() {
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // 画面幅でモバイル判定
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 768px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -120,6 +109,8 @@ export function useUiTheme() {
     const applyColors = (isDark: boolean, colors: UiColors) => {
       const root = document.documentElement;
       const mode = isDark ? colors.dark : colors.light;
+      
+      // CSS変数を設定
       root.style.setProperty('--background', normalizeColorValue(mode.background));
       root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
       root.style.setProperty('--border', normalizeColorValue(mode.border));
@@ -134,8 +125,11 @@ export function useUiTheme() {
       root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
       root.style.setProperty('--card-background-hex', mode.cardBg);
       root.style.setProperty('--card-foreground-hex', mode.cardFg);
+      
+      // darkクラスを切り替え
       root.classList.toggle('dark', isDark);
 
+      // 背景を適用
       if (mode.backgroundGradient) {
         document.body.style.backgroundImage = mode.backgroundGradient;
         document.body.style.backgroundColor = 'transparent';
@@ -174,26 +168,31 @@ export function useUiTheme() {
       },
     });
 
+    // 初期テーマ決定（デバイス設定を参照）
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const storedPref = window.localStorage.getItem('ui-is-dark');
+    const initialIsDark = storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches;
+
+    // キャッシュから即座に適用
     const cached = window.localStorage.getItem('ui-settings-cache');
     const cachedUi: UiSettings = cached ? (() => { try { return JSON.parse(cached); } catch { return {}; } })() : {};
     const cachedColors = loadColorsFromSettings(cachedUi);
+    applyColors(initialIsDark, cachedColors);
 
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const storedPref = window.localStorage.getItem('ui-is-dark');
-    const preferred = storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches;
-    const desired = isMobile ? media.matches : preferred;
-
-    // 1) 先にキャッシュを適用
-    applyColors(desired, cachedColors);
-
-    // 2) サーバーから取得して上書き
+    // サーバーから最新設定を取得して上書き
+    let latestColors = cachedColors;
     (async () => {
       try {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         const ui: UiSettings = data?.uiSettings || {};
-        const colors = loadColorsFromSettings(ui);
-        applyColors(desired, colors);
+        latestColors = loadColorsFromSettings(ui);
+        
+        // 現在のテーマ設定を再確認して適用
+        const currentPref = window.localStorage.getItem('ui-is-dark');
+        const currentIsDark = currentPref === 'true' ? true : currentPref === 'false' ? false : media.matches;
+        applyColors(currentIsDark, latestColors);
+        
         window.localStorage.setItem('ui-settings-cache', JSON.stringify(ui));
       } catch (e) {
         console.error('UI settings fetch error', e);
@@ -202,14 +201,18 @@ export function useUiTheme() {
       }
     })();
 
-    // モバイルのみデバイス設定の変化に追従
+    // デバイス設定変更時の処理（モバイル・PC共通）
+    // ユーザーが手動で切り替えていない場合のみ追従
     const handleChange = (event: MediaQueryListEvent) => {
-      if (!isMobile) return;
-      applyColors(event.matches, cachedColors);
+      const currentPref = window.localStorage.getItem('ui-is-dark');
+      // 手動設定がない場合のみデバイス設定に従う
+      if (currentPref === null) {
+        applyColors(event.matches, latestColors);
+      }
     };
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [isMobile]);
+  }, []);
 
   return { loading };
 }
