@@ -79,6 +79,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
     cardFg: ui.cardFgLight || ui.cardForeground || '#0f172a',
     cardBorder: ui.cardBorderLight || ui.cardBorder || '#e2e8f0',
     muted: ui.mutedColorLight || ui.mutedColor || '#64748b',
+    inputBg: ui.inputBgColorLight || '#ffffff',
+    inputText: ui.inputTextColorLight || '#0f172a',
   };
   const dark = {
     background: ui.darkBackground || '#0b1220',
@@ -90,6 +92,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
     cardFg: ui.cardFgDark || ui.cardForeground || '#e5e7eb',
     cardBorder: ui.cardBorderDark || ui.cardBorder || '#1f2937',
     muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
+    inputBg: ui.inputBgColorDark || '#1f2937',
+    inputText: ui.inputTextColorDark || '#e5e7eb',
   };
   const mode = isDark ? dark : light;
   const headerBg = isDark ? ui.headerBgDark || ui.headerBackground : ui.headerBgLight || ui.headerBackground;
@@ -117,6 +121,8 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--header-bg-alpha', headerAlpha.toString());
   root.style.setProperty('--header-gradient', headerGradient || 'none');
   root.style.setProperty('--header-fg', hexToHslTriplet(headerFg));
+  root.style.setProperty('--input-bg', mode.inputBg);
+  root.style.setProperty('--input-text', mode.inputText);
 
   if (mode.backgroundGradient) {
     document.body.style.backgroundImage = mode.backgroundGradient;
@@ -149,7 +155,10 @@ export default function Home() {
   const [uiSettings, setUiSettings] = useState<any>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
     const stored = window.localStorage.getItem('ui-is-dark');
+    // スマホは常にデバイス設定、PC/タブレットは保存された設定またはデバイス設定
+    if (isMobile) return window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (stored === 'true') return true;
     if (stored === 'false') return false;
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -165,6 +174,26 @@ export default function Home() {
       return item.requiredTags.some((t) => userDepartments.includes(t));
     });
   }, [userDepartments, privileged]);
+
+  // デバイス設定の監視（スマホでは常に追従）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const stored = window.localStorage.getItem('ui-is-dark');
+      
+      // スマホまたは手動設定がない場合はデバイス設定に従う
+      if (isMobile || stored === null) {
+        setIsDark(e.matches);
+        if (uiSettings) applyUiToDocument(uiSettings, e.matches);
+      }
+    };
+    
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [uiSettings]);
 
   useEffect(() => {
     (async () => {
@@ -382,15 +411,6 @@ export default function Home() {
             </button>
             {mobileMenuOpen && (
               <div className="absolute right-0 z-20 mt-2 w-44 space-y-2 rounded-xl border border-border bg-card p-3 shadow-lg">
-                <button
-                  onClick={() => {
-                    setIsDark((prev) => !prev);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left rounded-lg px-3 py-2 text-sm hover:bg-muted"
-                >
-                  {isDark ? 'ライトに切替' : 'ダークに切替'}
-                </button>
                 {isAdmin && (
                   <>
                     <Link href="/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>

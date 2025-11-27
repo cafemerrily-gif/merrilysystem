@@ -27,6 +27,10 @@ type UiSettings = {
   mutedColor?: string;
   mutedColorLight?: string;
   mutedColorDark?: string;
+  inputBgColorLight?: string;
+  inputTextColorLight?: string;
+  inputBgColorDark?: string;
+  inputTextColorDark?: string;
 };
 
 type UiColors = {
@@ -139,34 +143,41 @@ export function useUiTheme() {
       }
     };
 
-    const loadColorsFromSettings = (ui: UiSettings): UiColors => ({
-      light: {
-        background: ui.lightBackground || '#f8fafc',
-        border: ui.lightBorder || '#e2e8f0',
-        foreground: ui.lightForeground || '#0f172a',
-        backgroundAlpha: ui.lightBackgroundAlpha ?? 1,
-        backgroundGradient: ui.lightBackgroundGradient || '',
-        cardBg: ui.cardBgLight || ui.cardBackground || '#ffffff',
-        cardFg: ui.cardFgLight || ui.cardForeground || '#0f172a',
-        cardBorder: ui.cardBorderLight || ui.cardBorder || '#e2e8f0',
-        muted: ui.mutedColorLight || ui.mutedColor || '#64748b',
-        accent: ui.accent || ui.primary || '#0f172a',
-        primary: ui.primary || '#0f172a',
-      },
-      dark: {
-        background: ui.darkBackground || '#0b1220',
-        border: ui.darkBorder || '#1f2937',
-        foreground: ui.darkForeground || '#e5e7eb',
-        backgroundAlpha: ui.darkBackgroundAlpha ?? 1,
-        backgroundGradient: ui.darkBackgroundGradient || '',
-        cardBg: ui.cardBgDark || ui.cardBackground || '#0f172a',
-        cardFg: ui.cardFgDark || ui.cardForeground || '#e5e7eb',
-        cardBorder: ui.cardBorderDark || ui.cardBorder || '#1f2937',
-        muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
-        accent: ui.accent || ui.primary || '#e5e7eb',
-        primary: ui.primary || '#e5e7eb',
-      },
-    });
+    const loadColorsFromSettings = (ui: UiSettings): UiColors => {
+      const inputBgLight = ui.inputBgColorLight || '#ffffff';
+      const inputTextLight = ui.inputTextColorLight || '#0f172a';
+      const inputBgDark = ui.inputBgColorDark || '#1f2937';
+      const inputTextDark = ui.inputTextColorDark || '#e5e7eb';
+      
+      return {
+        light: {
+          background: ui.lightBackground || '#f8fafc',
+          border: ui.lightBorder || '#e2e8f0',
+          foreground: ui.lightForeground || '#0f172a',
+          backgroundAlpha: ui.lightBackgroundAlpha ?? 1,
+          backgroundGradient: ui.lightBackgroundGradient || '',
+          cardBg: ui.cardBgLight || ui.cardBackground || '#ffffff',
+          cardFg: ui.cardFgLight || ui.cardForeground || '#0f172a',
+          cardBorder: ui.cardBorderLight || ui.cardBorder || '#e2e8f0',
+          muted: ui.mutedColorLight || ui.mutedColor || '#64748b',
+          accent: ui.accent || ui.primary || '#0f172a',
+          primary: ui.primary || '#0f172a',
+        },
+        dark: {
+          background: ui.darkBackground || '#0b1220',
+          border: ui.darkBorder || '#1f2937',
+          foreground: ui.darkForeground || '#e5e7eb',
+          backgroundAlpha: ui.darkBackgroundAlpha ?? 1,
+          backgroundGradient: ui.darkBackgroundGradient || '',
+          cardBg: ui.cardBgDark || ui.cardBackground || '#0f172a',
+          cardFg: ui.cardFgDark || ui.cardForeground || '#e5e7eb',
+          cardBorder: ui.cardBorderDark || ui.cardBorder || '#1f2937',
+          muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
+          accent: ui.accent || ui.primary || '#e5e7eb',
+          primary: ui.primary || '#e5e7eb',
+        },
+      };
+    };
 
     // 初期テーマ決定
     const media = window.matchMedia('(prefers-color-scheme: dark)');
