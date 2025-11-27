@@ -265,6 +265,20 @@ export default function Home() {
     return { bg, bgAlpha, bgGradient, fg, border };
   })();
 
+  const currentWelcome = (() => {
+    const ui = uiSettings || {};
+    const bg = isDark ? ui.welcomeBgDark || ui.welcomeBackground || '#0f172a' : ui.welcomeBgLight || ui.welcomeBackground || '#ffffff';
+    const bgAlpha = isDark ? ui.welcomeBgAlphaDark ?? 1 : ui.welcomeBgAlphaLight ?? 1;
+    const bgGradient = isDark ? ui.welcomeBgGradientDark || '' : ui.welcomeBgGradientLight || '';
+    const fg = isDark ? ui.welcomeFgDark || ui.welcomeForeground || '#e5e7eb' : ui.welcomeFgLight || ui.welcomeForeground || '#0f172a';
+    const border = isDark ? ui.welcomeBorderDark || '#1f2937' : ui.welcomeBorderLight || '#e2e8f0';
+    const title = isDark ? ui.welcomeTitleColorDark || fg : ui.welcomeTitleColorLight || fg;
+    const body = isDark ? ui.welcomeBodyColorDark || fg : ui.welcomeBodyColorLight || fg;
+    const textTitle = ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました';
+    const textBody = ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。';
+    return { bg, bgAlpha, bgGradient, fg, border, title, body, textTitle, textBody };
+  })();
+
   const cardStyle = {
     backgroundImage: currentCard.bgGradient || undefined,
     backgroundColor: currentCard.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
@@ -277,6 +291,13 @@ export default function Home() {
     backgroundColor: currentHeader.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
     color: currentHeader.fg,
     borderColor: currentHeader.border,
+  };
+
+  const welcomeStyle = {
+    backgroundImage: currentWelcome.bgGradient || undefined,
+    backgroundColor: currentWelcome.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentWelcome.bg)}, ${currentWelcome.bgAlpha ?? 1})`,
+    color: currentWelcome.fg,
+    borderColor: currentWelcome.border,
   };
 
   return (
@@ -322,12 +343,37 @@ export default function Home() {
           </div>
         </header>
 
+        <section
+          className="mb-6 p-[1px] rounded-2xl shadow-lg border"
+          style={welcomeStyle}
+        >
+          <div className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
+            <div className="col-span-2 space-y-1">
+              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentHeader.subtitle }}>Welcome</p>
+              <h2 className="text-2xl font-bold" style={{ color: currentWelcome.title }}>{currentWelcome.textTitle}</h2>
+              <p className="text-sm" style={{ color: currentWelcome.body }}>{currentWelcome.textBody}</p>
+            </div>
+            <div className="justify-self-end text-sm text-muted-foreground flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Powered by Supabase</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group flex items-center justify-between px-4 py-4 rounded-xl border border-border bg-card hover:bg-muted transition-all duration-200 shadow-sm hover:shadow-lg"
+              className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
+              style={{
+                backgroundImage: currentCard.bgGradient || undefined,
+                backgroundColor: currentCard.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
+                color: currentCard.fg,
+                borderColor: currentCard.border,
+              }}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
