@@ -478,6 +478,8 @@ export default function UiEditor() {
   const [previewMode, setPreviewMode] = useState<ModeKey>('light');
   const [appIconLight, setAppIconLight] = useState('/white.png');
   const [appIconDark, setAppIconDark] = useState('/black.png');
+  const [pwaIcon, setPwaIcon] = useState('/icon-192.png'); // PWAマニフェストアイコン
+  const [uploadingPwaIcon, setUploadingPwaIcon] = useState(false); // アップロード中フラグ
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -502,6 +504,7 @@ export default function UiEditor() {
         setAppTitle((prev) => ui.appTitle || prev);
         setAppIconLight((prev) => ui.appIconLightUrl || ui.appIconUrl || prev);
         setAppIconDark((prev) => ui.appIconDarkUrl || ui.appIconUrl || prev);
+        setPwaIcon((prev) => ui.pwaIconUrl || prev);
         setSections({
           light: cloneSections(ui.sections?.light),
           dark: cloneSections(ui.sections?.dark),
@@ -722,6 +725,52 @@ export default function UiEditor() {
     }
   };
 
+  const handlePwaIconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // ファイルサイズチェック（5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ファイルサイズは5MB以下にしてください');
+      return;
+    }
+    
+    // ファイルタイプチェック
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('PNG、JPEG、WebP形式の画像のみアップロード可能です');
+      return;
+    }
+    
+    setUploadingPwaIcon(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'アップロードに失敗しました');
+      }
+      
+      const data = await response.json();
+      setPwaIcon(data.url);
+      setMessage('アイコンをアップロードしました');
+    } catch (e: any) {
+      setError(e?.message || 'アップロードに失敗しました');
+    } finally {
+      setUploadingPwaIcon(false);
+      // ファイル選択をリセット
+      event.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -732,6 +781,7 @@ export default function UiEditor() {
           appTitle,
           appIconLightUrl: appIconLight,
           appIconDarkUrl: appIconDark,
+          pwaIconUrl: pwaIcon,
           welcomeTitleText: welcomeTitle,
           welcomeBodyText: welcomeBody,
           sections,
@@ -957,6 +1007,55 @@ export default function UiEditor() {
                     ))}
                   </select>
                 </label>
+              </div>
+
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+                <h2 className="text-lg font-semibold mb-3">ホーム画面アイコン</h2>
+                <p className="text-xs text-muted-foreground mb-3">スマホでホーム画面に追加するときのアイコン</p>
+                <label className="text-sm block mb-2">
+                  アイコンURL
+                  <input
+                    type="text"
+                    value={pwaIcon}
+                    onChange={(e) => setPwaIcon(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    placeholder="/icon-192.png"
+                  />
+                </label>
+                <div className="mt-2">
+                  <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-accent bg-accent/10 px-4 py-2 text-sm text-accent hover:bg-accent/20 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handlePwaIconUpload}
+                      disabled={uploadingPwaIcon}
+                      className="hidden"
+                    />
+                    {uploadingPwaIcon ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        <span>アップロード中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📁</span>
+                        <span>ファイルを選択</span>
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPEG, WebP（最大5MB）</p>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <img 
+                    src={pwaIcon} 
+                    alt="PWA Icon Preview" 
+                    className="w-16 h-16 rounded-2xl border border-border object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/icon-192.png';
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">プレビュー</p>
+                </div>
               </div>
 
               <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
