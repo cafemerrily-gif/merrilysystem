@@ -539,7 +539,7 @@ export default function UiEditor() {
               }}
             >
             <h2 className="font-semibold">アイコン・題名</h2>
-            <label className="text-sm text-muted-foreground space-y-1 block">
+            <label className="text-sm space-y-1 block" style={{ color: cardTextColor }}>
               アプリの題名
               <input
                 value={appTitle}
@@ -548,7 +548,7 @@ export default function UiEditor() {
                 placeholder="MERRILY"
               />
             </label>
-            <label className="text-sm text-muted-foreground space-y-1 block">
+            <label className="text-sm space-y-1 block" style={{ color: cardTextColor }}>
               ログイン画面のアイコンURL
               <input
                 value={loginIconUrl}
@@ -557,7 +557,7 @@ export default function UiEditor() {
                 placeholder="https://example.com/login-icon.png"
               />
             </label>
-            <label className="text-sm text-muted-foreground space-y-1 block">
+            <label className="text-sm space-y-1 block" style={{ color: cardTextColor }}>
               ログイン後（ヘッダー）のアイコンURL
               <input
                 value={appIconUrl}
@@ -566,7 +566,7 @@ export default function UiEditor() {
                 placeholder="https://example.com/app-icon.png"
               />
             </label>
-            <label className="text-sm text-muted-foreground space-y-1 block">
+            <label className="text-sm space-y-1 block" style={{ color: cardTextColor }}>
               ホーム追加用アイコンURL
               <input
                 value={homeIconUrl}
@@ -593,11 +593,11 @@ export default function UiEditor() {
           </div>
 
           <div
-            className="bg-card border border-border rounded-xl p-4 space-y-3"
-            style={{
-              color: cardTextColor,
-              borderColor: cardBorderColor,
-            }}
+                className="bg-card border border-border rounded-xl p-4 space-y-3"
+                style={{
+                  color: cardTextColor,
+                  borderColor: cardBorderColor,
+                }}
           >
             <h2 className="font-semibold">ベース色（背景/透明度/グラデーション）</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
