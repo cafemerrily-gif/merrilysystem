@@ -303,30 +303,40 @@ function LoginPageInner() {
 
         <form className="space-y-4" onSubmit={handleLogin}>
           {mode === 'signup' && (
-            <label className="text-sm text-muted-foreground flex flex-col gap-2">
+            <label className="text-sm flex flex-col gap-2" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
               氏名
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2"
+                className="w-full rounded-lg border px-3 py-2"
+                style={{
+                  backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+                  borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
+                  color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined,
+                }}
                 placeholder="山田 太郎"
               />
             </label>
           )}
-          <label className="text-sm text-muted-foreground flex flex-col gap-2">
+          <label className="text-sm flex flex-col gap-2" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
             メールアドレス
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border bg-card px-3 py-2"
+              className="w-full rounded-lg border px-3 py-2"
+              style={{
+                backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+                borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
+                color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined,
+              }}
               placeholder="you@example.com"
             />
           </label>
-          <label className="text-sm text-muted-foreground flex flex-col gap-2">
+          <label className="text-sm flex flex-col gap-2" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
             パスワード
             <div className="flex items-center gap-2">
               <div className="relative w-full">
@@ -335,13 +345,19 @@ function LoginPageInner() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2 pr-12"
+                  className="w-full rounded-lg border px-3 py-2 pr-12"
+                  style={{
+                    backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+                    borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
+                    color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined,
+                  }}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-2 flex items-center px-2 text-muted-foreground hover:text-accent"
+                  className="absolute inset-y-0 right-2 flex items-center px-2 hover:opacity-70"
+                  style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}
                   aria-label={showPassword ? 'パスワードを非表示' : 'パスワードを表示'}
                 >
                   {showPassword ? (
@@ -358,17 +374,25 @@ function LoginPageInner() {
               </div>
             </div>
             {mode === 'signup' && (
-              <p className="text-xs text-muted-foreground">英数字を含む8文字以上で入力してください。</p>
+              <p className="text-xs" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>英数字を含む8文字以上で入力してください。</p>
             )}
           </label>
           {mode === 'signup' && (
-            <div className="text-sm text-muted-foreground flex flex-col gap-2">
+            <div className="text-sm flex flex-col gap-2" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
               部署（複数選択可）
               <div className="grid grid-cols-2 gap-2">
                 {deptOptions.map((dept) => {
                   const checked = departments.includes(dept);
                   return (
-                    <label key={dept} className="flex items-center gap-2 text-foreground border border-border rounded-lg px-3 py-2 bg-card">
+                    <label 
+                      key={dept} 
+                      className="flex items-center gap-2 border rounded-lg px-3 py-2"
+                      style={{
+                        backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+                        borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
+                        color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined,
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={checked}
@@ -397,12 +421,13 @@ function LoginPageInner() {
           </button>
         </form>
 
-        <div className="text-center text-xs text-muted-foreground space-y-1">
+        <div className="text-center text-xs space-y-1" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
           <p>アカウントが無い場合は一度だけ登録してください。</p>
           <button
             type="button"
             onClick={toggleMode}
-            className="text-accent hover:underline"
+            className="hover:underline"
+            style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined }}
           >
             {mode === 'login' ? '初回登録はこちら' : 'ログイン画面に戻る'}
           </button>
@@ -410,7 +435,9 @@ function LoginPageInner() {
             <button
               type="button"
               onClick={goResetPage}
-              className="text-accent hover:underline"
+              className="hover:underline"
+              style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined }}
+            >
             >
               パスワードを忘れた場合はこちら
             </button>
