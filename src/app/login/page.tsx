@@ -438,7 +438,6 @@ function LoginPageInner() {
               className="hover:underline"
               style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined }}
             >
-            >
               パスワードを忘れた場合はこちら
             </button>
           </div>
