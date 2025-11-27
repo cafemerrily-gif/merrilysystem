@@ -288,7 +288,8 @@ export default function Home() {
 
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
-    backgroundColor: currentHeader.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
+    // ヘッダーは常に実色を持たせ、グラデ指定時は背景色＋gradient両方を併用して透過を防ぐ
+    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
     color: currentHeader.fg,
     borderColor: currentHeader.border,
   };
