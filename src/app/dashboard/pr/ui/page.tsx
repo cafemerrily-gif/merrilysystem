@@ -169,7 +169,7 @@ export default function UiEditor() {
   const [saving, setSaving] = useState(false);
   const [presets, setPresets] = useState<Preset[]>(defaultPresets);
   const [presetName, setPresetName] = useState('Custom Preset');
-  const [selectedPreset, setSelectedPreset] = useState<string>('Default');
+  const [selectedPreset, setSelectedPreset] = useState<string>(defaultPresets[0].name);
   const [basePayload, setBasePayload] = useState<any>({});
 
   useEffect(() => {
@@ -211,6 +211,13 @@ export default function UiEditor() {
       });
     }
   }, [selectedPreset, presets]);
+
+  useEffect(() => {
+    if (!presets.length) return;
+    if (!presets.some((p) => p.name === selectedPreset)) {
+      setSelectedPreset(presets[0].name);
+    }
+  }, [presets, selectedPreset]);
 
   const currentSection = sections[selectedMode];
   const cardTextColor = currentSection.card.fg;
