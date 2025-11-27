@@ -21,21 +21,43 @@ type NotificationItem = { id: number; title: string; detail: string | null; crea
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
-const hexToRgba = (hex: string, alpha = 1) => {
+// Tailwind hsl(var(--background)) に合わせた "h s% l%" 形式
+const hexToHslTriplet = (hex: string) => {
   const h = hex.replace('#', '');
-  if (h.length !== 6) return hex;
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  if (h.length !== 6) return '0 0% 100%';
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let hDeg = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+  let s = 0;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    switch (max) {
+      case r:
+        hDeg = ((g - b) / d) % 6;
+        break;
+      case g:
+        hDeg = (b - r) / d + 2;
+        break;
+      default:
+        hDeg = (r - g) / d + 4;
+    }
+    hDeg = Math.round(hDeg * 60);
+    if (hDeg < 0) hDeg += 360;
+  }
+  return `${Math.round(hDeg)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
 const navItems: NavItem[] = [
   { href: '/dashboard/staff/menu', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠・シフト', desc: '出勤/退勤の記録とシフト確認', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
-  { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '会計メニュー', desc: '売上ダッシュボードや入力', accent: '会計', requiredTags: ['会計部'] },
+  { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '売上メニュー', desc: '売上・分析ダッシュボードへ', accent: '会計', requiredTags: ['会計部'] },
   { href: '/dashboard/dev/menu', icon: '🛠️', title: '開発部', subtitle: 'メニュー管理', desc: 'カテゴリ/フォルダ/商品を管理', accent: '開発', requiredTags: ['開発部'] },
   { href: '/dashboard/pr/menu', icon: '📣', title: '広報部', subtitle: 'ホームページ編集', desc: '配色・アイコン・ブログ編集', accent: '広報', requiredTags: ['広報部'] },
-  { href: '/dashboard/debug/menu', icon: '🐛', title: 'デバッグ', subtitle: 'テスト/チェック', desc: 'APIテストやヘルスチェック', accent: 'デバッグ', requiredTags: ['エンジニアチーム'] },
+  { href: '/dashboard/debug/menu', icon: '🐛', title: 'デバッグ', subtitle: 'テスト/チェック', desc: 'APIテストやスイッチ検証', accent: 'デバッグ', requiredTags: ['エンジニアチーム'] },
 ];
 
 const applyUiToDocument = (ui: any, isDark: boolean) => {
@@ -63,24 +85,27 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
     muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
   };
   const mode = isDark ? dark : light;
+
   const root = document.documentElement;
-  const bgColor = mode.backgroundGradient ? undefined : hexToRgba(mode.background, mode.backgroundAlpha);
-  if (bgColor) root.style.setProperty('--background', bgColor);
+  root.style.setProperty('--background', hexToHslTriplet(mode.background));
+  root.style.setProperty('--foreground', hexToHslTriplet(mode.foreground));
+  root.style.setProperty('--border', hexToHslTriplet(mode.border));
+  root.style.setProperty('--card', hexToHslTriplet(mode.cardBg));
+  root.style.setProperty('--card-foreground', hexToHslTriplet(mode.cardFg));
+  root.style.setProperty('--muted', hexToHslTriplet(mode.muted));
+  root.style.setProperty('--muted-foreground', hexToHslTriplet(mode.muted));
+  root.style.setProperty('--accent', hexToHslTriplet(ui.accent || mode.foreground));
+  root.style.setProperty('--primary', hexToHslTriplet(ui.primary || mode.foreground));
+
   if (mode.backgroundGradient) {
-    root.style.setProperty('--background-gradient', mode.backgroundGradient);
     document.body.style.backgroundImage = mode.backgroundGradient;
+    document.body.style.backgroundColor = 'transparent';
   } else {
-    root.style.removeProperty('--background-gradient');
+    const hsl = hexToHslTriplet(mode.background);
+    const alpha = mode.backgroundAlpha ?? 1;
     document.body.style.backgroundImage = 'none';
+    document.body.style.backgroundColor = `hsla(${hsl}, ${alpha})`;
   }
-  root.style.setProperty('--foreground', mode.foreground);
-  root.style.setProperty('--border', mode.border);
-  root.style.setProperty('--card', mode.cardBg);
-  root.style.setProperty('--card-foreground', mode.cardFg);
-  root.style.setProperty('--muted', mode.muted);
-  root.style.setProperty('--muted-foreground', mode.cardFg);
-  root.style.setProperty('--accent', ui.accent || mode.foreground);
-  root.style.setProperty('--primary', ui.primary || mode.foreground);
   root.classList.toggle('dark', isDark);
 };
 
@@ -307,7 +332,7 @@ export default function Home() {
           <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">最新ブログ</h3>
-              <span className="text-xs text-muted-foreground">広報ページの投稿を表示</span>
+              <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
             </div>
             <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
               {loadingBlogs ? (
