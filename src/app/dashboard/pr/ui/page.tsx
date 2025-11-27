@@ -42,6 +42,12 @@ const gradientOptions = [
   { label: 'Sunrise', value: 'linear-gradient(135deg, rgba(255,145,0,0.45), rgba(255,72,94,0.35))' },
   { label: 'Pastel glow', value: 'linear-gradient(120deg, rgba(173,212,255,0.45), rgba(255,255,255,0))' },
   { label: 'Soft gradient', value: 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(15,23,42,0.4))' },
+  { label: 'Ocean Breeze', value: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' },
+  { label: 'Sunset Glow', value: 'linear-gradient(135deg, #f97316, #f43f5e)' },
+  { label: 'Aurora Mist', value: 'linear-gradient(135deg, #0f172a, #4ade80)' },
+  { label: 'Forest Haze', value: 'linear-gradient(135deg, #0f172a, #22c55e)' },
+  { label: 'Calm Teal', value: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' },
+  { label: 'Coffee Warmth', value: 'linear-gradient(135deg, #3f1d13, #a16207)' },
 ];
 
 const defaultModeSections: ModeSections = {
@@ -174,6 +180,22 @@ const selectInitialPresetName = (storedPresets?: Preset[]) => {
   return defaultPresets[0].name;
 };
 
+type BaseBackgroundSettings = {
+  bg: string;
+  bgAlpha: number;
+  gradient: string;
+};
+
+const defaultBaseBackgrounds: Record<ModeKey, BaseBackgroundSettings> = {
+  light: { bg: '#f8fafc', bgAlpha: 1, gradient: '' },
+  dark: { bg: '#0b1220', bgAlpha: 1, gradient: '' },
+};
+
+const createDefaultBaseBackgrounds = () => ({
+  light: { ...defaultBaseBackgrounds.light },
+  dark: { ...defaultBaseBackgrounds.dark },
+});
+
 const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
   const out: Record<string, string | number> = {};
   (['light', 'dark'] as ModeKey[]).forEach((mode) => {
@@ -208,6 +230,15 @@ const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
   return out;
 };
 
+const baseBackgroundsToUiSettings = (backgrounds: Record<ModeKey, BaseBackgroundSettings>) => ({
+  lightBackground: backgrounds.light.bg,
+  lightBackgroundAlpha: backgrounds.light.bgAlpha,
+  lightBackgroundGradient: backgrounds.light.gradient,
+  darkBackground: backgrounds.dark.bg,
+  darkBackgroundAlpha: backgrounds.dark.bgAlpha,
+  darkBackgroundGradient: backgrounds.dark.gradient,
+});
+
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
@@ -215,6 +246,7 @@ export default function UiEditor() {
     light: cloneSections(defaultModeSections),
     dark: cloneSections(defaultModeSections),
   });
+  const [baseBackgrounds, setBaseBackgrounds] = useState<Record<ModeKey, BaseBackgroundSettings>>(createDefaultBaseBackgrounds());
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [welcomeTitle, setWelcomeTitle] = useState('バーとログがひと目でわかるダッシュボード');
   const [welcomeBody, setWelcomeBody] = useState('色やアイコン、グラデーションを自由に設定できます。');
@@ -234,18 +266,30 @@ export default function UiEditor() {
     (async () => {
       try {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
-        const data: UiPayload = await res.json();
-        const ui = data?.uiSettings || {};
-        setAppTitle(ui.appTitle || appTitle);
-        setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
-        setAppIconUrl(ui.appIconUrl || appIconUrl);
-        setHomeIconUrl(ui.homeIconUrl || homeIconUrl);
-        setSections({
-          light: cloneSections(ui.sections?.light),
-          dark: cloneSections(ui.sections?.dark),
-        });
-        const mergedPresets = mergePresetsWithDefaults(ui.presets);
-        setPresets(mergedPresets);
+      const data: UiPayload = await res.json();
+      const ui = data?.uiSettings || {};
+      setAppTitle(ui.appTitle || appTitle);
+      setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
+      setAppIconUrl(ui.appIconUrl || appIconUrl);
+      setHomeIconUrl(ui.homeIconUrl || homeIconUrl);
+      setSections({
+        light: cloneSections(ui.sections?.light),
+        dark: cloneSections(ui.sections?.dark),
+      });
+      setBaseBackgrounds({
+        light: {
+          bg: ui.lightBackground || defaultBaseBackgrounds.light.bg,
+          bgAlpha: typeof ui.lightBackgroundAlpha === 'number' ? ui.lightBackgroundAlpha : defaultBaseBackgrounds.light.bgAlpha,
+          gradient: ui.lightBackgroundGradient || defaultBaseBackgrounds.light.gradient,
+        },
+        dark: {
+          bg: ui.darkBackground || defaultBaseBackgrounds.dark.bg,
+          bgAlpha: typeof ui.darkBackgroundAlpha === 'number' ? ui.darkBackgroundAlpha : defaultBaseBackgrounds.dark.bgAlpha,
+          gradient: ui.darkBackgroundGradient || defaultBaseBackgrounds.dark.gradient,
+        },
+      });
+      const mergedPresets = mergePresetsWithDefaults(ui.presets);
+      setPresets(mergedPresets);
         setSelectedPreset(selectInitialPresetName(ui.presets));
         setBasePayload(data || {});
       } catch (e: any) {
@@ -278,16 +322,29 @@ export default function UiEditor() {
   const cardBorderColor = currentSection.card.border;
   const headerTextColor = currentSection.header.fg;
   const welcomeTextColor = currentSection.welcome.fg;
+  const currentBaseBackground = baseBackgrounds[selectedMode];
 
-  const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string) => {
+  const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string | number) => {
+    const parsedValue = field === 'bgAlpha' ? Number(value) : value;
     setSections((prev) => ({
       ...prev,
       [selectedMode]: {
         ...prev[selectedMode],
         [section]: {
           ...prev[selectedMode][section],
-          [field]: value,
+          [field]: parsedValue,
         },
+      },
+    }));
+  };
+
+  const updateBaseBackground = (mode: ModeKey, field: keyof BaseBackgroundSettings, value: string | number) => {
+    const parsedValue = field === 'bgAlpha' ? Number(value) : value;
+    setBaseBackgrounds((prev) => ({
+      ...prev,
+      [mode]: {
+        ...prev[mode],
+        [field]: parsedValue,
       },
     }));
   };
@@ -327,20 +384,21 @@ export default function UiEditor() {
     setSaving(true);
     setError(null);
     try {
-    const payload = {
-      ...basePayload,
-      uiSettings: {
-        appTitle,
-        loginIconUrl,
-        appIconUrl,
-        homeIconUrl,
-        welcomeTitleText: welcomeTitle,
-        welcomeBodyText: welcomeBody,
-        sections,
-        presets,
-        ...sectionsToUiSettings(sections),
-      },
-    };
+      const payload = {
+        ...basePayload,
+        uiSettings: {
+          appTitle,
+          loginIconUrl,
+          appIconUrl,
+          homeIconUrl,
+          welcomeTitleText: welcomeTitle,
+          welcomeBodyText: welcomeBody,
+          sections,
+          presets,
+          ...sectionsToUiSettings(sections),
+          ...baseBackgroundsToUiSettings(baseBackgrounds),
+        },
+      };
       const res = await fetch('/api/pr/website', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -409,12 +467,71 @@ export default function UiEditor() {
           ))}
         </div>
 
+        <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+          <h2 className="text-lg font-semibold mb-3">ベース背景 ({selectedMode === 'light' ? 'ライト' : 'ダーク'})</h2>
+          <label className="text-sm block mb-2">
+            背景色
+            <input
+              type="color"
+              value={currentBaseBackground.bg}
+              onChange={(e) => updateBaseBackground(selectedMode, 'bg', e.target.value)}
+              className="mt-1 w-full"
+            />
+          </label>
+          <label className="text-sm block mb-2">
+            透明度
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={Math.round(currentBaseBackground.bgAlpha * 100)}
+                onChange={(e) => updateBaseBackground(selectedMode, 'bgAlpha', Number(e.target.value) / 100)}
+                className="mt-1 w-full"
+              />
+              <span className="text-xs text-muted-foreground w-12 text-right">
+                {Math.round(currentBaseBackground.bgAlpha * 100)}%
+              </span>
+            </div>
+          </label>
+          <label className="text-sm block">
+            グラデーション
+            <select
+              value={currentBaseBackground.gradient}
+              onChange={(e) => updateBaseBackground(selectedMode, 'gradient', e.target.value)}
+              className="mt-1 w-full"
+            >
+              {gradientOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
             <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
             <label className="text-sm block mb-2">
               ログイン画面アイコン
               <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
+            </label>
+            <label className="text-sm block mb-2">
+              透明度
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={Math.round(currentSection.card.bgAlpha * 100)}
+                  onChange={(e) => updateSection('card', 'bgAlpha', Number(e.target.value) / 100)}
+                  className="mt-1 w-full"
+                />
+                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.card.bgAlpha * 100)}%</span>
+              </div>
             </label>
             <label className="text-sm block mb-2">
               ログイン後アイコン
@@ -474,6 +591,21 @@ export default function UiEditor() {
               <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} className="mt-1 w-full" />
             </label>
             <label className="text-sm block mb-2">
+              透明度
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={Math.round(currentSection.header.bgAlpha * 100)}
+                  onChange={(e) => updateSection('header', 'bgAlpha', Number(e.target.value) / 100)}
+                  className="mt-1 w-full"
+                />
+                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.header.bgAlpha * 100)}%</span>
+              </div>
+            </label>
+            <label className="text-sm block mb-2">
               文字色
               <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
@@ -494,6 +626,21 @@ export default function UiEditor() {
             <label className="text-sm block mb-2">
               背景色
               <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} className="mt-1 w-full" />
+            </label>
+            <label className="text-sm block mb-2">
+              透明度
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={Math.round(currentSection.welcome.bgAlpha * 100)}
+                  onChange={(e) => updateSection('welcome', 'bgAlpha', Number(e.target.value) / 100)}
+                  className="mt-1 w-full"
+                />
+                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.welcome.bgAlpha * 100)}%</span>
+              </div>
             </label>
             <label className="text-sm block mb-2">
               文字色
