@@ -1,3 +1,4 @@
+// UI editor with gradients and alpha
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ type BaseColors = {
 
 type SectionColors = {
   bg: string;
+  bgGradient: string;
   bgAlpha: number;
   fg: string;
   border: string;
@@ -41,39 +43,15 @@ const gradientOptions = [
 ];
 
 const defaultModeValues: ModeValues = {
-  header: {
-    bg: '#0b1220',
-    bgAlpha: 1,
-    fg: '#e5e7eb',
-    border: '#1f2937',
-    title: '#e5e7eb',
-    subtitle: '#94a3b8',
-    user: '#cbd5e1',
-  },
-  welcome: {
-    bg: '#ffffff',
-    bgAlpha: 1,
-    fg: '#0f172a',
-    border: '#e2e8f0',
-    title: '#0f172a',
-    body: '#1f2937',
-  },
-  card: {
-    bg: '#0b1220',
-    bgAlpha: 1,
-    fg: '#e5e7eb',
-    border: '#1f2937',
-  },
+  header: { bg: '#0b1220', bgGradient: '', bgAlpha: 1, fg: '#e5e7eb', border: '#1f2937', title: '#e5e7eb', subtitle: '#94a3b8', user: '#cbd5e1' },
+  welcome: { bg: '#ffffff', bgGradient: '', bgAlpha: 1, fg: '#0f172a', border: '#e2e8f0', title: '#0f172a', body: '#1f2937' },
+  card: { bg: '#0b1220', bgGradient: '', bgAlpha: 1, fg: '#e5e7eb', border: '#1f2937' },
 };
-
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
   const [baseColors, setBaseColors] = useState<Record<ModeKey, BaseColors>>(defaultBase);
-  const [sections, setSections] = useState<Record<ModeKey, ModeValues>>({
-    light: defaultModeValues,
-    dark: defaultModeValues,
-  });
+  const [sections, setSections] = useState<Record<ModeKey, ModeValues>>({ light: defaultModeValues, dark: defaultModeValues });
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [welcomeTitle, setWelcomeTitle] = useState('バー形式で全ダッシュボードをまとめました');
   const [welcomeBody, setWelcomeBody] = useState('最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。');
@@ -88,7 +66,6 @@ export default function UiEditor() {
   const [uploading, setUploading] = useState(false);
   const [presets, setPresets] = useState<any[]>([]);
   const [presetName, setPresetName] = useState('');
-
   useEffect(() => {
     (async () => {
       try {
@@ -121,6 +98,7 @@ export default function UiEditor() {
           light: {
             header: {
               bg: ui.headerBgLight || ui.headerBackground || defaultModeValues.header.bg,
+              bgGradient: ui.headerBgGradientLight || '',
               bgAlpha: ui.headerBgAlphaLight ?? defaultModeValues.header.bgAlpha,
               fg: ui.headerFgLight || ui.headerForeground || defaultModeValues.header.fg,
               border: ui.headerBorderLight || defaultModeValues.header.border,
@@ -130,6 +108,7 @@ export default function UiEditor() {
             },
             welcome: {
               bg: ui.welcomeBgLight || ui.welcomeBackground || defaultModeValues.welcome.bg,
+              bgGradient: ui.welcomeBgGradientLight || '',
               bgAlpha: ui.welcomeBgAlphaLight ?? defaultModeValues.welcome.bgAlpha,
               fg: ui.welcomeFgLight || ui.welcomeForeground || defaultModeValues.welcome.fg,
               border: ui.welcomeBorderLight || ui.welcomeBorder || defaultModeValues.welcome.border,
@@ -138,6 +117,7 @@ export default function UiEditor() {
             },
             card: {
               bg: ui.cardBgLight || ui.cardBackground || defaultModeValues.card.bg,
+              bgGradient: ui.cardBgGradientLight || '',
               bgAlpha: ui.cardBgAlphaLight ?? defaultModeValues.card.bgAlpha,
               fg: ui.cardFgLight || ui.cardForeground || defaultModeValues.card.fg,
               border: ui.cardBorderLight || ui.cardBorder || defaultModeValues.card.border,
@@ -146,6 +126,7 @@ export default function UiEditor() {
           dark: {
             header: {
               bg: ui.headerBgDark || ui.headerBackground || defaultModeValues.header.bg,
+              bgGradient: ui.headerBgGradientDark || '',
               bgAlpha: ui.headerBgAlphaDark ?? defaultModeValues.header.bgAlpha,
               fg: ui.headerFgDark || ui.headerForeground || defaultModeValues.header.fg,
               border: ui.headerBorderDark || defaultModeValues.header.border,
@@ -155,6 +136,7 @@ export default function UiEditor() {
             },
             welcome: {
               bg: ui.welcomeBgDark || ui.welcomeBackground || defaultModeValues.welcome.bg,
+              bgGradient: ui.welcomeBgGradientDark || '',
               bgAlpha: ui.welcomeBgAlphaDark ?? defaultModeValues.welcome.bgAlpha,
               fg: ui.welcomeFgDark || ui.welcomeForeground || defaultModeValues.welcome.fg,
               border: ui.welcomeBorderDark || ui.welcomeBorder || defaultModeValues.welcome.border,
@@ -163,6 +145,7 @@ export default function UiEditor() {
             },
             card: {
               bg: ui.cardBgDark || ui.cardBackground || defaultModeValues.card.bg,
+              bgGradient: ui.cardBgGradientDark || '',
               bgAlpha: ui.cardBgAlphaDark ?? defaultModeValues.card.bgAlpha,
               fg: ui.cardFgDark || ui.cardForeground || defaultModeValues.card.fg,
               border: ui.cardBorderDark || ui.cardBorder || defaultModeValues.card.border,
@@ -179,7 +162,6 @@ export default function UiEditor() {
       }
     })();
   }, []);
-
   const handleUpload = async (target: 'login' | 'app' | 'home', file?: File | null) => {
     if (!file) return;
     setUploading(true);
@@ -227,6 +209,7 @@ export default function UiEditor() {
           darkBorder: baseColors.dark.border,
           darkForeground: baseColors.dark.foreground,
           headerBgLight: sections.light.header.bg,
+          headerBgGradientLight: sections.light.header.bgGradient,
           headerBgAlphaLight: sections.light.header.bgAlpha,
           headerFgLight: sections.light.header.fg,
           headerBorderLight: sections.light.header.border,
@@ -234,6 +217,7 @@ export default function UiEditor() {
           headerSubtitleColorLight: sections.light.header.subtitle,
           headerUserColorLight: sections.light.header.user,
           headerBgDark: sections.dark.header.bg,
+          headerBgGradientDark: sections.dark.header.bgGradient,
           headerBgAlphaDark: sections.dark.header.bgAlpha,
           headerFgDark: sections.dark.header.fg,
           headerBorderDark: sections.dark.header.border,
@@ -241,25 +225,30 @@ export default function UiEditor() {
           headerSubtitleColorDark: sections.dark.header.subtitle,
           headerUserColorDark: sections.dark.header.user,
           welcomeBgLight: sections.light.welcome.bg,
+          welcomeBgGradientLight: sections.light.welcome.bgGradient,
           welcomeBgAlphaLight: sections.light.welcome.bgAlpha,
           welcomeFgLight: sections.light.welcome.fg,
           welcomeBorderLight: sections.light.welcome.border,
           welcomeTitleColorLight: sections.light.welcome.title,
           welcomeBodyColorLight: sections.light.welcome.body,
           welcomeBgDark: sections.dark.welcome.bg,
+          welcomeBgGradientDark: sections.dark.welcome.bgGradient,
           welcomeBgAlphaDark: sections.dark.welcome.bgAlpha,
           welcomeFgDark: sections.dark.welcome.fg,
           welcomeBorderDark: sections.dark.welcome.border,
           welcomeTitleColorDark: sections.dark.welcome.title,
           welcomeBodyColorDark: sections.dark.welcome.body,
           cardBgLight: sections.light.card.bg,
+          cardBgGradientLight: sections.light.card.bgGradient,
           cardBgAlphaLight: sections.light.card.bgAlpha,
           cardFgLight: sections.light.card.fg,
           cardBorderLight: sections.light.card.border,
           cardBgDark: sections.dark.card.bg,
+          cardBgGradientDark: sections.dark.card.bgGradient,
           cardBgAlphaDark: sections.dark.card.bgAlpha,
           cardFgDark: sections.dark.card.fg,
           cardBorderDark: sections.dark.card.border,
+          presets,
         },
       };
       const res = await fetch('/api/pr/website', {
@@ -276,7 +265,6 @@ export default function UiEditor() {
       setTimeout(() => setMessage(null), 3000);
     }
   };
-
   const currentBase = baseColors[selectedMode];
   const currentSection = sections[selectedMode];
 
@@ -299,6 +287,7 @@ export default function UiEditor() {
     darkBorder: baseColors.dark.border,
     darkForeground: baseColors.dark.foreground,
     headerBgLight: sections.light.header.bg,
+    headerBgGradientLight: sections.light.header.bgGradient,
     headerBgAlphaLight: sections.light.header.bgAlpha,
     headerFgLight: sections.light.header.fg,
     headerBorderLight: sections.light.header.border,
@@ -306,6 +295,7 @@ export default function UiEditor() {
     headerSubtitleColorLight: sections.light.header.subtitle,
     headerUserColorLight: sections.light.header.user,
     headerBgDark: sections.dark.header.bg,
+    headerBgGradientDark: sections.dark.header.bgGradient,
     headerBgAlphaDark: sections.dark.header.bgAlpha,
     headerFgDark: sections.dark.header.fg,
     headerBorderDark: sections.dark.header.border,
@@ -313,27 +303,30 @@ export default function UiEditor() {
     headerSubtitleColorDark: sections.dark.header.subtitle,
     headerUserColorDark: sections.dark.header.user,
     welcomeBgLight: sections.light.welcome.bg,
+    welcomeBgGradientLight: sections.light.welcome.bgGradient,
     welcomeBgAlphaLight: sections.light.welcome.bgAlpha,
     welcomeFgLight: sections.light.welcome.fg,
     welcomeBorderLight: sections.light.welcome.border,
     welcomeTitleColorLight: sections.light.welcome.title,
     welcomeBodyColorLight: sections.light.welcome.body,
     welcomeBgDark: sections.dark.welcome.bg,
+    welcomeBgGradientDark: sections.dark.welcome.bgGradient,
     welcomeBgAlphaDark: sections.dark.welcome.bgAlpha,
     welcomeFgDark: sections.dark.welcome.fg,
     welcomeBorderDark: sections.dark.welcome.border,
     welcomeTitleColorDark: sections.dark.welcome.title,
     welcomeBodyColorDark: sections.dark.welcome.body,
     cardBgLight: sections.light.card.bg,
+    cardBgGradientLight: sections.light.card.bgGradient,
     cardBgAlphaLight: sections.light.card.bgAlpha,
     cardFgLight: sections.light.card.fg,
     cardBorderLight: sections.light.card.border,
     cardBgDark: sections.dark.card.bg,
+    cardBgGradientDark: sections.dark.card.bgGradient,
     cardBgAlphaDark: sections.dark.card.bgAlpha,
     cardFgDark: sections.dark.card.fg,
     cardBorderDark: sections.dark.card.border,
   });
-
   const applyPreset = (p: any) => {
     if (!p) return;
     setAppTitle(p.appTitle || appTitle);
@@ -362,6 +355,7 @@ export default function UiEditor() {
       light: {
         header: {
           bg: p.headerBgLight || sections.light.header.bg,
+          bgGradient: p.headerBgGradientLight || sections.light.header.bgGradient,
           bgAlpha: p.headerBgAlphaLight ?? sections.light.header.bgAlpha,
           fg: p.headerFgLight || sections.light.header.fg,
           border: p.headerBorderLight || sections.light.header.border,
@@ -371,6 +365,7 @@ export default function UiEditor() {
         },
         welcome: {
           bg: p.welcomeBgLight || sections.light.welcome.bg,
+          bgGradient: p.welcomeBgGradientLight || sections.light.welcome.bgGradient,
           bgAlpha: p.welcomeBgAlphaLight ?? sections.light.welcome.bgAlpha,
           fg: p.welcomeFgLight || sections.light.welcome.fg,
           border: p.welcomeBorderLight || sections.light.welcome.border,
@@ -379,6 +374,7 @@ export default function UiEditor() {
         },
         card: {
           bg: p.cardBgLight || sections.light.card.bg,
+          bgGradient: p.cardBgGradientLight || sections.light.card.bgGradient,
           bgAlpha: p.cardBgAlphaLight ?? sections.light.card.bgAlpha,
           fg: p.cardFgLight || sections.light.card.fg,
           border: p.cardBorderLight || sections.light.card.border,
@@ -387,6 +383,7 @@ export default function UiEditor() {
       dark: {
         header: {
           bg: p.headerBgDark || sections.dark.header.bg,
+          bgGradient: p.headerBgGradientDark || sections.dark.header.bgGradient,
           bgAlpha: p.headerBgAlphaDark ?? sections.dark.header.bgAlpha,
           fg: p.headerFgDark || sections.dark.header.fg,
           border: p.headerBorderDark || sections.dark.header.border,
@@ -396,6 +393,7 @@ export default function UiEditor() {
         },
         welcome: {
           bg: p.welcomeBgDark || sections.dark.welcome.bg,
+          bgGradient: p.welcomeBgGradientDark || sections.dark.welcome.bgGradient,
           bgAlpha: p.welcomeBgAlphaDark ?? sections.dark.welcome.bgAlpha,
           fg: p.welcomeFgDark || sections.dark.welcome.fg,
           border: p.welcomeBorderDark || sections.dark.welcome.border,
@@ -404,6 +402,7 @@ export default function UiEditor() {
         },
         card: {
           bg: p.cardBgDark || sections.dark.card.bg,
+          bgGradient: p.cardBgGradientDark || sections.dark.card.bgGradient,
           bgAlpha: p.cardBgAlphaDark ?? sections.dark.card.bgAlpha,
           fg: p.cardFgDark || sections.dark.card.fg,
           border: p.cardBorderDark || sections.dark.card.border,
@@ -411,7 +410,6 @@ export default function UiEditor() {
       },
     });
   };
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('ui-presets', JSON.stringify(presets));
@@ -424,16 +422,13 @@ export default function UiEditor() {
       const filtered = prev.filter((p) => p.name !== next.name);
       return [...filtered, next];
     });
-    setMessage('プリセットを保存しました（保存ボタンで永続化）');
+    setMessage('プリセットを保存しました（保存ボタンで反映）');
   };
 
   const setSection = (key: keyof ModeValues, field: keyof SectionColors | 'title' | 'subtitle' | 'user' | 'body', value: any) => {
     setSections((prev) => ({
       ...prev,
-      [selectedMode]: {
-        ...prev[selectedMode],
-        [key]: { ...prev[selectedMode][key], [field]: value },
-      },
+      [selectedMode]: { ...prev[selectedMode], [key]: { ...prev[selectedMode][key], [field]: value } },
     }));
   };
 
@@ -444,14 +439,13 @@ export default function UiEditor() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">UI編集（配色・透明度・グラデーション）</h1>
-            <p className="text-muted-foreground text-sm">まずライト/ダークを選択し、そのモードの色・透明度・グラデーションを設定してください。</p>
+            <p className="text-muted-foreground text-sm">先にライト/ダークを選択し、そのモードの色・透明度・グラデーションを設定してください。</p>
           </div>
           <div className="flex gap-2">
             <Link href="/dashboard/pr/menu" className="px-4 py-2 rounded-lg border border-border bg-card hover:border-accent">
@@ -599,7 +593,7 @@ export default function UiEditor() {
               />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              グラデーション (linear-gradient など)
+              グラデーション
               <select
                 value={currentBase.backgroundGradient}
                 onChange={(e) =>
@@ -639,11 +633,21 @@ export default function UiEditor() {
             <h2 className="font-semibold">ヘッダー</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
-              <input
-                type="color"
-                value={currentSection.header.bg}
-                onChange={(e) => setSection('header', 'bg', e.target.value)}
-              />
+              <input type="color" value={currentSection.header.bg} onChange={(e) => setSection('header', 'bg', e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              グラデーション
+              <select
+                value={currentSection.header.bgGradient}
+                onChange={(e) => setSection('header', 'bgGradient', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                {gradientOptions.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               透明度 (0-1)
@@ -680,18 +684,6 @@ export default function UiEditor() {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-            <h2 className="font-semibold">小さい文字（muted）</h2>
-            <label className="text-sm text-muted-foreground space-y-1 block">
-              色
-              <input
-                type="color"
-                value={currentSection.header.subtitle}
-                onChange={(e) => setSection('header', 'subtitle', e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
             <h2 className="font-semibold">Welcomeカードの内容</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               タイトル
@@ -719,6 +711,20 @@ export default function UiEditor() {
               <input type="color" value={currentSection.welcome.bg} onChange={(e) => setSection('welcome', 'bg', e.target.value)} />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
+              グラデーション
+              <select
+                value={currentSection.welcome.bgGradient}
+                onChange={(e) => setSection('welcome', 'bgGradient', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                {gradientOptions.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
               透明度 (0-1)
               <input
                 type="number"
@@ -739,11 +745,11 @@ export default function UiEditor() {
               <input type="color" value={currentSection.welcome.border} onChange={(e) => setSection('welcome', 'border', e.target.value)} />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              タイトル色
+              タイトル文字色
               <input type="color" value={currentSection.welcome.title} onChange={(e) => setSection('welcome', 'title', e.target.value)} />
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
-              本文色
+              本文字色
               <input type="color" value={currentSection.welcome.body} onChange={(e) => setSection('welcome', 'body', e.target.value)} />
             </label>
           </div>
@@ -753,6 +759,20 @@ export default function UiEditor() {
             <label className="text-sm text-muted-foreground space-y-1 block">
               背景色
               <input type="color" value={currentSection.card.bg} onChange={(e) => setSection('card', 'bg', e.target.value)} />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1 block">
+              グラデーション
+              <select
+                value={currentSection.card.bgGradient}
+                onChange={(e) => setSection('card', 'bgGradient', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                {gradientOptions.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="text-sm text-muted-foreground space-y-1 block">
               透明度 (0-1)

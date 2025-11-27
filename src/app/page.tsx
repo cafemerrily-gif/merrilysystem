@@ -20,6 +20,7 @@ type LogItem = { id: number; user_name: string | null; message: string; created_
 type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
+type UiSettings = any;
 
 // Tailwind hsl(var(--background)) に合わせた "h s% l%" 形式
 const hexToHslTriplet = (hex: string) => {
@@ -124,7 +125,7 @@ export default function Home() {
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [loadingSales, setLoadingSales] = useState(true);
-  const [uiSettings, setUiSettings] = useState<any>(null);
+  const [uiSettings, setUiSettings] = useState<UiSettings | null>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem('ui-is-dark');
@@ -240,18 +241,59 @@ export default function Home() {
     }
   }, [isDark, uiSettings]);
 
+  // UI設定から現在のセクション色を算出
+  const currentHeader = (() => {
+    const ui = uiSettings || {};
+    const bg = isDark ? ui.headerBgDark || ui.headerBackground || '#0b1220' : ui.headerBgLight || ui.headerBackground || '#f8fafc';
+    const bgAlpha = isDark ? ui.headerBgAlphaDark ?? 1 : ui.headerBgAlphaLight ?? 1;
+    const bgGradient = isDark ? ui.headerBgGradientDark || '' : ui.headerBgGradientLight || '';
+    const fg = isDark ? ui.headerFgDark || ui.headerForeground || '#e5e7eb' : ui.headerFgLight || ui.headerForeground || '#0f172a';
+    const border = isDark ? ui.headerBorderDark || '#1f2937' : ui.headerBorderLight || '#e2e8f0';
+    const title = isDark ? ui.headerTitleColorDark || fg : ui.headerTitleColorLight || fg;
+    const subtitle = isDark ? ui.headerSubtitleColorDark || fg : ui.headerSubtitleColorLight || fg;
+    const user = isDark ? ui.headerUserColorDark || fg : ui.headerUserColorLight || fg;
+    return { bg, bgAlpha, bgGradient, fg, border, title, subtitle, user };
+  })();
+
+  const currentCard = (() => {
+    const ui = uiSettings || {};
+    const bg = isDark ? ui.cardBgDark || ui.cardBackground || '#0f172a' : ui.cardBgLight || ui.cardBackground || '#ffffff';
+    const bgAlpha = isDark ? ui.cardBgAlphaDark ?? 1 : ui.cardBgAlphaLight ?? 1;
+    const bgGradient = isDark ? ui.cardBgGradientDark || '' : ui.cardBgGradientLight || '';
+    const fg = isDark ? ui.cardFgDark || ui.cardForeground || '#e5e7eb' : ui.cardFgLight || ui.cardForeground || '#0f172a';
+    const border = isDark ? ui.cardBorderDark || '#1f2937' : ui.cardBorderLight || '#e2e8f0';
+    return { bg, bgAlpha, bgGradient, fg, border };
+  })();
+
+  const cardStyle = {
+    backgroundImage: currentCard.bgGradient || undefined,
+    backgroundColor: currentCard.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
+    color: currentCard.fg,
+    borderColor: currentCard.border,
+  };
+
+  const headerStyle = {
+    backgroundImage: currentHeader.bgGradient || undefined,
+    backgroundColor: currentHeader.bgGradient ? 'transparent' : `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
+    color: currentHeader.fg,
+    borderColor: currentHeader.border,
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-12">
-        <header className="flex items-center justify-between py-4 sticky top-0 z-30 bg-background">
+        <header
+          className="flex items-center justify-between py-4 sticky top-0 z-30"
+          style={headerStyle}
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cafe Management System</p>
-              <h1 className="text-2xl font-bold">{appTitle}</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>Cafe Management System</p>
+              <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>{appTitle}</h1>
+              <p className="text-sm" style={{ color: currentHeader.user }}>
                 {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
               </p>
             </div>
@@ -308,7 +350,7 @@ export default function Home() {
         </section>
 
         <section className="space-y-6">
-          <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
+          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">売上サマリー</h3>
               <span className="text-xs text-muted-foreground">最新データ</span>
@@ -329,7 +371,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
+          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">最新ブログ</h3>
               <span className="text-xs text-muted-foreground">ホームページの投稿を表示</span>
@@ -367,7 +409,7 @@ export default function Home() {
             <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
           </div>
 
-          <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
+          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">操作ログ</h3>
               <span className="text-xs text-muted-foreground">最新50件</span>
@@ -394,7 +436,7 @@ export default function Home() {
             <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
           </div>
 
-          <div className="rounded-2xl p-6 shadow-lg border border-border bg-card">
+          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">通知</h3>
               <span className="text-xs text-muted-foreground">最新50件（全員/個別を含む）</span>
