@@ -12,6 +12,7 @@ type SectionColors = {
   gradient: string;
   fg: string;
   border: string;
+  gradientType?: string;
 };
 
 type ModeSections = {
@@ -42,25 +43,84 @@ type UiPayload = {
   };
 };
 
-const gradientOptions = [
-  { label: 'なし', value: '' },
-  { label: 'Night sky', value: 'linear-gradient(135deg, #0b1220, #1f2937)' },
-  { label: 'Sunrise', value: 'linear-gradient(135deg, rgba(255,145,0,0.45), rgba(255,72,94,0.35))' },
-  { label: 'Pastel glow', value: 'linear-gradient(120deg, rgba(173,212,255,0.45), rgba(255,255,255,0))' },
-  { label: 'Soft gradient', value: 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(15,23,42,0.4))' },
-  { label: 'Ocean Breeze', value: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' },
-  { label: 'Sunset Glow', value: 'linear-gradient(135deg, #f97316, #f43f5e)' },
-  { label: 'Aurora Mist', value: 'linear-gradient(135deg, #0f172a, #4ade80)' },
-  { label: 'Forest Haze', value: 'linear-gradient(135deg, #0f172a, #22c55e)' },
-  { label: 'Calm Teal', value: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' },
-  { label: 'Coffee Warmth', value: 'linear-gradient(135deg, #3f1d13, #a16207)' },
+type GradientPreset = {
+  label: string;
+  value: string;
+  resolve: (base: string) => string;
+  dependsOnBase?: boolean;
+};
+
+const hexToRgb = (hex: string) => {
+  const safeHex = hex.replace('#', '');
+  if (safeHex.length !== 6) return { r: 255, g: 255, b: 255 };
+  return {
+    r: parseInt(safeHex.slice(0, 2), 16),
+    g: parseInt(safeHex.slice(2, 4), 16),
+    b: parseInt(safeHex.slice(4, 6), 16),
+  };
+};
+
+const rgbToHex = (r: number, g: number, b: number) =>
+  `#${[r, g, b]
+    .map((n) => Math.max(0, Math.min(255, Math.round(n))))
+    .map((n) => n.toString(16).padStart(2, '0'))
+    .join('')}`;
+
+const adjustHexColor = (hex: string, amount: number) => {
+  const { r, g, b } = hexToRgb(hex);
+  if (amount >= 0) {
+    return rgbToHex(r + (255 - r) * amount, g + (255 - g) * amount, b + (255 - b) * amount);
+  }
+  return rgbToHex(r * (1 + amount), g * (1 + amount), b * (1 + amount));
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const gradientOptions: GradientPreset[] = [
+  { label: 'なし', value: 'none', resolve: () => '' },
+  { label: 'Night sky', value: 'nightSky', resolve: () => 'linear-gradient(135deg, #0b1220, #1f2937)' },
+  { label: 'Sunrise', value: 'sunrise', resolve: () => 'linear-gradient(135deg, rgba(255,145,0,0.45), rgba(255,72,94,0.35))' },
+  { label: 'Pastel glow', value: 'pastelGlow', resolve: () => 'linear-gradient(120deg, rgba(173,212,255,0.45), rgba(255,255,255,0))' },
+  { label: 'Soft gradient', value: 'softGradient', resolve: () => 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(15,23,42,0.4))' },
+  { label: 'Ocean Breeze', value: 'oceanBreeze', resolve: () => 'linear-gradient(135deg, #38bdf8, #0ea5e9)' },
+  { label: 'Sunset Glow', value: 'sunsetGlow', resolve: () => 'linear-gradient(135deg, #f97316, #f43f5e)' },
+  { label: 'Aurora Mist', value: 'auroraMist', resolve: () => 'linear-gradient(135deg, #0f172a, #4ade80)' },
+  { label: 'Forest Haze', value: 'forestHaze', resolve: () => 'linear-gradient(135deg, #0f172a, #22c55e)' },
+  { label: 'Calm Teal', value: 'calmTeal', resolve: () => 'linear-gradient(135deg, #14b8a6, #0ea5e9)' },
+  { label: 'Coffee Warmth', value: 'coffeeWarmth', resolve: () => 'linear-gradient(135deg, #3f1d13, #a16207)' },
+  {
+    label: 'Base glow',
+    value: 'baseGlow',
+    dependsOnBase: true,
+    resolve: (base) => `linear-gradient(135deg, ${base}, ${adjustHexColor(base, 0.15)})`,
+  },
+  {
+    label: 'Base fade',
+    value: 'baseFade',
+    dependsOnBase: true,
+    resolve: (base) => `linear-gradient(180deg, ${adjustHexColor(base, 0.2)}, ${base})`,
+  },
+  {
+    label: 'Base overlay',
+    value: 'baseOverlay',
+    dependsOnBase: true,
+    resolve: (base) => `linear-gradient(180deg, ${base}, ${hexToRgba(base, 0)})`,
+  },
 ];
+
+const getGradientPreset = (value: string) => gradientOptions.find((opt) => opt.value === value) ?? gradientOptions[0];
+
+const resolveGradient = (value: string | undefined, baseColor: string) => getGradientPreset(value || 'none').resolve(baseColor || '#ffffff');
 
 const defaultModeSections: ModeSections = {
   header: {
     bg: '#0b1220',
     bgAlpha: 1,
     gradient: '',
+    gradientType: 'none',
     fg: '#e5e7eb',
     border: '#1f2937',
     title: '#e5e7eb',
@@ -71,6 +131,7 @@ const defaultModeSections: ModeSections = {
     bg: '#ffffff',
     bgAlpha: 1,
     gradient: '',
+    gradientType: 'none',
     fg: '#0f172a',
     border: '#e2e8f0',
     title: '#0f172a',
@@ -80,6 +141,7 @@ const defaultModeSections: ModeSections = {
     bg: '#0f172a',
     bgAlpha: 1,
     gradient: '',
+    gradientType: 'none',
     fg: '#e5e7eb',
     border: '#1f2937',
   },
@@ -88,9 +150,9 @@ const defaultModeSections: ModeSections = {
 const cloneSections = (sections?: ModeSections): ModeSections => {
   const source = sections || defaultModeSections;
   return {
-    header: { ...source.header },
-    welcome: { ...source.welcome },
-    card: { ...source.card },
+    header: { ...source.header, gradientType: source.header.gradientType || 'none' },
+    welcome: { ...source.welcome, gradientType: source.welcome.gradientType || 'none' },
+    card: { ...source.card, gradientType: source.card.gradientType || 'none' },
   };
 };
 
@@ -106,14 +168,50 @@ const defaultPresets: Preset[] = [
     name: 'Sunrise',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#ffe3b8', fg: '#1f2937', gradient: 'linear-gradient(135deg, #ffe29f, #ff7a18)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,170,0,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#fff5ed', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,110,64,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#ffe3b8',
+          fg: '#1f2937',
+          gradient: resolveGradient('sunrise', '#ffe3b8'),
+          gradientType: 'sunrise',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#fff9f1',
+          fg: '#1f2937',
+          gradient: resolveGradient('sunrise', '#fff9f1'),
+          gradientType: 'sunrise',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#fff5ed',
+          fg: '#1f2937',
+          gradient: resolveGradient('sunrise', '#fff5ed'),
+          gradientType: 'sunrise',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#1f1c2c', fg: '#f0c987', gradient: 'linear-gradient(145deg, #1f1c2c, #3a4c63)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#0d0b19', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(240,201,135,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0f1220', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(240,201,135,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#1f1c2c',
+          fg: '#f0c987',
+          gradient: resolveGradient('nightSky', '#1f1c2c'),
+          gradientType: 'nightSky',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#0d0b19',
+          fg: '#f0c987',
+          gradient: resolveGradient('nightSky', '#0d0b19'),
+          gradientType: 'nightSky',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0f1220',
+          fg: '#f0c987',
+          gradient: resolveGradient('nightSky', '#0f1220'),
+          gradientType: 'nightSky',
+        },
       },
     },
   },
@@ -121,14 +219,50 @@ const defaultPresets: Preset[] = [
     name: 'Midnight Bloom',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#f0f4ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, #f0f4ff, #cfd3ff)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#ffffff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(99,102,241,0.1))' },
-        card: { ...defaultModeSections.card, bg: '#eff1ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(79,70,229,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#f0f4ff',
+          fg: '#1f2937',
+          gradient: resolveGradient('pastelGlow', '#f0f4ff'),
+          gradientType: 'pastelGlow',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#ffffff',
+          fg: '#1f2937',
+          gradient: resolveGradient('pastelGlow', '#ffffff'),
+          gradientType: 'pastelGlow',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#eff1ff',
+          fg: '#1f2937',
+          gradient: resolveGradient('pastelGlow', '#eff1ff'),
+          gradientType: 'pastelGlow',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#0f172a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, #0f172a, #312e81)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#090e1a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, rgba(15,23,42,0.8), rgba(165,180,252,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0b1220', fg: '#c7d2fe', gradient: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(255,255,255,0.1))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#0f172a',
+          fg: '#a5b4fc',
+          gradient: resolveGradient('nightSky', '#0f172a'),
+          gradientType: 'nightSky',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#090e1a',
+          fg: '#a5b4fc',
+          gradient: resolveGradient('nightSky', '#090e1a'),
+          gradientType: 'nightSky',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0b1220',
+          fg: '#c7d2fe',
+          gradient: resolveGradient('nightSky', '#0b1220'),
+          gradientType: 'nightSky',
+        },
       },
     },
   },
@@ -136,14 +270,50 @@ const defaultPresets: Preset[] = [
     name: 'Coastal Mist',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#d7efff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, #d7efff, #7dc0ff)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#ecf6ff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(237,246,255,0.7), rgba(124,192,255,0.25))' },
-        card: { ...defaultModeSections.card, bg: '#f5fbff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(124,192,255,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#d7efff',
+          fg: '#0c1e2a',
+          gradient: resolveGradient('calmTeal', '#d7efff'),
+          gradientType: 'calmTeal',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#ecf6ff',
+          fg: '#0c1e2a',
+          gradient: resolveGradient('calmTeal', '#ecf6ff'),
+          gradientType: 'calmTeal',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#f5fbff',
+          fg: '#0c1e2a',
+          gradient: resolveGradient('calmTeal', '#f5fbff'),
+          gradientType: 'calmTeal',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#0b1f2f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, #0b1f2f, #1f3f5f)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#09121f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, rgba(9,18,31,0.9), rgba(179,212,255,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0f1825', fg: '#d6e6ff', gradient: 'linear-gradient(135deg, rgba(179,212,255,0.25), rgba(255,255,255,0.05))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#0b1f2f',
+          fg: '#b3d4ff',
+          gradient: resolveGradient('forestHaze', '#0b1f2f'),
+          gradientType: 'forestHaze',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#09121f',
+          fg: '#b3d4ff',
+          gradient: resolveGradient('forestHaze', '#09121f'),
+          gradientType: 'forestHaze',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0f1825',
+          fg: '#d6e6ff',
+          gradient: resolveGradient('forestHaze', '#0f1825'),
+          gradientType: 'forestHaze',
+        },
       },
     },
   },
@@ -151,14 +321,50 @@ const defaultPresets: Preset[] = [
     name: 'Solar Harvest',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#fff4e1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, #fff4e1, #ffc166)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,177,58,0.25))' },
-        card: { ...defaultModeSections.card, bg: '#fff7ee', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,177,58,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#fff4e1',
+          fg: '#4b2e0f',
+          gradient: resolveGradient('sunsetGlow', '#fff4e1'),
+          gradientType: 'sunsetGlow',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#fff9f1',
+          fg: '#4b2e0f',
+          gradient: resolveGradient('sunsetGlow', '#fff9f1'),
+          gradientType: 'sunsetGlow',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#fff7ee',
+          fg: '#4b2e0f',
+          gradient: resolveGradient('sunsetGlow', '#fff7ee'),
+          gradientType: 'sunsetGlow',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#2b1f00', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, #2b1f00, #5c3610)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#1a1204', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.85), rgba(255,233,213,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#1c1004', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,233,213,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#2b1f00',
+          fg: '#ffe9d5',
+          gradient: resolveGradient('sunsetGlow', '#2b1f00'),
+          gradientType: 'sunsetGlow',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#1a1204',
+          fg: '#ffe9d5',
+          gradient: resolveGradient('sunsetGlow', '#1a1204'),
+          gradientType: 'sunsetGlow',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#1c1004',
+          fg: '#ffe9d5',
+          gradient: resolveGradient('sunsetGlow', '#1c1004'),
+          gradientType: 'sunsetGlow',
+        },
       },
     },
   },
@@ -332,16 +538,44 @@ export default function UiEditor() {
 
   const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string | number) => {
     const parsedValue = field === 'bgAlpha' ? Number(value) : value;
-    setSections((prev) => ({
-      ...prev,
-      [selectedMode]: {
-        ...prev[selectedMode],
-        [section]: {
-          ...prev[selectedMode][section],
-          [field]: parsedValue,
+    setSections((prev) => {
+      const updatedSection = {
+        ...prev[selectedMode][section],
+        [field]: parsedValue,
+      };
+      if (field === 'bg') {
+        const gradientType = updatedSection.gradientType || 'none';
+        const preset = getGradientPreset(gradientType);
+        if (preset.dependsOnBase) {
+          updatedSection.gradient = preset.resolve(String(parsedValue));
+        }
+      }
+      return {
+        ...prev,
+        [selectedMode]: {
+          ...prev[selectedMode],
+          [section]: updatedSection,
         },
-      },
-    }));
+      };
+    });
+  };
+
+  const handleGradientSelection = (section: keyof ModeSections, type: string) => {
+    setSections((prev) => {
+      const sectionState = { ...prev[selectedMode][section] };
+      const preset = getGradientPreset(type);
+      return {
+        ...prev,
+        [selectedMode]: {
+          ...prev[selectedMode],
+          [section]: {
+            ...sectionState,
+            gradient: preset.resolve(sectionState.bg),
+            gradientType: type,
+          },
+        },
+      };
+    });
   };
 
   const updateBaseBackground = (mode: ModeKey, field: keyof BaseBackgroundSettings, value: string | number) => {
@@ -496,7 +730,7 @@ export default function UiEditor() {
                 onChange={(e) => updateBaseBackground(selectedMode, 'bgAlpha', Number(e.target.value) / 100)}
                 className="mt-1 w-full"
               />
-              <span className="text-xs text-muted-foreground w-12 text-right">
+              <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>
                 {Math.round(currentBaseBackground.bgAlpha * 100)}%
               </span>
             </div>
@@ -536,7 +770,7 @@ export default function UiEditor() {
                   onChange={(e) => updateSection('card', 'bgAlpha', Number(e.target.value) / 100)}
                   className="mt-1 w-full"
                 />
-                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.card.bgAlpha * 100)}%</span>
+                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.card.bgAlpha * 100)}%</span>
               </div>
             </label>
             <label className="text-sm block mb-2">
@@ -559,9 +793,17 @@ export default function UiEditor() {
               文字色
               <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
+            <label className="text-sm block mb-2">
+              枠線色
+              <input type="color" value={currentSection.card.border} onChange={(e) => updateSection('card', 'border', e.target.value)} className="mt-1 w-full" />
+            </label>
             <label className="text-sm block">
               グラデーション
-              <select value={currentSection.card.gradient} onChange={(e) => updateSection('card', 'gradient', e.target.value)} className="mt-1 w-full">
+                <select
+                  value={currentSection.card.gradientType || 'none'}
+                  onChange={(e) => handleGradientSelection('card', e.target.value)}
+                  className="mt-1 w-full"
+                >
                 {gradientOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -608,7 +850,7 @@ export default function UiEditor() {
                   onChange={(e) => updateSection('header', 'bgAlpha', Number(e.target.value) / 100)}
                   className="mt-1 w-full"
                 />
-                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.header.bgAlpha * 100)}%</span>
+                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.header.bgAlpha * 100)}%</span>
               </div>
             </label>
             <label className="text-sm block mb-2">
@@ -617,7 +859,11 @@ export default function UiEditor() {
             </label>
             <label className="text-sm block">
               グラデーション
-              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w-full">
+              <select
+                value={currentSection.header.gradientType || 'none'}
+                onChange={(e) => handleGradientSelection('header', e.target.value)}
+                className="mt-1 w-full"
+              >
                 {gradientOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -645,16 +891,24 @@ export default function UiEditor() {
                   onChange={(e) => updateSection('welcome', 'bgAlpha', Number(e.target.value) / 100)}
                   className="mt-1 w-full"
                 />
-                <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(currentSection.welcome.bgAlpha * 100)}%</span>
+                <span className="text-xs w-12 text-right" style={{ color: cardTextColor }}>{Math.round(currentSection.welcome.bgAlpha * 100)}%</span>
               </div>
             </label>
             <label className="text-sm block mb-2">
               文字色
               <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
+            <label className="text-sm block mb-2">
+              枠線色
+              <input type="color" value={currentSection.welcome.border} onChange={(e) => updateSection('welcome', 'border', e.target.value)} className="mt-1 w-full" />
+            </label>
             <label className="text-sm block">
               グラデーション
-              <select value={currentSection.welcome.gradient} onChange={(e) => updateSection('welcome', 'gradient', e.target.value)} className="mt-1 w-full">
+              <select
+                value={currentSection.welcome.gradientType || 'none'}
+                onChange={(e) => handleGradientSelection('welcome', e.target.value)}
+                className="mt-1 w-full"
+              >
                 {gradientOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}

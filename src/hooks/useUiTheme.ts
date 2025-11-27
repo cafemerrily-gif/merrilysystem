@@ -2,16 +2,60 @@ import { useEffect, useState } from 'react';
 
 type UiSettings = {
   lightBackground?: string;
+  lightBackgroundAlpha?: number;
+  lightBackgroundGradient?: string;
   lightBorder?: string;
   lightForeground?: string;
   darkBackground?: string;
+  darkBackgroundAlpha?: number;
+  darkBackgroundGradient?: string;
   darkBorder?: string;
   darkForeground?: string;
+  cardBgLight?: string;
+  cardFgLight?: string;
+  cardBorderLight?: string;
+  cardBgDark?: string;
+  cardFgDark?: string;
+  cardBorderDark?: string;
+  cardBackground?: string;
+  cardForeground?: string;
+  cardBorder?: string;
+  primary?: string;
+  primaryForeground?: string;
+  accent?: string;
+  accentForeground?: string;
+  mutedColor?: string;
+  mutedColorLight?: string;
+  mutedColorDark?: string;
 };
 
 type UiColors = {
-  light: { background: string; border: string; foreground: string };
-  dark: { background: string; border: string; foreground: string };
+  light: {
+    background: string;
+    border: string;
+    foreground: string;
+    backgroundAlpha: number;
+    backgroundGradient: string;
+    cardBg: string;
+    cardFg: string;
+    cardBorder: string;
+    muted: string;
+    accent: string;
+    primary: string;
+  };
+  dark: {
+    background: string;
+    border: string;
+    foreground: string;
+    backgroundAlpha: number;
+    backgroundGradient: string;
+    cardBg: string;
+    cardFg: string;
+    cardBorder: string;
+    muted: string;
+    accent: string;
+    primary: string;
+  };
 };
 
 const normalizeColorValue = (value: string) => {
@@ -47,6 +91,15 @@ const normalizeColorValue = (value: string) => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+const hexToRgba = (hex: string, alpha = 1) => {
+  const safeHex = hex.replace('#', '');
+  if (safeHex.length !== 6) return `rgba(0, 0, 0, ${alpha})`;
+  const r = parseInt(safeHex.slice(0, 2), 16);
+  const g = parseInt(safeHex.slice(2, 4), 16);
+  const b = parseInt(safeHex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export function useUiTheme() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -70,10 +123,26 @@ export function useUiTheme() {
       root.style.setProperty('--background', normalizeColorValue(mode.background));
       root.style.setProperty('--foreground', normalizeColorValue(mode.foreground));
       root.style.setProperty('--border', normalizeColorValue(mode.border));
+      root.style.setProperty('--card', normalizeColorValue(mode.cardBg));
+      root.style.setProperty('--card-foreground', normalizeColorValue(mode.cardFg));
+      root.style.setProperty('--muted', normalizeColorValue(mode.muted));
+      root.style.setProperty('--muted-foreground', normalizeColorValue(mode.muted));
+      root.style.setProperty('--accent', normalizeColorValue(mode.accent));
+      root.style.setProperty('--primary', normalizeColorValue(mode.primary));
       root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
       root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
       root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
+      root.style.setProperty('--card-background-hex', mode.cardBg);
+      root.style.setProperty('--card-foreground-hex', mode.cardFg);
       root.classList.toggle('dark', isDark);
+
+      if (mode.backgroundGradient) {
+        document.body.style.backgroundImage = mode.backgroundGradient;
+        document.body.style.backgroundColor = 'transparent';
+      } else {
+        document.body.style.backgroundImage = 'none';
+        document.body.style.backgroundColor = hexToRgba(mode.background, mode.backgroundAlpha ?? 1);
+      }
     };
 
     const loadColorsFromSettings = (ui: UiSettings): UiColors => ({
@@ -81,11 +150,27 @@ export function useUiTheme() {
         background: ui.lightBackground || '#f8fafc',
         border: ui.lightBorder || '#e2e8f0',
         foreground: ui.lightForeground || '#0f172a',
+        backgroundAlpha: ui.lightBackgroundAlpha ?? 1,
+        backgroundGradient: ui.lightBackgroundGradient || '',
+        cardBg: ui.cardBgLight || ui.cardBackground || '#ffffff',
+        cardFg: ui.cardFgLight || ui.cardForeground || '#0f172a',
+        cardBorder: ui.cardBorderLight || ui.cardBorder || '#e2e8f0',
+        muted: ui.mutedColorLight || ui.mutedColor || '#64748b',
+        accent: ui.accent || ui.primary || '#0f172a',
+        primary: ui.primary || '#0f172a',
       },
       dark: {
         background: ui.darkBackground || '#0b1220',
         border: ui.darkBorder || '#1f2937',
         foreground: ui.darkForeground || '#e5e7eb',
+        backgroundAlpha: ui.darkBackgroundAlpha ?? 1,
+        backgroundGradient: ui.darkBackgroundGradient || '',
+        cardBg: ui.cardBgDark || ui.cardBackground || '#0f172a',
+        cardFg: ui.cardFgDark || ui.cardForeground || '#e5e7eb',
+        cardBorder: ui.cardBorderDark || ui.cardBorder || '#1f2937',
+        muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
+        accent: ui.accent || ui.primary || '#e5e7eb',
+        primary: ui.primary || '#e5e7eb',
       },
     });
 
