@@ -118,6 +118,36 @@ const defaultPresets: Preset[] = [
       },
     },
   },
+  {
+    name: 'Coastal Mist',
+    sections: {
+      light: {
+        header: { ...defaultModeSections.header, bg: '#d7efff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, #d7efff, #7dc0ff)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#ecf6ff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(237,246,255,0.7), rgba(124,192,255,0.25))' },
+        card: { ...defaultModeSections.card, bg: '#f5fbff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(124,192,255,0.2))' },
+      },
+      dark: {
+        header: { ...defaultModeSections.header, bg: '#0b1f2f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, #0b1f2f, #1f3f5f)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#09121f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, rgba(9,18,31,0.9), rgba(179,212,255,0.2))' },
+        card: { ...defaultModeSections.card, bg: '#0f1825', fg: '#d6e6ff', gradient: 'linear-gradient(135deg, rgba(179,212,255,0.25), rgba(255,255,255,0.05))' },
+      },
+    },
+  },
+  {
+    name: 'Solar Harvest',
+    sections: {
+      light: {
+        header: { ...defaultModeSections.header, bg: '#fff4e1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, #fff4e1, #ffc166)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,177,58,0.25))' },
+        card: { ...defaultModeSections.card, bg: '#fff7ee', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,177,58,0.2))' },
+      },
+      dark: {
+        header: { ...defaultModeSections.header, bg: '#2b1f00', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, #2b1f00, #5c3610)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#1a1204', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.85), rgba(255,233,213,0.2))' },
+        card: { ...defaultModeSections.card, bg: '#1c1004', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,233,213,0.25))' },
+      },
+    },
+  },
 ];
 
 export default function UiEditor() {
