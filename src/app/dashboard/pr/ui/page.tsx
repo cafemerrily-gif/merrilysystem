@@ -21,6 +21,8 @@ type ModeSections = {
   card: SectionColors;
   content: { textColor: string }; // カード以外の本文エリアの文字色
   input: { bgColor: string; textColor: string }; // 入力欄の背景色と文字色
+  base: { bg: string; bgAlpha: number; gradient: string }; // ベース背景
+  cardOverall: { bg: string; bgAlpha: number }; // カード全体の背景色
 };
 
 type Preset = {
@@ -156,6 +158,15 @@ const defaultModeSections: ModeSections = {
     bgColor: '#ffffff',
     textColor: '#0f172a',
   },
+  base: {
+    bg: '#f8fafc',
+    bgAlpha: 1,
+    gradient: '',
+  },
+  cardOverall: {
+    bg: '#ffffff',
+    bgAlpha: 0.95,
+  },
 };
 
 const cloneSections = (sections?: ModeSections): ModeSections => {
@@ -169,6 +180,15 @@ const cloneSections = (sections?: ModeSections): ModeSections => {
       bgColor: source.input?.bgColor || defaultModeSections.input.bgColor,
       textColor: source.input?.textColor || defaultModeSections.input.textColor,
     },
+    base: {
+      bg: source.base?.bg || defaultModeSections.base.bg,
+      bgAlpha: source.base?.bgAlpha ?? defaultModeSections.base.bgAlpha,
+      gradient: source.base?.gradient || defaultModeSections.base.gradient,
+    },
+    cardOverall: {
+      bg: source.cardOverall?.bg || defaultModeSections.cardOverall.bg,
+      bgAlpha: source.cardOverall?.bgAlpha ?? defaultModeSections.cardOverall.bgAlpha,
+    },
   };
 };
 
@@ -177,36 +197,22 @@ const defaultPresets: Preset[] = [
     name: 'Midnight Ocean (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#0f172a', bgAlpha: 0.95, gradient: 'linear-gradient(135deg, #0f172a, #1e3a8a)', gradientType: 'custom', 
-          fg: '#e0e7ff', border: '#3b82f6', title: '#ffffff', subtitle: '#bfdbfe', user: '#dbeafe' 
-        },
-        welcome: { 
-          bg: '#eff6ff', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#1e3a8a', border: '#93c5fd', title: '#1e3a8a', body: '#3b82f6' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#cbd5e1' 
-        },
+        header: { bg: '#0f172a', bgAlpha: 0.95, gradient: 'linear-gradient(135deg, #0f172a, #1e3a8a)', gradientType: 'custom', fg: '#e0e7ff', border: '#3b82f6', title: '#ffffff', subtitle: '#bfdbfe', user: '#dbeafe' },
+        welcome: { bg: '#eff6ff', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#1e3a8a', border: '#93c5fd', title: '#1e3a8a', body: '#3b82f6' },
+        card: { bg: '#ffffff', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#cbd5e1' },
         content: { textColor: '#1e293b' },
         input: { bgColor: '#f1f5f9', textColor: '#0f172a' },
+        base: { bg: '#f8fafc', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#0f172a', bgAlpha: 0.95, gradient: 'linear-gradient(135deg, #0a0f1e, #1e3a8a)', gradientType: 'custom', 
-          fg: '#e0e7ff', border: '#1e3a8a', title: '#ffffff', subtitle: '#93c5fd', user: '#bfdbfe' 
-        },
-        welcome: { 
-          bg: '#1e3a8a', bgAlpha: 0.8, gradient: '', gradientType: 'none', 
-          fg: '#e0e7ff', border: '#3b82f6', title: '#ffffff', body: '#bfdbfe' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#334155' 
-        },
+        header: { bg: '#0f172a', bgAlpha: 0.95, gradient: 'linear-gradient(135deg, #0a0f1e, #1e3a8a)', gradientType: 'custom', fg: '#e0e7ff', border: '#1e3a8a', title: '#ffffff', subtitle: '#93c5fd', user: '#bfdbfe' },
+        welcome: { bg: '#1e3a8a', bgAlpha: 0.8, gradient: '', gradientType: 'none', fg: '#e0e7ff', border: '#3b82f6', title: '#ffffff', body: '#bfdbfe' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#334155' },
         content: { textColor: '#e2e8f0' },
         input: { bgColor: '#0f172a', textColor: '#e2e8f0' },
+        base: { bg: '#0b1220', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -214,36 +220,22 @@ const defaultPresets: Preset[] = [
     name: 'Forest Glow (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#065f46', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(5,150,105,0.9), rgba(16,185,129,0.7))', gradientType: 'custom', 
-          fg: '#d1fae5', border: '#10b981', title: '#ffffff', subtitle: '#a7f3d0', user: '#d1fae5' 
-        },
-        welcome: { 
-          bg: '#ecfdf5', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#065f46', border: '#6ee7b7', title: '#065f46', body: '#059669' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#d1fae5' 
-        },
+        header: { bg: '#065f46', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(5,150,105,0.9), rgba(16,185,129,0.7))', gradientType: 'custom', fg: '#d1fae5', border: '#10b981', title: '#ffffff', subtitle: '#a7f3d0', user: '#d1fae5' },
+        welcome: { bg: '#ecfdf5', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#065f46', border: '#6ee7b7', title: '#065f46', body: '#059669' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#d1fae5' },
         content: { textColor: '#064e3b' },
         input: { bgColor: '#f0fdf4', textColor: '#064e3b' },
+        base: { bg: '#f0fdf4', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#022c22', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(2,44,34,0.95), rgba(6,95,70,0.8))', gradientType: 'custom', 
-          fg: '#d1fae5', border: '#065f46', title: '#ffffff', subtitle: '#6ee7b7', user: '#a7f3d0' 
-        },
-        welcome: { 
-          bg: '#065f46', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#d1fae5', border: '#10b981', title: '#ffffff', body: '#a7f3d0' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#065f46' 
-        },
+        header: { bg: '#022c22', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(2,44,34,0.95), rgba(6,95,70,0.8))', gradientType: 'custom', fg: '#d1fae5', border: '#065f46', title: '#ffffff', subtitle: '#6ee7b7', user: '#a7f3d0' },
+        welcome: { bg: '#065f46', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#d1fae5', border: '#10b981', title: '#ffffff', body: '#a7f3d0' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#065f46' },
         content: { textColor: '#a7f3d0' },
         input: { bgColor: '#064e3b', textColor: '#d1fae5' },
+        base: { bg: '#022c22', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -251,36 +243,22 @@ const defaultPresets: Preset[] = [
     name: 'Sunset Gradient (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#c2410c', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(234,88,12,0.9), rgba(251,146,60,0.7))', gradientType: 'custom', 
-          fg: '#fed7aa', border: '#f97316', title: '#ffffff', subtitle: '#fdba74', user: '#fed7aa' 
-        },
-        welcome: { 
-          bg: '#fff7ed', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#c2410c', border: '#fb923c', title: '#c2410c', body: '#ea580c' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#fed7aa' 
-        },
+        header: { bg: '#c2410c', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(234,88,12,0.9), rgba(251,146,60,0.7))', gradientType: 'custom', fg: '#fed7aa', border: '#f97316', title: '#ffffff', subtitle: '#fdba74', user: '#fed7aa' },
+        welcome: { bg: '#fff7ed', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#c2410c', border: '#fb923c', title: '#c2410c', body: '#ea580c' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#fed7aa' },
         content: { textColor: '#9a3412' },
         input: { bgColor: '#fff7ed', textColor: '#9a3412' },
+        base: { bg: '#fff7ed', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#7c2d12', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(124,45,18,0.95), rgba(194,65,12,0.8))', gradientType: 'custom', 
-          fg: '#fed7aa', border: '#c2410c', title: '#ffffff', subtitle: '#fb923c', user: '#fdba74' 
-        },
-        welcome: { 
-          bg: '#c2410c', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#fed7aa', border: '#f97316', title: '#ffffff', body: '#fdba74' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#c2410c' 
-        },
+        header: { bg: '#7c2d12', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(124,45,18,0.95), rgba(194,65,12,0.8))', gradientType: 'custom', fg: '#fed7aa', border: '#c2410c', title: '#ffffff', subtitle: '#fb923c', user: '#fdba74' },
+        welcome: { bg: '#c2410c', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#fed7aa', border: '#f97316', title: '#ffffff', body: '#fdba74' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#c2410c' },
         content: { textColor: '#fdba74' },
         input: { bgColor: '#7c2d12', textColor: '#fed7aa' },
+        base: { bg: '#7c2d12', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -288,36 +266,22 @@ const defaultPresets: Preset[] = [
     name: 'Purple Dream (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#6b21a8', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(107,33,168,0.9), rgba(168,85,247,0.7))', gradientType: 'custom', 
-          fg: '#e9d5ff', border: '#a855f7', title: '#ffffff', subtitle: '#d8b4fe', user: '#e9d5ff' 
-        },
-        welcome: { 
-          bg: '#faf5ff', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#6b21a8', border: '#c084fc', title: '#6b21a8', body: '#9333ea' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#e9d5ff' 
-        },
+        header: { bg: '#6b21a8', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(107,33,168,0.9), rgba(168,85,247,0.7))', gradientType: 'custom', fg: '#e9d5ff', border: '#a855f7', title: '#ffffff', subtitle: '#d8b4fe', user: '#e9d5ff' },
+        welcome: { bg: '#faf5ff', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#6b21a8', border: '#c084fc', title: '#6b21a8', body: '#9333ea' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#e9d5ff' },
         content: { textColor: '#581c87' },
         input: { bgColor: '#faf5ff', textColor: '#581c87' },
+        base: { bg: '#faf5ff', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#3b0764', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(107,33,168,0.8))', gradientType: 'custom', 
-          fg: '#e9d5ff', border: '#6b21a8', title: '#ffffff', subtitle: '#c084fc', user: '#d8b4fe' 
-        },
-        welcome: { 
-          bg: '#6b21a8', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#e9d5ff', border: '#a855f7', title: '#ffffff', body: '#d8b4fe' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#6b21a8' 
-        },
+        header: { bg: '#3b0764', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(107,33,168,0.8))', gradientType: 'custom', fg: '#e9d5ff', border: '#6b21a8', title: '#ffffff', subtitle: '#c084fc', user: '#d8b4fe' },
+        welcome: { bg: '#6b21a8', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#e9d5ff', border: '#a855f7', title: '#ffffff', body: '#d8b4fe' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#6b21a8' },
         content: { textColor: '#d8b4fe' },
         input: { bgColor: '#581c87', textColor: '#e9d5ff' },
+        base: { bg: '#3b0764', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -325,36 +289,22 @@ const defaultPresets: Preset[] = [
     name: 'Rose Elegance (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#9f1239', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(159,18,57,0.9), rgba(244,63,94,0.7))', gradientType: 'custom', 
-          fg: '#fecdd3', border: '#f43f5e', title: '#ffffff', subtitle: '#fda4af', user: '#fecdd3' 
-        },
-        welcome: { 
-          bg: '#fff1f2', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#9f1239', border: '#fb7185', title: '#9f1239', body: '#e11d48' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#fecdd3' 
-        },
+        header: { bg: '#9f1239', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(159,18,57,0.9), rgba(244,63,94,0.7))', gradientType: 'custom', fg: '#fecdd3', border: '#f43f5e', title: '#ffffff', subtitle: '#fda4af', user: '#fecdd3' },
+        welcome: { bg: '#fff1f2', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#9f1239', border: '#fb7185', title: '#9f1239', body: '#e11d48' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#fecdd3' },
         content: { textColor: '#881337' },
         input: { bgColor: '#fff1f2', textColor: '#881337' },
+        base: { bg: '#fff1f2', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#4c0519', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(76,5,25,0.95), rgba(159,18,57,0.8))', gradientType: 'custom', 
-          fg: '#fecdd3', border: '#9f1239', title: '#ffffff', subtitle: '#fb7185', user: '#fda4af' 
-        },
-        welcome: { 
-          bg: '#9f1239', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#fecdd3', border: '#f43f5e', title: '#ffffff', body: '#fda4af' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#9f1239' 
-        },
+        header: { bg: '#4c0519', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(76,5,25,0.95), rgba(159,18,57,0.8))', gradientType: 'custom', fg: '#fecdd3', border: '#9f1239', title: '#ffffff', subtitle: '#fb7185', user: '#fda4af' },
+        welcome: { bg: '#9f1239', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#fecdd3', border: '#f43f5e', title: '#ffffff', body: '#fda4af' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#9f1239' },
         content: { textColor: '#fda4af' },
         input: { bgColor: '#881337', textColor: '#fecdd3' },
+        base: { bg: '#4c0519', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -362,36 +312,22 @@ const defaultPresets: Preset[] = [
     name: 'Teal Wave (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#115e59', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(17,94,89,0.9), rgba(20,184,166,0.7))', gradientType: 'custom', 
-          fg: '#ccfbf1', border: '#14b8a6', title: '#ffffff', subtitle: '#99f6e4', user: '#ccfbf1' 
-        },
-        welcome: { 
-          bg: '#f0fdfa', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#115e59', border: '#5eead4', title: '#115e59', body: '#0f766e' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#ccfbf1' 
-        },
+        header: { bg: '#115e59', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(17,94,89,0.9), rgba(20,184,166,0.7))', gradientType: 'custom', fg: '#ccfbf1', border: '#14b8a6', title: '#ffffff', subtitle: '#99f6e4', user: '#ccfbf1' },
+        welcome: { bg: '#f0fdfa', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#115e59', border: '#5eead4', title: '#115e59', body: '#0f766e' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#ccfbf1' },
         content: { textColor: '#134e4a' },
         input: { bgColor: '#f0fdfa', textColor: '#134e4a' },
+        base: { bg: '#f0fdfa', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#042f2e', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(4,47,46,0.95), rgba(17,94,89,0.8))', gradientType: 'custom', 
-          fg: '#ccfbf1', border: '#115e59', title: '#ffffff', subtitle: '#5eead4', user: '#99f6e4' 
-        },
-        welcome: { 
-          bg: '#115e59', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#ccfbf1', border: '#14b8a6', title: '#ffffff', body: '#99f6e4' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#115e59' 
-        },
+        header: { bg: '#042f2e', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(4,47,46,0.95), rgba(17,94,89,0.8))', gradientType: 'custom', fg: '#ccfbf1', border: '#115e59', title: '#ffffff', subtitle: '#5eead4', user: '#99f6e4' },
+        welcome: { bg: '#115e59', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#ccfbf1', border: '#14b8a6', title: '#ffffff', body: '#99f6e4' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#115e59' },
         content: { textColor: '#99f6e4' },
         input: { bgColor: '#134e4a', textColor: '#ccfbf1' },
+        base: { bg: '#042f2e', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
@@ -399,36 +335,22 @@ const defaultPresets: Preset[] = [
     name: 'Slate Modern (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#334155', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(51,65,85,0.9), rgba(100,116,139,0.7))', gradientType: 'custom', 
-          fg: '#f1f5f9', border: '#64748b', title: '#ffffff', subtitle: '#cbd5e1', user: '#e2e8f0' 
-        },
-        welcome: { 
-          bg: '#f8fafc', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#334155', border: '#94a3b8', title: '#1e293b', body: '#475569' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#e2e8f0' 
-        },
+        header: { bg: '#334155', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(51,65,85,0.9), rgba(100,116,139,0.7))', gradientType: 'custom', fg: '#f1f5f9', border: '#64748b', title: '#ffffff', subtitle: '#cbd5e1', user: '#e2e8f0' },
+        welcome: { bg: '#f8fafc', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#334155', border: '#94a3b8', title: '#1e293b', body: '#475569' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#e2e8f0' },
         content: { textColor: '#1e293b' },
         input: { bgColor: '#f1f5f9', textColor: '#1e293b' },
+        base: { bg: '#f8fafc', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#1e293b', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(30,41,59,0.95), rgba(51,65,85,0.8))', gradientType: 'custom', 
-          fg: '#f1f5f9', border: '#334155', title: '#ffffff', subtitle: '#94a3b8', user: '#cbd5e1' 
-        },
-        welcome: { 
-          bg: '#334155', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#f1f5f9', border: '#64748b', title: '#ffffff', body: '#cbd5e1' 
-        },
-        card: { 
-          bg: '#0f172a', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#1e293b' 
-        },
+        header: { bg: '#1e293b', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(30,41,59,0.95), rgba(51,65,85,0.8))', gradientType: 'custom', fg: '#f1f5f9', border: '#334155', title: '#ffffff', subtitle: '#94a3b8', user: '#cbd5e1' },
+        welcome: { bg: '#334155', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#f1f5f9', border: '#64748b', title: '#ffffff', body: '#cbd5e1' },
+        card: { bg: '#0f172a', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#1e293b' },
         content: { textColor: '#cbd5e1' },
         input: { bgColor: '#1e293b', textColor: '#e2e8f0' },
+        base: { bg: '#1e293b', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#0f172a', bgAlpha: 0.9 },
       },
     },
   },
@@ -436,36 +358,22 @@ const defaultPresets: Preset[] = [
     name: 'Golden Hour (default)',
     sections: {
       light: {
-        header: { 
-          bg: '#b45309', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(180,83,9,0.9), rgba(245,158,11,0.7))', gradientType: 'custom', 
-          fg: '#fef3c7', border: '#f59e0b', title: '#ffffff', subtitle: '#fde68a', user: '#fef3c7' 
-        },
-        welcome: { 
-          bg: '#fffbeb', bgAlpha: 1, gradient: '', gradientType: 'none', 
-          fg: '#b45309', border: '#fbbf24', title: '#b45309', body: '#d97706' 
-        },
-        card: { 
-          bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', 
-          fg: '#1e293b', border: '#fef3c7' 
-        },
+        header: { bg: '#b45309', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(180,83,9,0.9), rgba(245,158,11,0.7))', gradientType: 'custom', fg: '#fef3c7', border: '#f59e0b', title: '#ffffff', subtitle: '#fde68a', user: '#fef3c7' },
+        welcome: { bg: '#fffbeb', bgAlpha: 1, gradient: '', gradientType: 'none', fg: '#b45309', border: '#fbbf24', title: '#b45309', body: '#d97706' },
+        card: { bg: '#ffffff', bgAlpha: 0.95, gradient: '', gradientType: 'none', fg: '#1e293b', border: '#fef3c7' },
         content: { textColor: '#92400e' },
         input: { bgColor: '#fffbeb', textColor: '#92400e' },
+        base: { bg: '#fffbeb', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#ffffff', bgAlpha: 0.95 },
       },
       dark: {
-        header: { 
-          bg: '#78350f', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(120,53,15,0.95), rgba(180,83,9,0.8))', gradientType: 'custom', 
-          fg: '#fef3c7', border: '#b45309', title: '#ffffff', subtitle: '#fbbf24', user: '#fde68a' 
-        },
-        welcome: { 
-          bg: '#b45309', bgAlpha: 0.85, gradient: '', gradientType: 'none', 
-          fg: '#fef3c7', border: '#f59e0b', title: '#ffffff', body: '#fde68a' 
-        },
-        card: { 
-          bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', 
-          fg: '#e2e8f0', border: '#b45309' 
-        },
+        header: { bg: '#78350f', bgAlpha: 1, gradient: 'linear-gradient(135deg, rgba(120,53,15,0.95), rgba(180,83,9,0.8))', gradientType: 'custom', fg: '#fef3c7', border: '#b45309', title: '#ffffff', subtitle: '#fbbf24', user: '#fde68a' },
+        welcome: { bg: '#b45309', bgAlpha: 0.85, gradient: '', gradientType: 'none', fg: '#fef3c7', border: '#f59e0b', title: '#ffffff', body: '#fde68a' },
+        card: { bg: '#1e293b', bgAlpha: 0.9, gradient: '', gradientType: 'none', fg: '#e2e8f0', border: '#b45309' },
         content: { textColor: '#fde68a' },
         input: { bgColor: '#78350f', textColor: '#fef3c7' },
+        base: { bg: '#78350f', bgAlpha: 1, gradient: '' },
+        cardOverall: { bg: '#1e293b', bgAlpha: 0.9 },
       },
     },
   },
