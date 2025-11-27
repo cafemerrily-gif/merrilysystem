@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -94,14 +94,44 @@ const defaultPresets: Preset[] = [
     name: 'Sunrise',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#ffe3b8', fg: '#1f2937', gradient: 'linear-gradient(135deg, #ffe29f, #ff7a18)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,170,0,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#fff5ed', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,110,64,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#ffe3b8',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, #ffe29f, #ff7a18)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#fff9f1',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,170,0,0.2))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#fff5ed',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,110,64,0.25))',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#1f1c2c', fg: '#f0c987', gradient: 'linear-gradient(145deg, #1f1c2c, #3a4c63)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#0d0b19', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(240,201,135,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0f1220', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(240,201,135,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#1f1c2c',
+          fg: '#f0c987',
+          gradient: 'linear-gradient(145deg, #1f1c2c, #3a4c63)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#0d0b19',
+          fg: '#f0c987',
+          gradient: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(240,201,135,0.2))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0f1220',
+          fg: '#f0c987',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(240,201,135,0.25))',
+        },
       },
     },
   },
@@ -109,14 +139,44 @@ const defaultPresets: Preset[] = [
     name: 'Midnight Bloom',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#f0f4ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, #f0f4ff, #cfd3ff)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#ffffff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(99,102,241,0.1))' },
-        card: { ...defaultModeSections.card, bg: '#eff1ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(79,70,229,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#f0f4ff',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, #f0f4ff, #cfd3ff)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#ffffff',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(99,102,241,0.1))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#eff1ff',
+          fg: '#1f2937',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(79,70,229,0.2))',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#0f172a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, #0f172a, #312e81)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#090e1a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, rgba(15,23,42,0.8), rgba(165,180,252,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0b1220', fg: '#c7d2fe', gradient: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(255,255,255,0.1))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#0f172a',
+          fg: '#a5b4fc',
+          gradient: 'linear-gradient(135deg, #0f172a, #312e81)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#090e1a',
+          fg: '#a5b4fc',
+          gradient: 'linear-gradient(135deg, rgba(15,23,42,0.8), rgba(165,180,252,0.2))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0b1220',
+          fg: '#c7d2fe',
+          gradient: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(255,255,255,0.1))',
+        },
       },
     },
   },
@@ -124,14 +184,44 @@ const defaultPresets: Preset[] = [
     name: 'Coastal Mist',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#d7efff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, #d7efff, #7dc0ff)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#ecf6ff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(237,246,255,0.7), rgba(124,192,255,0.25))' },
-        card: { ...defaultModeSections.card, bg: '#f5fbff', fg: '#0c1e2a', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(124,192,255,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#d7efff',
+          fg: '#0c1e2a',
+          gradient: 'linear-gradient(135deg, #d7efff, #7dc0ff)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#ecf6ff',
+          fg: '#0c1e2a',
+          gradient: 'linear-gradient(135deg, rgba(237,246,255,0.7), rgba(124,192,255,0.25))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#f5fbff',
+          fg: '#0c1e2a',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(124,192,255,0.2))',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#0b1f2f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, #0b1f2f, #1f3f5f)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#09121f', fg: '#b3d4ff', gradient: 'linear-gradient(135deg, rgba(9,18,31,0.9), rgba(179,212,255,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#0f1825', fg: '#d6e6ff', gradient: 'linear-gradient(135deg, rgba(179,212,255,0.25), rgba(255,255,255,0.05))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#0b1f2f',
+          fg: '#b3d4ff',
+          gradient: 'linear-gradient(135deg, #0b1f2f, #1f3f5f)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#09121f',
+          fg: '#b3d4ff',
+          gradient: 'linear-gradient(135deg, rgba(9,18,31,0.9), rgba(179,212,255,0.2))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#0f1825',
+          fg: '#d6e6ff',
+          gradient: 'linear-gradient(135deg, rgba(179,212,255,0.25), rgba(255,255,255,0.05))',
+        },
       },
     },
   },
@@ -139,14 +229,44 @@ const defaultPresets: Preset[] = [
     name: 'Solar Harvest',
     sections: {
       light: {
-        header: { ...defaultModeSections.header, bg: '#fff4e1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, #fff4e1, #ffc166)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,177,58,0.25))' },
-        card: { ...defaultModeSections.card, bg: '#fff7ee', fg: '#4b2e0f', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,177,58,0.2))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#fff4e1',
+          fg: '#4b2e0f',
+          gradient: 'linear-gradient(135deg, #fff4e1, #ffc166)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#fff9f1',
+          fg: '#4b2e0f',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,177,58,0.25))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#fff7ee',
+          fg: '#4b2e0f',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,177,58,0.2))',
+        },
       },
       dark: {
-        header: { ...defaultModeSections.header, bg: '#2b1f00', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, #2b1f00, #5c3610)' },
-        welcome: { ...defaultModeSections.welcome, bg: '#1a1204', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.85), rgba(255,233,213,0.2))' },
-        card: { ...defaultModeSections.card, bg: '#1c1004', fg: '#ffe9d5', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,233,213,0.25))' },
+        header: {
+          ...defaultModeSections.header,
+          bg: '#2b1f00',
+          fg: '#ffe9d5',
+          gradient: 'linear-gradient(135deg, #2b1f00, #5c3610)',
+        },
+        welcome: {
+          ...defaultModeSections.welcome,
+          bg: '#1a1204',
+          fg: '#ffe9d5',
+          gradient: 'linear-gradient(135deg, rgba(0,0,0,0.85), rgba(255,233,213,0.2))',
+        },
+        card: {
+          ...defaultModeSections.card,
+          bg: '#1c1004',
+          fg: '#ffe9d5',
+          gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,233,213,0.25))',
+        },
       },
     },
   },
@@ -188,7 +308,8 @@ export default function UiEditor() {
           light: cloneSections(ui.sections?.light),
           dark: cloneSections(ui.sections?.dark),
         });
-        const candidatePresets = Array.isArray(ui.presets) && ui.presets.length ? ui.presets : defaultPresets;
+        const candidatePresets =
+          Array.isArray(ui.presets) && ui.presets.length ? ui.presets : defaultPresets;
         setPresets(candidatePresets);
         setSelectedPreset(candidatePresets[0].name);
         setBasePayload(data || {});
