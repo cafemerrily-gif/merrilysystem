@@ -21,8 +21,10 @@ type NotificationItem = { id: number; title: string; detail: string | null; crea
 type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 type SalesSummary = { todayTotal: number; currentMonthSales: number; totalAmount: number };
 
-const hexToHslTriplet = (hex: string) => {
-  const h = hex.replace('#', '');
+const hexToHslTriplet = (hex: string = '#ffffff') => {
+  const safeHex = (hex ?? '#ffffff').trim();
+  if (!safeHex) return '0 0% 100%';
+  const h = safeHex.replace('#', '');
   if (h.length !== 6) return '0 0% 100%';
   const r = parseInt(h.slice(0, 2), 16) / 255;
   const g = parseInt(h.slice(2, 4), 16) / 255;
@@ -52,7 +54,7 @@ const hexToHslTriplet = (hex: string) => {
 };
 
 const toHsla = (triplet: string = '0 0% 100%', alpha = 1) => {
-  const safeTriplet = triplet || '0 0% 100%';
+  const safeTriplet = (triplet ?? '0 0% 100%').trim() || '0 0% 100%';
   const normalized = safeTriplet.replace(/\s+/g, ', ');
   return `hsla(${normalized}, ${alpha})`;
 };
