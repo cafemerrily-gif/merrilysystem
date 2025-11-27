@@ -301,7 +301,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-6xl mx-auto px-4 pb-12">
-        <header className="flex items-center justify-between py-4 sticky top-0 z-30 border" style={headerStyle}>
+          <header className="flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
               <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
