@@ -805,7 +805,6 @@ export default function UiEditor() {
         const remaining = presets.filter((p) => p.name !== presetName);
         if (remaining.length > 0) {
           setSelectedPreset(remaining[0].name);
-          loadPreset(remaining[0].name);
         }
       }
       
