@@ -89,6 +89,12 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
     muted: ui.mutedColorDark || ui.mutedColor || '#94a3b8',
   };
   const mode = isDark ? dark : light;
+  const headerBg = isDark ? ui.headerBgDark || ui.headerBackground : ui.headerBgLight || ui.headerBackground;
+  const headerAlpha = isDark ? ui.headerBgAlphaDark ?? 1 : ui.headerBgAlphaLight ?? 1;
+  const headerGradient = isDark ? ui.headerBgGradientDark || '' : ui.headerBgGradientLight || '';
+  const headerFg = isDark ? ui.headerFgDark || ui.headerForeground : ui.headerFgLight || ui.headerForeground;
+  const cardGradient = isDark ? ui.cardBgGradientDark || '' : ui.cardBgGradientLight || '';
+  const cardAlpha = isDark ? ui.cardBgAlphaDark ?? 1 : ui.cardBgAlphaLight ?? 1;
 
   const root = document.documentElement;
   root.style.setProperty('--background', hexToHslTriplet(mode.background));
@@ -102,6 +108,12 @@ const applyUiToDocument = (ui: any, isDark: boolean) => {
   root.style.setProperty('--primary', hexToHslTriplet(ui.primary || mode.foreground));
   root.style.setProperty('--card-foreground-hex', mode.cardFg);
   root.style.setProperty('--card-background-hex', mode.cardBg);
+  root.style.setProperty('--card-gradient', cardGradient || 'none');
+  root.style.setProperty('--card-alpha', cardAlpha.toString());
+  root.style.setProperty('--header-bg', hexToHslTriplet(headerBg));
+  root.style.setProperty('--header-bg-alpha', headerAlpha.toString());
+  root.style.setProperty('--header-gradient', headerGradient || 'none');
+  root.style.setProperty('--header-fg', hexToHslTriplet(headerFg));
 
   if (mode.backgroundGradient) {
     document.body.style.backgroundImage = mode.backgroundGradient;
@@ -284,18 +296,18 @@ export default function Home() {
   })();
 
   const cardStyle = {
-    backgroundImage: currentCard.bgGradient || undefined,
+    backgroundImage: currentCard.bgGradient || 'var(--card-gradient)',
     backgroundColor: toHsla(hexToHslTriplet(currentCard.bg), currentCard.bgAlpha ?? 1),
-    color: currentCard.fg,
+    color: currentCard.fg || `hsla(var(--card-foreground), 1)`,
     borderColor: currentCard.border,
   };
 
   const headerStyle = {
-    backgroundImage: currentHeader.bgGradient || undefined,
+    backgroundImage: currentHeader.bgGradient || 'var(--header-gradient)',
     backgroundColor: toHsla(hexToHslTriplet(currentHeader.bg), currentHeader.bgAlpha ?? 1),
     backgroundBlendMode: currentHeader.bgGradient ? 'overlay' : 'normal',
     backgroundRepeat: 'no-repeat',
-    color: currentHeader.fg,
+    color: currentHeader.fg || `hsla(var(--header-fg), 1)`,
     borderColor: currentHeader.border,
   };
 
