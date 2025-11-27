@@ -79,6 +79,15 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const hexToRgba = (hex: string, alpha = 1) => {
+  const safeHex = hex.replace('#', '');
+  if (safeHex.length !== 6) return `rgba(0, 0, 0, ${alpha})`;
+  const r = parseInt(safeHex.slice(0, 2), 16);
+  const g = parseInt(safeHex.slice(2, 4), 16);
+  const b = parseInt(safeHex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const gradientOptions: GradientPreset[] = [
   { label: 'なし', value: 'none', resolve: () => '' },
   { label: 'Night sky', value: 'nightSky', resolve: () => 'linear-gradient(135deg, #0b1220, #1f2937)' },
@@ -462,6 +471,7 @@ export default function UiEditor() {
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [welcomeTitle, setWelcomeTitle] = useState('バーとログがひと目でわかるダッシュボード');
   const [welcomeBody, setWelcomeBody] = useState('色やアイコン、グラデーションを自由に設定できます。');
+  const [previewMode, setPreviewMode] = useState<ModeKey>('light');
   const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
   const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
   const [homeIconUrl, setHomeIconUrl] = useState('/MERRILY_Simbol.png');
@@ -535,6 +545,21 @@ export default function UiEditor() {
   const headerTextColor = currentSection.header.fg;
   const welcomeTextColor = currentSection.welcome.fg;
   const currentBaseBackground = baseBackgrounds[selectedMode];
+  const previewSection = sections[previewMode];
+  const previewBase = baseBackgrounds[previewMode];
+  const previewSectionStyle = (section: SectionColors) => ({
+    backgroundColor: hexToRgba(section.bg, section.bgAlpha),
+    color: section.fg,
+    borderColor: section.border,
+    backgroundImage: section.gradient || undefined,
+  });
+  const previewContainerStyle = {
+    backgroundColor: previewBase.gradient ? 'transparent' : hexToRgba(previewBase.bg, previewBase.bgAlpha),
+    backgroundImage: previewBase.gradient || undefined,
+    borderColor: previewSection.card.border,
+    borderRadius: '24px',
+    overflow: 'hidden',
+  };
 
   const updateSection = (section: keyof ModeSections, field: keyof SectionColors, value: string | number) => {
     const parsedValue = field === 'bgAlpha' ? Number(value) : value;
@@ -749,6 +774,67 @@ export default function UiEditor() {
               ))}
             </select>
           </label>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">トップ画面プレビュー</h2>
+            <div className="flex gap-2 text-xs">
+              {(['light', 'dark'] as ModeKey[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setPreviewMode(mode)}
+                  className={`rounded-full px-3 py-1 border text-muted-foreground ${previewMode === mode ? 'border-primary text-primary' : 'border-border'}`}
+                >
+                  {mode === 'light' ? 'ライト' : 'ダーク'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={previewContainerStyle} className="border bg-transparent p-0">
+            <div style={previewSectionStyle(previewSection.header)} className="px-4 py-3 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.header.subtitle }}>
+                    Welcome
+                  </p>
+                  <h3 className="text-lg font-semibold" style={{ color: previewSection.header.title }}>
+                    {appTitle}
+                  </h3>
+                </div>
+                <span className="text-xs" style={{ color: previewSection.header.user }}>
+                  {previewSection.header.user}
+                </span>
+              </div>
+            </div>
+            <div style={previewSectionStyle(previewSection.welcome)} className="px-4 py-3 border-b">
+              <p className="text-sm font-semibold">{welcomeTitle || 'MERRILY'}</p>
+              <p className="text-xs text-muted-foreground">{welcomeBody || '最新メトリクスを一瞥できます。'}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
+              {[1, 2, 3].map((idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border bg-opacity-80 p-3"
+                  style={{
+                    ...previewSectionStyle(previewSection.card),
+                    borderColor: previewSection.card.border,
+                  }}
+                >
+                  <p className="text-xs uppercase tracking-[0.2em]" style={{ color: previewSection.card.border }}>
+                    Card {idx}
+                  </p>
+                  <p className="text-sm font-semibold" style={{ color: previewSection.card.fg }}>
+                    {idx === 1 ? 'Sales' : idx === 2 ? 'Logs' : 'Notifications'}
+                  </p>
+                  <p className="text-xs" style={{ color: previewSection.card.fg }}>
+                    最新アップデート
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
