@@ -587,6 +587,7 @@ export default function UiEditor() {
   useEffect(() => {
     (async () => {
       try {
+        // UI設定を取得
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data: UiPayload = await res.json();
         const ui = data?.uiSettings || {};
@@ -609,12 +610,31 @@ export default function UiEditor() {
             gradient: ui.darkBackgroundGradient || defaultBaseBackgrounds.dark.gradient,
           },
         });
-        const mergedPresets = mergePresetsWithDefaults(ui.presets);
-        setPresets(mergedPresets);
-        setSelectedPreset(selectInitialPresetName(ui.presets));
+        
+        // データベースからプリセットを取得
+        const presetsRes = await fetch('/api/presets', { cache: 'no-store' });
+        const presetsData = await presetsRes.json();
+        
+        if (Array.isArray(presetsData) && presetsData.length > 0) {
+          // データベースのプリセットを変換
+          const loadedPresets: Preset[] = presetsData.map((p: any) => ({
+            name: p.name,
+            sections: p.sections,
+          }));
+          setPresets(loadedPresets);
+          setSelectedPreset(loadedPresets[0].name);
+        } else {
+          // データベースにプリセットがない場合はデフォルトを使用
+          setPresets(defaultPresets);
+          setSelectedPreset(defaultPresets[0].name);
+        }
+        
         setBasePayload(data || {});
       } catch (e: any) {
         setError(e?.message || '設定の取得に失敗しました');
+        // エラー時はデフォルトプリセットを使用
+        setPresets(defaultPresets);
+        setSelectedPreset(defaultPresets[0].name);
       } finally {
         setLoading(false);
       }
@@ -712,40 +732,87 @@ export default function UiEditor() {
     }));
   };
 
-  const savePreset = () => {
-    const nextPreset: Preset = {
-      name: presetName || `Preset ${presets.length + 1}`,
-      sections: {
-        light: cloneSections(sections.light),
-        dark: cloneSections(sections.dark),
-      },
-    };
-    setPresets((prev) => {
-      const filtered = prev.filter((p) => p.name !== nextPreset.name);
-      return [...filtered, nextPreset];
-    });
-    setMessage('プリセットを保存しました');
+  const savePreset = async () => {
+    try {
+      const nextPreset: Preset = {
+        name: presetName || `Preset ${presets.length + 1}`,
+        sections: {
+          light: cloneSections(sections.light),
+          dark: cloneSections(sections.dark),
+        },
+      };
+      
+      // データベースに保存
+      const res = await fetch('/api/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nextPreset.name,
+          sections: nextPreset.sections,
+        }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'プリセットの保存に失敗しました');
+      }
+      
+      // ローカル状態を更新
+      setPresets((prev) => {
+        const filtered = prev.filter((p) => p.name !== nextPreset.name);
+        return [...filtered, nextPreset];
+      });
+      
+      setMessage('プリセットを保存しました');
+      setPresetName(''); // 入力フィールドをクリア
+    } catch (e: any) {
+      setError(e?.message || 'プリセットの保存に失敗しました');
+    }
   };
 
-  const deletePreset = (presetName: string) => {
+  const deletePreset = async (presetName: string) => {
     // defaultプリセットは削除できない
     if (presetName.includes('(default)')) {
       setError('デフォルトプリセットは削除できません');
       return;
     }
     
-    setPresets((prev) => prev.filter((p) => p.name !== presetName));
-    
-    // 削除したプリセットが選択中の場合、最初のプリセットに切り替え
-    if (selectedPreset === presetName) {
-      const remaining = presets.filter((p) => p.name !== presetName);
-      if (remaining.length > 0) {
-        setSelectedPreset(remaining[0].name);
-        loadPreset(remaining[0].name);
+    try {
+      // データベースから該当プリセットのIDを取得
+      const presetsRes = await fetch('/api/presets', { cache: 'no-store' });
+      const presetsData = await presetsRes.json();
+      const presetToDelete = presetsData.find((p: any) => p.name === presetName);
+      
+      if (!presetToDelete) {
+        throw new Error('プリセットが見つかりません');
       }
+      
+      // データベースから削除
+      const res = await fetch(`/api/presets?id=${presetToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'プリセットの削除に失敗しました');
+      }
+      
+      // ローカル状態を更新
+      setPresets((prev) => prev.filter((p) => p.name !== presetName));
+      
+      // 削除したプリセットが選択中の場合、最初のプリセットに切り替え
+      if (selectedPreset === presetName) {
+        const remaining = presets.filter((p) => p.name !== presetName);
+        if (remaining.length > 0) {
+          setSelectedPreset(remaining[0].name);
+          loadPreset(remaining[0].name);
+        }
+      }
+      
+      setMessage('プリセットを削除しました');
+    } catch (e: any) {
+      setError(e?.message || 'プリセットの削除に失敗しました');
     }
-    
-    setMessage('プリセットを削除しました');
   };
 
   const handleSave = async () => {
@@ -761,7 +828,6 @@ export default function UiEditor() {
           welcomeTitleText: welcomeTitle,
           welcomeBodyText: welcomeBody,
           sections,
-          presets,
           ...sectionsToUiSettings(sections),
           ...baseBackgroundsToUiSettings(baseBackgrounds),
         },
