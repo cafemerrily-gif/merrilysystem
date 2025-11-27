@@ -152,6 +152,21 @@ const defaultPresets: Preset[] = [
   },
 ];
 
+const mergePresetsWithDefaults = (storedPresets?: Preset[]) => {
+  const merged = [...defaultPresets];
+  if (Array.isArray(storedPresets) && storedPresets.length) {
+    storedPresets.forEach((preset) => {
+      const existingIndex = merged.findIndex((p) => p.name === preset.name);
+      if (existingIndex >= 0) {
+        merged[existingIndex] = preset;
+      } else {
+        merged.push(preset);
+      }
+    });
+  }
+  return merged;
+};
+
 export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
@@ -188,13 +203,9 @@ export default function UiEditor() {
           light: cloneSections(ui.sections?.light),
           dark: cloneSections(ui.sections?.dark),
         });
-        if (Array.isArray(ui.presets) && ui.presets.length > 0) {
-          setPresets(ui.presets);
-          setSelectedPreset(ui.presets[0].name);
-        } else {
-          setPresets(defaultPresets);
-          setSelectedPreset(defaultPresets[0].name);
-        }
+        const mergedPresets = mergePresetsWithDefaults(ui.presets);
+        setPresets(mergedPresets);
+        setSelectedPreset(mergedPresets[0].name);
         setBasePayload(data || {});
       } catch (e: any) {
         setError(e?.message || '設定の取得に失敗しました');
