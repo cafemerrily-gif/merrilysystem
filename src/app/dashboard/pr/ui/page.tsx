@@ -79,15 +79,6 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const hexToRgba = (hex: string, alpha = 1) => {
-  const safeHex = hex.replace('#', '');
-  if (safeHex.length !== 6) return `rgba(0, 0, 0, ${alpha})`;
-  const r = parseInt(safeHex.slice(0, 2), 16);
-  const g = parseInt(safeHex.slice(2, 4), 16);
-  const b = parseInt(safeHex.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
 const gradientOptions: GradientPreset[] = [
   { label: 'なし', value: 'none', resolve: () => '' },
   { label: 'Night sky', value: 'nightSky', resolve: () => 'linear-gradient(135deg, #0b1220, #1f2937)' },
