@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type ModeKey = 'light' | 'dark';
@@ -22,12 +23,12 @@ type ModeSections = {
 type Preset = {
   name: string;
   sections: Record<ModeKey, ModeSections>;
-  base: { background: string; foreground: string; border: string };
 };
 
 type UiPayload = {
   uiSettings?: {
     [key: string]: any;
+    sections?: Record<ModeKey, ModeSections>;
     presets?: Preset[];
   };
 };
@@ -69,11 +70,49 @@ const defaultModeSections: ModeSections = {
   },
 };
 
+const cloneSections = (sections: ModeSections): ModeSections => ({
+  header: { ...sections.header },
+  welcome: { ...sections.welcome },
+  card: { ...sections.card },
+});
+
 const defaultPresets: Preset[] = [
   {
     name: 'Default',
-    sections: { light: defaultModeSections, dark: defaultModeSections },
-    base: { background: '#0b1220', foreground: '#e5e7eb', border: '#1f2937' },
+    sections: {
+      light: cloneSections(defaultModeSections),
+      dark: cloneSections(defaultModeSections),
+    },
+  },
+  {
+    name: 'Sunrise',
+    sections: {
+      light: {
+        header: { ...defaultModeSections.header, bg: '#ffe3b8', fg: '#1f2937', gradient: 'linear-gradient(135deg, #ffe29f, #ff7a18)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#fff9f1', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,170,0,0.2))' },
+        card: { ...defaultModeSections.card, bg: '#fff5ed', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,110,64,0.25))' },
+      },
+      dark: {
+        header: { ...defaultModeSections.header, bg: '#1f1c2c', fg: '#f0c987', gradient: 'linear-gradient(145deg, #1f1c2c, #3a4c63)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#0d0b19', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(0,0,0,0.8), rgba(240,201,135,0.2))' },
+        card: { ...defaultModeSections.card, bg: '#0f1220', fg: '#f0c987', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(240,201,135,0.25))' },
+      },
+    },
+  },
+  {
+    name: 'Midnight Bloom',
+    sections: {
+      light: {
+        header: { ...defaultModeSections.header, bg: '#f0f4ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, #f0f4ff, #cfd3ff)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#ffffff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(99,102,241,0.1))' },
+        card: { ...defaultModeSections.card, bg: '#eff1ff', fg: '#1f2937', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(79,70,229,0.2))' },
+      },
+      dark: {
+        header: { ...defaultModeSections.header, bg: '#0f172a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, #0f172a, #312e81)' },
+        welcome: { ...defaultModeSections.welcome, bg: '#090e1a', fg: '#a5b4fc', gradient: 'linear-gradient(135deg, rgba(15,23,42,0.8), rgba(165,180,252,0.2))' },
+        card: { ...defaultModeSections.card, bg: '#0b1220', fg: '#c7d2fe', gradient: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(255,255,255,0.1))' },
+      },
+    },
   },
 ];
 
@@ -81,8 +120,8 @@ export default function UiEditor() {
   const supabase = createClientComponentClient();
   const [selectedMode, setSelectedMode] = useState<ModeKey>('light');
   const [sections, setSections] = useState<Record<ModeKey, ModeSections>>({
-    light: defaultModeSections,
-    dark: defaultModeSections,
+    light: cloneSections(defaultModeSections),
+    dark: cloneSections(defaultModeSections),
   });
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [welcomeTitle, setWelcomeTitle] = useState('バーとログが一目でわかるダッシュボード');
@@ -96,6 +135,7 @@ export default function UiEditor() {
   const [saving, setSaving] = useState(false);
   const [presets, setPresets] = useState<Preset[]>(defaultPresets);
   const [presetName, setPresetName] = useState('Custom Preset');
+  const [selectedPreset, setSelectedPreset] = useState<string>('Default');
   const [basePayload, setBasePayload] = useState<any>({});
 
   useEffect(() => {
@@ -108,11 +148,12 @@ export default function UiEditor() {
         setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
         setAppIconUrl(ui.appIconUrl || appIconUrl);
         setHomeIconUrl(ui.homeIconUrl || homeIconUrl);
-        const loadedSections = ui.sections || sections;
-        setSections((prev) => ({
-          light: loadedSections.light || prev.light,
-          dark: loadedSections.dark || prev.dark,
-        }));
+        if (ui.sections) {
+          setSections({
+            light: cloneSections(ui.sections.light || defaultModeSections),
+            dark: cloneSections(ui.sections.dark || defaultModeSections),
+          });
+        }
         if (Array.isArray(ui.presets) && ui.presets.length > 0) {
           setPresets(ui.presets);
         }
@@ -124,6 +165,16 @@ export default function UiEditor() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const preset = presets.find((p) => p.name === selectedPreset);
+    if (preset) {
+      setSections({
+        light: cloneSections(preset.sections.light),
+        dark: cloneSections(preset.sections.dark),
+      });
+    }
+  }, [selectedPreset, presets]);
 
   const currentSection = sections[selectedMode];
   const cardTextColor = currentSection.card.fg;
@@ -160,18 +211,13 @@ export default function UiEditor() {
     }
   };
 
-  const [selectedPreset, setSelectedPreset] = useState<string>('Default');
-  useEffect(() => {
-    const preset = presets.find((p) => p.name === selectedPreset);
-    if (preset) {
-      setSections(preset.sections);
-    }
-  }, [selectedPreset, presets]);
-
   const savePreset = () => {
     const nextPreset: Preset = {
       name: presetName || `Preset ${presets.length + 1}`,
-      sections,
+      sections: {
+        light: cloneSections(sections.light),
+        dark: cloneSections(sections.dark),
+      },
       base: {
         background: currentSection.card.bg,
         foreground: currentSection.card.fg,
@@ -196,8 +242,8 @@ export default function UiEditor() {
           loginIconUrl,
           appIconUrl,
           homeIconUrl,
-          presets: [...presets],
           sections,
+          presets,
         },
       };
       const res = await fetch('/api/pr/website', {
@@ -215,32 +261,38 @@ export default function UiEditor() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">読み込み中...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">読み込み中...</div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">UI編集</h1>
-          <div className="flex gap-3">
-            <select value={selectedPreset} onChange={(e) => setSelectedPreset(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-              {presets.map((preset) => (
-                <option key={preset.name} value={preset.name}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              value={presetName}
-              onChange={(e) => setPresetName(e.target.value)}
-              placeholder="プリセット名"
-            />
-            <button onClick={savePreset} className="rounded-lg border border-accent px-3 py-2 text-sm text-accent hover:bg-accent/10">
-              保存
-            </button>
-          </div>
+          <h1 className="text-3xl font-semibold">UI編集</h1>
+          <Link href="/dashboard/pr" className="text-sm text-muted-foreground hover:text-accent">
+            広報トップへ戻る
+          </Link>
+        </div>
+
+        <div className="flex gap-3">
+          <select value={selectedPreset} onChange={(e) => setSelectedPreset(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+            {presets.map((preset) => (
+              <option key={preset.name} value={preset.name}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
+          <input
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            placeholder="新規プリセット名"
+          />
+          <button className="rounded-lg border border-accent px-3 py-2 text-sm text-accent hover:bg-accent/10" onClick={savePreset}>
+            プリセット保存
+          </button>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
@@ -248,7 +300,7 @@ export default function UiEditor() {
             <button
               key={mode}
               onClick={() => setSelectedMode(mode)}
-              className={`rounded-xl border px-3 py-2 text-sm font-semibold ${selectedMode === mode ? 'border-accent bg-accent/10' : 'border-border'}`}
+              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primary bg-primary/10' : 'border-border'}`}
             >
               {mode === 'light' ? 'ライトモード' : 'ダークモード'}
             </button>
@@ -257,30 +309,30 @@ export default function UiEditor() {
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <p className="text-sm font-semibold mb-2">アイコン</p>
-            <label className="text-sm mb-1 block">
+            <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
+            <label className="text-sm block mb-2">
               ログイン画面アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
+              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
             </label>
-            <label className="text-sm mb-1 block">
+            <label className="text-sm block mb-2">
               ログイン後アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full" onChange={(e) => handleUpload('app', e.target.files?.[0])} />
+              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('app', e.target.files?.[0])} />
             </label>
             <label className="text-sm block">
               ホーム追加用アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
+              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
             </label>
           </div>
 
           <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <p className="text-sm font-semibold mb-2">ベースカラー</p>
-            <label className="text-sm block">
-              文字色
-              <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
+            <h2 className="text-lg font-semibold mb-3">カード全体</h2>
+            <label className="text-sm block mb-2">
               背景色
               <input type="color" value={currentSection.card.bg} onChange={(e) => updateSection('card', 'bg', e.target.value)} className="mt-1 w-full" />
+            </label>
+            <label className="text-sm block mb-2">
+              文字色
+              <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
             <label className="text-sm block">
               グラデーション
@@ -295,24 +347,24 @@ export default function UiEditor() {
           </div>
 
           <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <p className="text-sm font-semibold mb-2">ウェルカムテキスト</p>
+            <h2 className="text-lg font-semibold mb-3">ウェルカムテキスト</h2>
             <input className="mb-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" value={welcomeTitle} onChange={(e) => setWelcomeTitle(e.target.value)} placeholder="ウェルカムタイトル" />
             <textarea className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" rows={3} value={welcomeBody} onChange={(e) => setWelcomeBody(e.target.value)} placeholder="ウェルカム本文" />
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: headerTextColor }}>
-          <h2 className="text-lg font-semibold mb-2">ヘッダー</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            <label className="text-sm">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: headerTextColor }}>
+            <h2 className="text-lg font-semibold mb-3">ヘッダー</h2>
+            <label className="text-sm block mb-2">
               背景色
               <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} className="mt-1 w-full" />
             </label>
-            <label className="text-sm">
+            <label className="text-sm block mb-2">
               文字色
               <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
-            <label className="text-sm">
+            <label className="text-sm block">
               グラデーション
               <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w-full">
                 {gradientOptions.map((opt) => (
@@ -323,20 +375,18 @@ export default function UiEditor() {
               </select>
             </label>
           </div>
-        </div>
 
-        <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: welcomeTextColor }}>
-          <h2 className="text-lg font-semibold mb-2">ウェルカムカード</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            <label className="text-sm">
+          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: welcomeTextColor }}>
+            <h2 className="text-lg font-semibold mb-3">ウェルカムカード</h2>
+            <label className="text-sm block mb-2">
               背景色
               <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} className="mt-1 w-full" />
             </label>
-            <label className="text-sm">
+            <label className="text-sm block mb-2">
               文字色
               <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} className="mt-1 w-full" />
             </label>
-            <label className="text-sm">
+            <label className="text-sm block">
               グラデーション
               <select value={currentSection.welcome.gradient} onChange={(e) => updateSection('welcome', 'gradient', e.target.value)} className="mt-1 w-full">
                 {gradientOptions.map((opt) => (
