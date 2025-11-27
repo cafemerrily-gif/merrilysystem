@@ -269,12 +269,12 @@ function LoginPageInner() {
       >
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <div className="w-28 h-28 rounded-full border-2 border-border bg-white overflow-hidden flex items-center justify-center shadow-md">
+            <div className="w-40 h-40 overflow-hidden flex items-center justify-center">
               <Image
                 src={loginIconUrl || '/MERRILY_Simbol.png'}
                 alt="MERRILY"
-                width={112}
-                height={112}
+                width={160}
+                height={160}
                 className="object-contain"
                 priority
               />
