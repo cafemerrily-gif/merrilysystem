@@ -71,11 +71,14 @@ const defaultModeSections: ModeSections = {
   },
 };
 
-const cloneSections = (sections: ModeSections): ModeSections => ({
-  header: { ...sections.header },
-  welcome: { ...sections.welcome },
-  card: { ...sections.card },
-});
+const cloneSections = (sections?: ModeSections): ModeSections => {
+  const source = sections || defaultModeSections;
+  return {
+    header: { ...source.header },
+    welcome: { ...source.welcome },
+    card: { ...source.card },
+  };
+};
 
 const defaultPresets: Preset[] = [
   {
@@ -149,12 +152,10 @@ export default function UiEditor() {
         setLoginIconUrl(ui.loginIconUrl || loginIconUrl);
         setAppIconUrl(ui.appIconUrl || appIconUrl);
         setHomeIconUrl(ui.homeIconUrl || homeIconUrl);
-        if (ui.sections) {
-          setSections({
-            light: cloneSections(ui.sections.light || defaultModeSections),
-            dark: cloneSections(ui.sections.dark || defaultModeSections),
-          });
-        }
+        setSections({
+          light: cloneSections(ui.sections?.light),
+          dark: cloneSections(ui.sections?.dark),
+        });
         if (Array.isArray(ui.presets) && ui.presets.length > 0) {
           setPresets(ui.presets);
         }
