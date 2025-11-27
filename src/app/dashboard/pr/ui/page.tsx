@@ -441,12 +441,19 @@ export default function UiEditor() {
   }
   return (
     <div
-      className="min-h-screen bg-background text-foreground"
-      style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+      className="min-h-screen"
+      style={{
+        backgroundColor: 'var(--background)',
+        color: 'var(--card-foreground-hex, #0f172a)',
+      }}
     >
       <div
         className="max-w-4xl mx-auto px-4 py-8 space-y-6"
-        style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+        style={{
+          backgroundColor: 'var(--background)',
+          color: 'var(--card-foreground-hex, #0f172a)',
+          '--card-border-color': 'var(--border)',
+        } as React.CSSProperties}
       >
         <div className="flex items-center justify-between">
           <div>
@@ -467,7 +474,10 @@ export default function UiEditor() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <div
+          className="bg-card border rounded-xl p-4 space-y-3"
+          style={{ borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))' }}
+        >
           <h2 className="font-semibold">編集するモード</h2>
           <div className="flex gap-2">
             {(['light', 'dark'] as const).map((mode) => (
@@ -516,7 +526,10 @@ export default function UiEditor() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <div
+              className="bg-card border rounded-xl p-4 space-y-3"
+              style={{ borderColor: 'var(--card-border-color, rgba(148, 163, 184, 0.2))' }}
+            >
             <h2 className="font-semibold">アイコン・題名</h2>
             <label className="text-sm text-muted-foreground space-y-1 block">
               アプリの題名
