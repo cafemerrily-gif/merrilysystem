@@ -23,12 +23,14 @@ type ModeSections = {
 type Preset = {
   name: string;
   sections: Record<ModeKey, ModeSections>;
-  base?: { background: string; foreground: string; border: string };
 };
 
 type UiPayload = {
   uiSettings?: {
-    [key: string]: any;
+    appTitle?: string;
+    loginIconUrl?: string;
+    appIconUrl?: string;
+    homeIconUrl?: string;
     sections?: Record<ModeKey, ModeSections>;
     presets?: Preset[];
   };
@@ -37,9 +39,9 @@ type UiPayload = {
 const gradientOptions = [
   { label: 'なし', value: '' },
   { label: 'Night sky', value: 'linear-gradient(135deg, #0b1220, #1f2937)' },
-  { label: 'Sunrise', value: 'linear-gradient(135deg, rgba(255, 145, 0, 0.45), rgba(255, 72, 94, 0.35))' },
-  { label: 'Pastel glow', value: 'linear-gradient(120deg, rgba(173, 212, 255, 0.45), rgba(255, 255, 255, 0))' },
-  { label: 'Soft gradient', value: 'linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(15, 23, 42, 0.4))' },
+  { label: 'Sunrise', value: 'linear-gradient(135deg, rgba(255,145,0,0.45), rgba(255,72,94,0.35))' },
+  { label: 'Pastel glow', value: 'linear-gradient(120deg, rgba(173,212,255,0.45), rgba(255,255,255,0))' },
+  { label: 'Soft gradient', value: 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(15,23,42,0.4))' },
 ];
 
 const defaultModeSections: ModeSections = {
@@ -329,131 +331,4 @@ export default function UiEditor() {
           </select>
           <input
             value={presetName}
-            onChange={(e) => setPresetName(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-            placeholder="新規プリセット名"
-          />
-          <button className="rounded-lg border border-accent px-3 py-2 text-sm text-accent hover:bg-accent/10" onClick={savePreset}>
-            プリセット保存
-          </button>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2">
-          {(['light', 'dark'] as ModeKey[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => {
-                setSelectedMode(mode);
-              }}
-              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primary bg-primary/10' : 'border-border'}`}
-            >
-              {mode === 'light' ? 'ライトモード' : 'ダークモード'}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
-            <label className="text-sm block mb-2">
-              ログイン画面アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
-            </label>
-            <label className="text-sm block mb-2">
-              ログイン後アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('app', e.target.files?.[0])} />
-            </label>
-            <label className="text-sm block">
-              ホーム追加用アイコン
-              <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
-            </label>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">カード全体</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.card.bg} onChange={(e) => updateSection('card', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.card.fg} onChange={(e) => updateSection('card', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-              <select value={currentSection.card.gradient} onChange={(e) => updateSection('card', 'gradient', e.target.value)} className="mt-1 w-full">
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ウェルカムテキスト</h2>
-            <input className="mb-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" value={welcomeTitle} onChange={(e) => setWelcomeTitle(e.target.value)} placeholder="ウェルカムタイトル" />
-            <textarea className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" rows={3} value={welcomeBody} onChange={(e) => setWelcomeBody(e.target.value)} placeholder="ウェルカム本文" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: headerTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ヘッダー</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.header.bg} onChange={(e) => updateSection('header', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.header.fg} onChange={(e) => updateSection('header', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w-full">
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: welcomeTextColor }}>
-            <h2 className="text-lg font-semibold mb-3">ウェルカムカード</h2>
-            <label className="text-sm block mb-2">
-              背景色
-              <input type="color" value={currentSection.welcome.bg} onChange={(e) => updateSection('welcome', 'bg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block mb-2">
-              文字色
-              <input type="color" value={currentSection.welcome.fg} onChange={(e) => updateSection('welcome', 'fg', e.target.value)} className="mt-1 w-full" />
-            </label>
-            <label className="text-sm block">
-              グラデーション
-              <select value={currentSection.welcome.gradient} onChange={(e) => updateSection('welcome', 'gradient', e.target.value)} className="mt-1 w-full">
-                {gradientOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full rounded-2xl border border-primary bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {saving ? '保存中...' : '設定を保存'}
-        </button>
-        {message && <p className="text-sm text-foreground">{message}</p>}
-        {error && <p className="text-sm text-destructive">{error}</p>}
-      </div>
-    </div>
-  );
-}
+replace ...
