@@ -291,7 +291,8 @@ export default function Home() {
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
     backgroundColor: toHsla(hexToHslTriplet(currentHeader.bg), currentHeader.bgAlpha ?? 1),
-    backgroundBlendMode: 'normal',
+    backgroundBlendMode: currentHeader.bgGradient ? 'overlay' : 'normal',
+    backgroundRepeat: 'no-repeat',
     color: currentHeader.fg,
     borderColor: currentHeader.border,
   };
@@ -305,53 +306,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="max-w-6xl mx-auto px-4 pb-12">
-          <header className="flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
-              <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>
-                Cafe Management System
-              </p>
-              <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>
-                {appTitle}
-              </h1>
-              <p className="text-sm" style={{ color: currentHeader.user }}>
-                {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
-              </p>
-            </div>
+      <header className="w-full flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white text-foreground flex items-center justify-center text-xl shadow-lg border border-border shrink-0">
+            <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={44} height={44} alt="MERRILY" className="rounded-full object-contain" />
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
-              onClick={() => setIsDark((prev) => !prev)}
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>
+              Cafe Management System
+            </p>
+            <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>
+              {appTitle}
+            </h1>
+            <p className="text-sm" style={{ color: currentHeader.user }}>
+              {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+            onClick={() => setIsDark((prev) => !prev)}
+          >
+            <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
+            <span className="text-sm">{isDark ? 'ダーク' : 'ライト'}</span>
+          </button>
+          <div className="hidden sm:flex items-center gap-2">
+            {isAdmin && (
+              <>
+                <Link href="/profile" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
+                  プロフィール
+                </Link>
+                <Link href="/admin/users" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
+                  メンバー管理
+                </Link>
+              </>
+            )}
+            <Link
+              href="/dashboard/pr/ui"
+              className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
             >
-              <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
-              <span className="text-sm">{isDark ? 'ダーク' : 'ライト'}</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-2">
-              {isAdmin && (
-                <>
-                  <Link href="/profile" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
-                    プロフィール
-                  </Link>
-                  <Link href="/admin/users" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
-                    メンバー管理
-                  </Link>
-                </>
-              )}
-              <Link
-                href="/dashboard/pr/ui"
-                className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
-              >
-                UI編集
-              </Link>
-              <LogoutButton />
-            </div>
+              UI編集
+            </Link>
+            <LogoutButton />
           </div>
-        </header>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto px-4 pb-12">
 
         <section className="mb-6 p-[1px] rounded-2xl shadow-lg border" style={welcomeStyle}>
           <div className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
