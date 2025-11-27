@@ -135,7 +135,8 @@ export default function Home() {
   const [userName, setUserName] = useState('');
   const [userDepartments, setUserDepartments] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [appIconUrl, setAppIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appIconLightUrl, setAppIconLightUrl] = useState('/white.png');
+  const [appIconDarkUrl, setAppIconDarkUrl] = useState('/black.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -209,7 +210,8 @@ export default function Home() {
         if (data?.uiSettings) {
           setUiSettings(data.uiSettings);
           applyUiToDocument(data.uiSettings, isDark);
-          if (data.uiSettings.appIconUrl) setAppIconUrl(data.uiSettings.appIconUrl);
+          if (data.uiSettings.appIconLightUrl) setAppIconLightUrl(data.uiSettings.appIconLightUrl);
+          if (data.uiSettings.appIconDarkUrl) setAppIconDarkUrl(data.uiSettings.appIconDarkUrl);
           if (data.uiSettings.appTitle) setAppTitle(data.uiSettings.appTitle);
         }
         if (data?.blogPosts) {
@@ -327,7 +329,7 @@ export default function Home() {
       <header className="w-full flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 flex items-center justify-center shrink-0">
-            <Image src={appIconUrl || '/MERRILY_Simbol.png'} width={64} height={64} alt="MERRILY" className="object-contain" />
+            <Image src={isDark ? appIconDarkUrl : appIconLightUrl} width={64} height={64} alt="MERRILY" className="object-contain" />
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>

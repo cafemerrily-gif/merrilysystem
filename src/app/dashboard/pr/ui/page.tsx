@@ -268,10 +268,8 @@ export default function UiEditor() {
   const [welcomeTitle, setWelcomeTitle] = useState('バーとログがひと目でわかるダッシュボード');
   const [welcomeBody, setWelcomeBody] = useState('色やアイコン、グラデーションを自由に設定できます。');
   const [previewMode, setPreviewMode] = useState<ModeKey>('light');
-  const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
-  const [appIconLightUrl, setAppIconLightUrl] = useState('/MERRILY_Simbol.png');
-  const [appIconDarkUrl, setAppIconDarkUrl] = useState('/MERRILY_Simbol.png');
-  const [homeIconUrl, setHomeIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appIconLight, setAppIconLight] = useState('/white.png');
+  const [appIconDark, setAppIconDark] = useState('/black.png');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -281,6 +279,11 @@ export default function UiEditor() {
   const [selectedPreset, setSelectedPreset] = useState<string>(defaultPresets[0].name);
   const [basePayload, setBasePayload] = useState<any>({});
 
+  const iconOptions = [
+    { label: 'White', value: '/white.png' },
+    { label: 'Black', value: '/black.png' },
+  ];
+
   useEffect(() => {
     (async () => {
       try {
@@ -288,10 +291,8 @@ export default function UiEditor() {
         const data: UiPayload = await res.json();
         const ui = data?.uiSettings || {};
         setAppTitle((prev) => ui.appTitle || prev);
-        setLoginIconUrl((prev) => ui.loginIconUrl || prev);
-        setAppIconLightUrl((prev) => ui.appIconLightUrl || ui.appIconUrl || prev);
-        setAppIconDarkUrl((prev) => ui.appIconDarkUrl || ui.appIconUrl || prev);
-        setHomeIconUrl((prev) => ui.homeIconUrl || prev);
+        setAppIconLight((prev) => ui.appIconLightUrl || ui.appIconUrl || prev);
+        setAppIconDark((prev) => ui.appIconDarkUrl || ui.appIconUrl || prev);
         setSections({
           light: cloneSections(ui.sections?.light),
           dark: cloneSections(ui.sections?.dark),
@@ -411,23 +412,6 @@ export default function UiEditor() {
     }));
   };
 
-  const handleUpload = async (target: 'login' | 'appLight' | 'appDark' | 'home', file?: File | null) => {
-    if (!file) return;
-    try {
-      const ext = file.name.split('.').pop() || 'png';
-      const fileName = `${target}-icon-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('ui-icons').upload(fileName, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from('ui-icons').getPublicUrl(fileName);
-      if (target === 'login') setLoginIconUrl(data.publicUrl);
-      if (target === 'appLight') setAppIconLightUrl(data.publicUrl);
-      if (target === 'appDark') setAppIconDarkUrl(data.publicUrl);
-      if (target === 'home') setHomeIconUrl(data.publicUrl);
-    } catch (e: any) {
-      setError(e?.message || 'アイコンのアップロードに失敗しました');
-    }
-  };
-
   const savePreset = () => {
     const nextPreset: Preset = {
       name: presetName || `Preset ${presets.length + 1}`,
@@ -451,10 +435,8 @@ export default function UiEditor() {
         ...basePayload,
         uiSettings: {
           appTitle,
-          loginIconUrl,
-          appIconLightUrl,
-          appIconDarkUrl,
-          homeIconUrl,
+          appIconLightUrl: appIconLight,
+          appIconDarkUrl: appIconDark,
           welcomeTitleText: welcomeTitle,
           welcomeBodyText: welcomeBody,
           sections,
@@ -643,22 +625,34 @@ export default function UiEditor() {
           <div className="space-y-4 order-last lg:order-first lg:flex-1">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
-                <h2 className="text-lg font-semibold mb-3">アイコンアップロード</h2>
+                <h2 className="text-lg font-semibold mb-3">トップページアイコン</h2>
                 <label className="text-sm block mb-2">
-                  ログイン画面アイコン
-                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('login', e.target.files?.[0])} />
-                </label>
-                <label className="text-sm block mb-2">
-                  ライトモード アイコン
-                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('appLight', e.target.files?.[0])} />
-                </label>
-                <label className="text-sm block mb-2">
-                  ダークモード アイコン
-                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('appDark', e.target.files?.[0])} />
+                  ライトモード
+                  <select
+                    value={appIconLight}
+                    onChange={(e) => setAppIconLight(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    {iconOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="text-sm block">
-                  ホーム追加用アイコン
-                  <input type="file" accept="image/*" className="mt-1 w-full text-xs" onChange={(e) => handleUpload('home', e.target.files?.[0])} />
+                  ダークモード
+                  <select
+                    value={appIconDark}
+                    onChange={(e) => setAppIconDark(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    {iconOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 

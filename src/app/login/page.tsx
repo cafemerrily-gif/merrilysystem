@@ -25,13 +25,14 @@ function LoginPageInner() {
   const [isDark, setIsDark] = useState(true);
   const [hasManualPreference, setHasManualPreference] = useState(false);
   const [routerReady, setRouterReady] = useState(false);
-  const [loginIconUrl, setLoginIconUrl] = useState('/MERRILY_Simbol.png');
+  const [appIconLightUrl, setAppIconLightUrl] = useState('/white.png');
+  const [appIconDarkUrl, setAppIconDarkUrl] = useState('/black.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
   const [headerColors, setHeaderColors] = useState<{ background: string; foreground: string }>({ background: '', foreground: '' });
   const [mutedColor, setMutedColor] = useState<string>('');
   const [themeColors, setThemeColors] = useState<{
-    light: { background: string; border: string; foreground: string };
-    dark: { background: string; border: string; foreground: string };
+    light: { background: string; border: string; foreground: string; headerBg: string; headerFg: string };
+    dark: { background: string; border: string; foreground: string; headerBg: string; headerFg: string };
   } | null>(null);
 
   const normalizeColorValue = (value: string) => {
@@ -78,6 +79,9 @@ function LoginPageInner() {
       root.style.setProperty('--background-dark', normalizeColorValue(colors.dark.background));
       root.style.setProperty('--foreground-dark', normalizeColorValue(colors.dark.foreground));
       root.style.setProperty('--border-dark', normalizeColorValue(colors.dark.border));
+      
+      // 背景色を適用
+      document.body.style.backgroundColor = mode.background;
     },
     []
   );
@@ -118,7 +122,8 @@ function LoginPageInner() {
         const res = await fetch('/api/pr/website', { cache: 'no-store' });
         const data = await res.json();
         const ui = data?.uiSettings;
-        if (ui?.loginIconUrl) setLoginIconUrl(ui.loginIconUrl);
+        if (ui?.appIconLightUrl) setAppIconLightUrl(ui.appIconLightUrl);
+        if (ui?.appIconDarkUrl) setAppIconDarkUrl(ui.appIconDarkUrl);
         if (ui?.appTitle) setAppTitle(ui.appTitle);
         if (ui?.headerBackground || ui?.headerForeground) {
           setHeaderColors({
@@ -135,11 +140,15 @@ function LoginPageInner() {
               background: ui.lightBackground || '#f8fafc',
               border: ui.lightBorder || '#e2e8f0',
               foreground: ui.lightForeground || '#0f172a',
+              headerBg: ui.headerBackground || '#ffffff',
+              headerFg: ui.headerForeground || '#0f172a',
             },
             dark: {
               background: ui.darkBackground || '#0b1220',
               border: ui.darkBorder || '#1f2937',
               foreground: ui.darkForeground || '#e5e7eb',
+              headerBg: ui.headerBackgroundDark || '#1f2937',
+              headerFg: ui.headerForegroundDark || '#e5e7eb',
             },
           });
         }
@@ -241,7 +250,7 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: themeColors ? (isDark ? themeColors.dark.background : themeColors.light.background) : undefined }}>
       <div className="hidden md:block fixed top-4 right-4">
         <button
           onClick={toggleTheme}
@@ -260,18 +269,18 @@ function LoginPageInner() {
         </button>
       </div>
       <div
-        className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-8 space-y-6"
+        className="w-full max-w-md border rounded-2xl shadow-xl p-8 space-y-6"
         style={{
-          backgroundColor: headerColors.background || undefined,
-          color: headerColors.foreground || undefined,
-          borderColor: headerColors.background ? headerColors.background : undefined,
+          backgroundColor: themeColors ? (isDark ? themeColors.dark.headerBg : themeColors.light.headerBg) : undefined,
+          color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined,
+          borderColor: themeColors ? (isDark ? themeColors.dark.border : themeColors.light.border) : undefined,
         }}
       >
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="w-40 h-40 overflow-hidden flex items-center justify-center">
               <Image
-                src={loginIconUrl || '/MERRILY_Simbol.png'}
+                src={isDark ? appIconDarkUrl : appIconLightUrl}
                 alt="MERRILY"
                 width={160}
                 height={160}
@@ -280,14 +289,14 @@ function LoginPageInner() {
               />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">{appTitle}</h1>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined }}>{appTitle}</h1>
           <p
             className="text-xs uppercase tracking-[0.2em]"
             style={{ color: mutedColor || undefined }}
           >
             Cafe Management System
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm" style={{ color: themeColors ? (isDark ? themeColors.dark.headerFg : themeColors.light.headerFg) : undefined, opacity: 0.7 }}>
             {mode === 'login' ? 'メールアドレスとパスワードでサインイン' : '初回のみユーザー登録してください'}
           </p>
         </div>
