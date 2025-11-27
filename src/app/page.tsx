@@ -51,6 +51,11 @@ const hexToHslTriplet = (hex: string) => {
   return `${Math.round(hDeg)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+const toHsla = (triplet: string, alpha = 1) => {
+  const normalized = triplet.replace(/\s+/g, ', ');
+  return `hsla(${normalized}, ${alpha})`;
+};
+
 const navItems: NavItem[] = [
   { href: '/dashboard/staff/menu', icon: '👥', title: '店舗スタッフ', subtitle: '勤怠・シフト', desc: '出勤/退勤の記録とシフト確認', accent: 'スタッフ', requiredTags: ['店舗スタッフ'] },
   { href: '/dashboard/accounting/menu', icon: '📊', title: '会計部', subtitle: '売上メニュー', desc: '売上・分析ダッシュボードへ', accent: '会計', requiredTags: ['会計部'] },
@@ -278,14 +283,14 @@ export default function Home() {
 
   const cardStyle = {
     backgroundImage: currentCard.bgGradient || undefined,
-    backgroundColor: `hsla(${hexToHslTriplet(currentCard.bg)}, ${currentCard.bgAlpha ?? 1})`,
+    backgroundColor: toHsla(hexToHslTriplet(currentCard.bg), currentCard.bgAlpha ?? 1),
     color: currentCard.fg,
     borderColor: currentCard.border,
   };
 
   const headerStyle = {
     backgroundImage: currentHeader.bgGradient || undefined,
-    backgroundColor: `hsla(${hexToHslTriplet(currentHeader.bg)}, ${currentHeader.bgAlpha ?? 1})`,
+    backgroundColor: toHsla(hexToHslTriplet(currentHeader.bg), currentHeader.bgAlpha ?? 1),
     backgroundBlendMode: 'normal',
     color: currentHeader.fg,
     borderColor: currentHeader.border,
@@ -293,7 +298,7 @@ export default function Home() {
 
   const welcomeStyle = {
     backgroundImage: currentWelcome.bgGradient || undefined,
-    backgroundColor: `hsla(${hexToHslTriplet(currentWelcome.bg)}, ${currentWelcome.bgAlpha ?? 1})`,
+    backgroundColor: toHsla(hexToHslTriplet(currentWelcome.bg), currentWelcome.bgAlpha ?? 1),
     color: currentWelcome.fg,
     borderColor: currentWelcome.border,
   };
