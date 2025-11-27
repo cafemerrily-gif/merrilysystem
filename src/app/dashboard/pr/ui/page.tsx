@@ -444,7 +444,10 @@ export default function UiEditor() {
       className="min-h-screen bg-background text-foreground"
       style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
     >
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div
+        className="max-w-4xl mx-auto px-4 py-8 space-y-6"
+        style={{ color: 'var(--card-foreground-hex, #0f172a)' }}
+      >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">UI編集（配色・透明度・グラデーション）</h1>

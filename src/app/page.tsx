@@ -356,7 +356,7 @@ export default function Home() {
       </header>
       <main className="max-w-6xl mx-auto px-4 pb-12">
 
-        <section className="mb-6 p-[1px] rounded-2xl shadow-lg border" style={welcomeStyle}>
+        <section className="mt-6 mb-6 p-[1px] rounded-2xl shadow-lg border" style={welcomeStyle}>
           <div className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
             <div className="col-span-2 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentHeader.subtitle }}>
