@@ -188,13 +188,9 @@ export default function UiEditor() {
           light: cloneSections(ui.sections?.light),
           dark: cloneSections(ui.sections?.dark),
         });
-        if (Array.isArray(ui.presets) && ui.presets.length > 0) {
-          setPresets(ui.presets);
-          setSelectedPreset(ui.presets[0].name);
-        } else {
-          setPresets(defaultPresets);
-          setSelectedPreset(defaultPresets[0].name);
-        }
+        const candidatePresets = Array.isArray(ui.presets) && ui.presets.length ? ui.presets : defaultPresets;
+        setPresets(candidatePresets);
+        setSelectedPreset(candidatePresets[0].name);
         setBasePayload(data || {});
       } catch (e: any) {
         setError(e?.message || '設定の取得に失敗しました');
@@ -405,7 +401,7 @@ export default function UiEditor() {
             </label>
             <label className="text-sm block">
               グラデーション
-              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w/full">
+              <select value={currentSection.header.gradient} onChange={(e) => updateSection('header', 'gradient', e.target.value)} className="mt-1 w-full">
                 {gradientOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
