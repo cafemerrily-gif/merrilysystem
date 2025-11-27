@@ -188,6 +188,10 @@ export default function UiEditor() {
         });
         if (Array.isArray(ui.presets) && ui.presets.length > 0) {
           setPresets(ui.presets);
+          setSelectedPreset(ui.presets[0].name);
+        } else {
+          setPresets(defaultPresets);
+          setSelectedPreset(defaultPresets[0].name);
         }
         setBasePayload(data || {});
       } catch (e: any) {
