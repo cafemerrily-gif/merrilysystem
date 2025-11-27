@@ -20,6 +20,7 @@ type ModeSections = {
   welcome: SectionColors & { title: string; body: string };
   card: SectionColors;
   content: { textColor: string }; // カード以外の本文エリアの文字色
+  input: { bgColor: string; textColor: string }; // 入力欄の背景色と文字色
 };
 
 type Preset = {
@@ -151,6 +152,10 @@ const defaultModeSections: ModeSections = {
   content: {
     textColor: '#e5e7eb',
   },
+  input: {
+    bgColor: '#ffffff',
+    textColor: '#0f172a',
+  },
 };
 
 const cloneSections = (sections?: ModeSections): ModeSections => {
@@ -160,6 +165,10 @@ const cloneSections = (sections?: ModeSections): ModeSections => {
     welcome: { ...source.welcome, gradientType: source.welcome.gradientType || 'none' },
     card: { ...source.card, gradientType: source.card.gradientType || 'none' },
     content: { textColor: source.content?.textColor || defaultModeSections.content.textColor },
+    input: {
+      bgColor: source.input?.bgColor || defaultModeSections.input.bgColor,
+      textColor: source.input?.textColor || defaultModeSections.input.textColor,
+    },
   };
 };
 
@@ -216,7 +225,7 @@ const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
   (['light', 'dark'] as ModeKey[]).forEach((mode) => {
     const suffix = mode === 'light' ? 'Light' : 'Dark';
     const section = sections[mode];
-    const { header, card, welcome, content } = section;
+    const { header, card, welcome, content, input } = section;
 
     out[`headerBg${suffix}`] = header.bg;
     out[`headerBgAlpha${suffix}`] = header.bgAlpha;
@@ -242,6 +251,8 @@ const sectionsToUiSettings = (sections: Record<ModeKey, ModeSections>) => {
     out[`welcomeBodyColor${suffix}`] = welcome.body;
 
     out[`contentTextColor${suffix}`] = content.textColor;
+    out[`inputBgColor${suffix}`] = input.bgColor;
+    out[`inputTextColor${suffix}`] = input.textColor;
   });
 
   return out;
@@ -692,6 +703,19 @@ export default function UiEditor() {
                 <label className="text-sm block">
                   文字色
                   <input type="color" value={currentSection.content.textColor} onChange={(e) => updateSection('content', 'textColor', e.target.value)} className="mt-1 w-full" />
+                </label>
+              </div>
+
+              <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
+                <h2 className="text-lg font-semibold mb-3">入力欄の色</h2>
+                <p className="text-xs text-muted-foreground mb-3">テキスト入力欄や日付選択などの色</p>
+                <label className="text-sm block mb-2">
+                  背景色
+                  <input type="color" value={currentSection.input.bgColor} onChange={(e) => updateSection('input', 'bgColor', e.target.value)} className="mt-1 w-full" />
+                </label>
+                <label className="text-sm block">
+                  文字色
+                  <input type="color" value={currentSection.input.textColor} onChange={(e) => updateSection('input', 'textColor', e.target.value)} className="mt-1 w-full" />
                 </label>
               </div>
             </div>

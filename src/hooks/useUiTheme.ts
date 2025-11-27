@@ -168,10 +168,13 @@ export function useUiTheme() {
       },
     });
 
-    // 初期テーマ決定（デバイス設定を参照）
+    // 初期テーマ決定
     const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
     const storedPref = window.localStorage.getItem('ui-is-dark');
-    const initialIsDark = storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches;
+    
+    // スマホは常にデバイス設定、PC/タブレットは保存された設定またはデバイス設定
+    const initialIsDark = isMobile ? media.matches : (storedPref === 'true' ? true : storedPref === 'false' ? false : media.matches);
 
     // キャッシュから即座に適用
     const cached = window.localStorage.getItem('ui-settings-cache');
@@ -201,12 +204,14 @@ export function useUiTheme() {
       }
     })();
 
-    // デバイス設定変更時の処理（モバイル・PC共通）
-    // ユーザーが手動で切り替えていない場合のみ追従
+    // デバイス設定変更時の処理
+    // スマホ: 常にデバイス設定に従う
+    // PC/タブレット: 手動設定がない場合のみデバイス設定に従う
     const handleChange = (event: MediaQueryListEvent) => {
+      const isMobileNow = window.matchMedia('(max-width: 768px)').matches;
       const currentPref = window.localStorage.getItem('ui-is-dark');
-      // 手動設定がない場合のみデバイス設定に従う
-      if (currentPref === null) {
+      
+      if (isMobileNow || currentPref === null) {
         applyColors(event.matches, latestColors);
       }
     };
