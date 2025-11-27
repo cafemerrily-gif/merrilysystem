@@ -336,9 +336,10 @@ export default function UiEditor() {
         <div className="grid gap-3 md:grid-cols-2">
           {(['light', 'dark'] as ModeKey[]).map((mode) => (
             <button
+              type="button"
               key={mode}
               onClick={() => setSelectedMode(mode)}
-              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primarybg-primary/10' : 'border-border'}`}
+              className={`rounded-xl border px-4 py-2 text-sm font-bold ${selectedMode === mode ? 'border-primary bg-primary/10' : 'border-border'}`}
             >
               {mode === 'light' ? 'ライトモード' : 'ダークモード'}
             </button>
