@@ -216,9 +216,9 @@ export default function Home() {
   const mutedColor = isDark ? '#a8a8a8' : '#737373';
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: bgColor, color: textColor }}>
+    <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
       {/* ヘッダー */}
-      <header className="w-full flex items-center justify-between px-4 py-3 sticky top-0 z-30 border-b" style={{ backgroundColor: bgColor, borderColor }}>
+      <header className="w-full flex items-center justify-between px-4 py-3 sticky top-0 z-30 border-b md:hidden" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 flex items-center justify-center shrink-0">
             <Image src={appIconUrl} width={40} height={40} alt="MERRILY" className="object-contain" />
@@ -228,16 +228,8 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border transition"
-            style={{ borderColor }}
-            onClick={() => setIsDark((prev) => !prev)}
-          >
-            <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
-          </button>
-          
           {/* 通知アイコン */}
-          <div className="relative">
+          <div className="relative" id="notifications">
             <button
               onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
               className="relative p-2 rounded-lg transition"
@@ -278,7 +270,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="relative sm:hidden">
+          <div className="relative">
             <button
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               className="rounded-lg border p-2"
@@ -307,24 +299,10 @@ export default function Home() {
               </div>
             )}
           </div>
-          
-          <div className="hidden sm:flex items-center gap-2">
-            {isAdmin && (
-              <>
-                <Link href="/profile" className="text-sm px-3 py-2 rounded-lg border transition" style={{ borderColor }}>
-                  プロフィール
-                </Link>
-                <Link href="/admin/users" className="text-sm px-3 py-2 rounded-lg border transition" style={{ borderColor }}>
-                  メンバー管理
-                </Link>
-              </>
-            )}
-            <LogoutButton />
-          </div>
         </div>
       </header>
 
-      {/* メインコンテンツ（ブログフィード） - PC版は幅いっぱい */}
+      {/* メインコンテンツ（ブログフィード） */}
       <main className="w-full mx-auto px-0 md:px-4 py-0 md:py-6">
         {loadingBlogs ? (
           <div className="text-center py-8" style={{ color: mutedColor }}>読み込み中...</div>
@@ -386,8 +364,8 @@ export default function Home() {
         )}
       </main>
 
-      {/* 下部固定バー（Instagram風） */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={{ backgroundColor: bgColor, borderColor }}>
+      {/* 下部固定バー（スマホのみ） - Instagram風 */}
+      <nav className="fixed bottom-0 left-0 right-0 border-t z-40 md:hidden" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-2xl mx-auto px-4 py-2">
           <div className="flex items-center justify-around">
             {visibleNavItems.map((item) => (
