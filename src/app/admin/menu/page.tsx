@@ -253,4 +253,420 @@ export default function MenuManagementPage() {
         {/* フォルダ作成 */}
         <section className="rounded-2xl border p-6 space-y-4" style={{ backgroundColor: cardBg, borderColor }}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <h2 className="text-xl font
+            <h2 className="text-xl font-semibold" style={{ color: textColor }}>商品フォルダ（販売期間）</h2>
+            <span className="text-sm" style={{ color: mutedColor }}>販売期間を設定してフォルダ作成</span>
+          </div>
+          <form onSubmit={handleAddCollection} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>フォルダ名</label>
+              <input
+                type="text"
+                value={collectionForm.name}
+                onChange={(e) => setCollectionForm({ ...collectionForm, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border transition-all"
+                style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                placeholder="例: 春メニュー"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>説明（任意）</label>
+              <input
+                type="text"
+                value={collectionForm.description}
+                onChange={(e) => setCollectionForm({ ...collectionForm, description: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border transition-all"
+                style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                placeholder="例: 春限定ドリンク"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>開始日</label>
+              <input
+                type="date"
+                value={collectionForm.startDate}
+                onChange={(e) => setCollectionForm({ ...collectionForm, startDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border transition-all"
+                style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>終了日</label>
+              <input
+                type="date"
+                value={collectionForm.endDate}
+                onChange={(e) => setCollectionForm({ ...collectionForm, endDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border transition-all"
+                style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+              />
+            </div>
+            <div className="md:col-span-2 lg:col-span-4">
+              <button
+                type="submit"
+                className="w-full md:w-auto font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                style={{ backgroundColor: textColor, color: bgColor }}
+              >
+                フォルダを作成
+              </button>
+            </div>
+          </form>
+
+          <div className="overflow-x-auto border rounded-xl" style={{ borderColor }}>
+            <table className="min-w-full text-sm">
+              <thead style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa' }}>
+                <tr className="text-left">
+                  <th className="px-4 py-3" style={{ color: textColor }}>フォルダ名</th>
+                  <th className="px-4 py-3" style={{ color: textColor }}>期間</th>
+                  <th className="px-4 py-3" style={{ color: textColor }}>説明</th>
+                  <th className="px-4 py-3 w-28 text-right" style={{ color: textColor }}>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {collections.map((c) => (
+                  <tr key={c.id} className="border-t" style={{ borderColor }}>
+                    <td className="px-4 py-3 font-semibold" style={{ color: textColor }}>{c.name}</td>
+                    <td className="px-4 py-3" style={{ color: mutedColor }}>
+                      {c.start_date || '未設定'} ～ {c.end_date || '未設定'}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: mutedColor }}>{c.description || '-'}</td>
+                    <td className="px-4 py-3 text-right space-x-2">
+                      <button
+                        onClick={() => {
+                          setViewCollectionId(c.id);
+                          loadCollectionProducts(c.id);
+                        }}
+                        className="text-xs font-semibold"
+                        style={{ color: textColor }}
+                      >
+                        中身を見る
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCollection(c.id)}
+                        className="text-xs font-semibold"
+                        style={{ color: '#ff3b30' }}
+                      >
+                        削除
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {viewCollectionId && (
+            <div className="border rounded-2xl p-4" style={{ borderColor, backgroundColor: isDark ? '#0a0a0a' : '#fafafa' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold" style={{ color: textColor }}>
+                  {collections.find((c) => c.id === viewCollectionId)?.name || 'フォルダ'}
+                </h4>
+                <button
+                  className="text-sm hover:opacity-70"
+                  style={{ color: mutedColor }}
+                  onClick={() => setViewCollectionId(null)}
+                >
+                  閉じる
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left uppercase tracking-wider" style={{ borderColor, color: mutedColor }}>
+                      <th className="px-3 py-2">商品名</th>
+                      <th className="px-3 py-2">カテゴリ</th>
+                      <th className="px-3 py-2">売価</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(collectionProducts[viewCollectionId] || []).map((p) => (
+                      <tr key={p.id} className="border-t" style={{ borderColor }}>
+                        <td className="px-3 py-2" style={{ color: textColor }}>{p.name}</td>
+                        <td className="px-3 py-2" style={{ color: mutedColor }}>{p.category_name}</td>
+                        <td className="px-3 py-2 font-semibold" style={{ color: textColor }}>¥{p.selling_price.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {!(collectionProducts[viewCollectionId] || []).length && (
+                      <tr>
+                        <td className="px-3 py-3" style={{ color: mutedColor }} colSpan={3}>
+                          商品がありません
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* フォルダへ商品を追加 */}
+        <section className="rounded-2xl border p-6 space-y-4" style={{ backgroundColor: cardBg, borderColor }}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 className="text-xl font-semibold" style={{ color: textColor }}>フォルダに商品を登録</h2>
+            <span className="text-sm" style={{ color: mutedColor }}>販売期間と紐づけて売上入力を効率化</span>
+          </div>
+          <form onSubmit={handleAssignProduct} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>フォルダ</label>
+                <select
+                  value={assignForm.collectionId}
+                  onChange={(e) => setAssignForm({ ...assignForm, collectionId: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                  required
+                >
+                  <option value="">選択してください</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.start_date || '未設定'}~{c.end_date || '未設定'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>商品（複数選択可）</label>
+                <div className="h-48 overflow-y-auto border rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderColor }}>
+                  {products.map((p) => {
+                    const checked = assignForm.productIds.includes(p.id);
+                    return (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2 cursor-pointer"
+                        style={{ backgroundColor: inputBg, borderColor }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleProductSelection(p.id)}
+                        />
+                        <span className="flex-1">
+                          <span className="font-semibold" style={{ color: textColor }}>{p.name}</span>
+                          <span className="block text-xs" style={{ color: mutedColor }}>{p.category_name}</span>
+                        </span>
+                        <span className="text-xs" style={{ color: mutedColor }}>¥{p.selling_price.toLocaleString()}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="w-full md:w-auto font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                style={{ backgroundColor: textColor, color: bgColor }}
+              >
+                まとめて追加
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* カテゴリー・商品管理 */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: textColor }}>カテゴリー一覧</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left uppercase tracking-wider" style={{ borderColor, color: mutedColor }}>
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">名前</th>
+                    <th className="px-4 py-3">説明</th>
+                    <th className="px-4 py-3">表示順</th>
+                    <th className="px-4 py-3 w-16"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((cat) => (
+                    <tr key={cat.id} className="border-t transition" style={{ borderColor }}>
+                      <td className="px-4 py-3" style={{ color: textColor }}>{cat.id}</td>
+                      <td className="px-4 py-3 font-medium" style={{ color: textColor }}>{cat.name}</td>
+                      <td className="px-4 py-3" style={{ color: mutedColor }}>{cat.description}</td>
+                      <td className="px-4 py-3" style={{ color: mutedColor }}>{cat.display_order}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="text-xs font-semibold"
+                          style={{ color: '#ff3b30' }}
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: textColor }}>新規カテゴリー追加</h3>
+            <form onSubmit={handleAddCategory} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                  カテゴリー名 <span style={{ color: '#ff3b30' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                  placeholder="例: ドリンク"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>説明</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all resize-none"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                  rows={3}
+                  placeholder="カテゴリーの補足説明"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>表示順</label>
+                <input
+                  type="number"
+                  value={categoryForm.display_order}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full font-semibold py-3 px-4 rounded-xl transition-all duration-200"
+                style={{ backgroundColor: textColor, color: bgColor }}
+              >
+                カテゴリーを追加
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: textColor }}>商品一覧</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left uppercase tracking-wider" style={{ borderColor, color: mutedColor }}>
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">商品名</th>
+                    <th className="px-4 py-3">カテゴリー</th>
+                    <th className="px-4 py-3">売価</th>
+                    <th className="px-4 py-3">原価</th>
+                    <th className="px-4 py-3 w-16"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p) => (
+                    <tr key={p.id} className="border-t transition" style={{ borderColor }}>
+                      <td className="px-4 py-3" style={{ color: textColor }}>{p.id}</td>
+                      <td className="px-4 py-3 font-medium" style={{ color: textColor }}>{p.name}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 rounded-full text-xs border" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', borderColor }}>
+                          {p.category_name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold" style={{ color: textColor }}>¥{p.selling_price.toLocaleString()}</td>
+                      <td className="px-4 py-3" style={{ color: mutedColor }}>¥{p.cost_price.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="text-xs font-semibold"
+                          style={{ color: '#ff3b30' }}
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: textColor }}>新規商品追加</h3>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                  カテゴリー <span style={{ color: '#ff3b30' }}>*</span>
+                </label>
+                <select
+                  value={productForm.category_id}
+                  onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                >
+                  <option value="">選択してください</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                  商品名 <span style={{ color: '#ff3b30' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border transition-all"
+                  style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                  placeholder="例: アイスコーヒー"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                    売価(円) <span style={{ color: '#ff3b30' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={productForm.selling_price}
+                    onChange={(e) => setProductForm({ ...productForm, selling_price: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border transition-all"
+                    style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                    placeholder="500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                    原価(円) <span style={{ color: '#ff3b30' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={productForm.cost_price}
+                    onChange={(e) => setProductForm({ ...productForm, cost_price: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border transition-all"
+                    style={{ backgroundColor: inputBg, borderColor, color: textColor }}
+                    placeholder="200"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full font-semibold py-3 px-4 rounded-xl transition-all duration-200"
+                style={{ backgroundColor: textColor, color: bgColor }}
+              >
+                商品を追加
+              </button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
