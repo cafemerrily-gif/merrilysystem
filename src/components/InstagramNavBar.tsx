@@ -21,11 +21,9 @@ export default function InstagramNavBar() {
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const appIconUrl = isDark ? '/white.png' : '/black.png';
 
-  // 認証関連ページでは非表示
-  const hideOnPages = ['/login', '/reset-password', '/auth'];
-  if (hideOnPages.some(page => pathname === page)) {
-    return null;
-  }
+  // Instagram風ナビバーを一時的に完全非表示
+  // 元のダッシュボードを表示するため
+  return null;
 
   // ハイドレーションミスマッチを防ぐ
   if (!mounted) {
