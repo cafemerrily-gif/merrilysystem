@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Attendance = {
   id: number;
@@ -15,12 +14,32 @@ type Attendance = {
 };
 
 export default function StaffDashboard() {
-  useUiTheme();
+  const [isDark, setIsDark] = useState(false);
   const [records, setRecords] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentUserLabel, setCurrentUserLabel] = useState('ログインユーザー');
   const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const stored = window.localStorage.getItem('ui-is-dark');
+    
+    const currentIsDark = isMobile ? media.matches : (stored === 'true' ? true : stored === 'false' ? false : media.matches);
+    setIsDark(currentIsDark);
+    
+    document.documentElement.classList.toggle('dark', currentIsDark);
+    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
+    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
+  }, []);
+
+  const bgColor = isDark ? '#000000' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const borderColor = isDark ? '#262626' : '#dbdbdb';
+  const mutedColor = isDark ? '#a8a8a8' : '#737373';
+  const cardBg = isDark ? '#000000' : '#ffffff';
 
   const totalHours = useMemo(() => {
     const toMinutes = (time: string) => {
@@ -139,49 +158,49 @@ export default function StaffDashboard() {
 
   const menuCards = (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <Link href="/dashboard/staff" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
-        <h2 className="text-lg font-semibold">勤怠ダッシュボード</h2>
-        <p className="text-sm text-muted-foreground">出勤・退勤の記録と履歴を確認</p>
+      <Link href="/dashboard/staff" className="p-4 rounded-2xl border transition" style={{ borderColor, backgroundColor: cardBg }}>
+        <h2 className="text-lg font-semibold" style={{ color: textColor }}>勤怠ダッシュボード</h2>
+        <p className="text-sm" style={{ color: mutedColor }}>出勤・退勤の記録と履歴を確認</p>
       </Link>
       <button
         onClick={clockIn}
         disabled={submitting}
-        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition text-left"
+        className="p-4 rounded-2xl border transition text-left"
+        style={{ borderColor, backgroundColor: cardBg }}
       >
-        <h2 className="text-lg font-semibold">{submitting ? '処理中...' : '出勤を記録'}</h2>
-        <p className="text-sm text-muted-foreground">現在時刻で出勤を打刻</p>
+        <h2 className="text-lg font-semibold" style={{ color: textColor }}>{submitting ? '処理中...' : '出勤を記録'}</h2>
+        <p className="text-sm" style={{ color: mutedColor }}>現在時刻で出勤を打刻</p>
       </button>
       <button
         onClick={clockOut}
         disabled={submitting}
-        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition text-left"
+        className="p-4 rounded-2xl border transition text-left"
+        style={{ borderColor, backgroundColor: cardBg }}
       >
-        <h2 className="text-lg font-semibold">{submitting ? '処理中...' : '退勤を記録'}</h2>
-        <p className="text-sm text-muted-foreground">未退勤レコードに現在時刻で退勤を記録</p>
+        <h2 className="text-lg font-semibold" style={{ color: textColor }}>{submitting ? '処理中...' : '退勤を記録'}</h2>
+        <p className="text-sm" style={{ color: mutedColor }}>未退勤レコードに現在時刻で退勤を記録</p>
       </button>
-      <div className="p-4 rounded-2xl border border-dashed border-border bg-muted/30">
-        <h2 className="text-lg font-semibold">今後追加するメニュー</h2>
-        <p className="text-sm text-muted-foreground">シフト管理や連絡事項などを予定しています。</p>
+      <div className="p-4 rounded-2xl border border-dashed" style={{ borderColor, opacity: 0.6 }}>
+        <h2 className="text-lg font-semibold" style={{ color: mutedColor }}>今後追加するメニュー</h2>
+        <p className="text-sm" style={{ color: mutedColor }}>シフト管理や連絡事項などを予定しています。</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
+    <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
+      <div className="border-b sticky top-0 z-10 backdrop-blur" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-              <span className="text-2xl" aria-hidden>
-                🕒
-              </span>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: cardBg, border: `2px solid ${borderColor}` }}>
+              <span className="text-2xl">🕒</span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">店舗スタッフ</h1>
-              <p className="text-sm text-muted-foreground">勤怠管理と履歴確認</p>
+              <h1 className="text-3xl font-bold" style={{ color: textColor }}>店舗スタッフ</h1>
+              <p className="text-sm" style={{ color: mutedColor }}>勤怠管理と履歴確認</p>
             </div>
           </div>
-          <Link href="/" className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 text-sm">
+          <Link href="/" className="px-4 py-3 rounded-xl border transition-all duration-200 text-sm" style={{ backgroundColor: cardBg, borderColor, color: textColor }}>
             ホームへ戻る
           </Link>
         </div>
@@ -191,13 +210,13 @@ export default function StaffDashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
+          <div className="lg:col-span-2 rounded-2xl border p-6 space-y-4" style={{ backgroundColor: cardBg, borderColor }}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">勤怠を記録</h2>
-                <p className="text-sm text-muted-foreground">ログイン中: {currentUserLabel}</p>
+                <h2 className="text-xl font-semibold" style={{ color: textColor }}>勤怠を記録</h2>
+                <p className="text-sm" style={{ color: mutedColor }}>ログイン中: {currentUserLabel}</p>
               </div>
-              <button onClick={load} className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent">
+              <button onClick={load} className="text-sm px-3 py-2 rounded-lg border transition" style={{ borderColor, color: textColor }}>
                 最新に更新
               </button>
             </div>
@@ -206,57 +225,59 @@ export default function StaffDashboard() {
               <button
                 disabled={submitting}
                 onClick={clockIn}
-                className="w-full px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:opacity-90 disabled:opacity-60"
+                className="w-full px-5 py-3 rounded-lg font-semibold transition disabled:opacity-60"
+                style={{ backgroundColor: '#34c759', color: '#ffffff' }}
               >
                 {submitting ? '処理中...' : '出勤を記録'}
               </button>
               <button
                 disabled={submitting}
                 onClick={clockOut}
-                className="w-full px-5 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:opacity-90 disabled:opacity-60"
+                className="w-full px-5 py-3 rounded-lg font-semibold transition disabled:opacity-60"
+                style={{ backgroundColor: '#007aff', color: '#ffffff' }}
               >
                 {submitting ? '処理中...' : '退勤を記録'}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs" style={{ color: mutedColor }}>
               出勤: 今日の日付と現在時刻で新規レコードを作成します。退勤: 直近の未退勤レコードに現在時刻で退勤を付与します。
             </p>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-3">
-            <h3 className="text-lg font-semibold">サマリー</h3>
+          <div className="rounded-2xl border p-6 space-y-3" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="text-lg font-semibold" style={{ color: textColor }}>サマリー</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-muted-foreground">記録件数</p>
-                <p className="text-2xl font-bold">{records.length}</p>
+              <div className="rounded-xl border p-3" style={{ borderColor, backgroundColor: isDark ? '#0a0a0a' : '#fafafa' }}>
+                <p style={{ color: mutedColor }}>記録件数</p>
+                <p className="text-2xl font-bold" style={{ color: textColor }}>{records.length}</p>
               </div>
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-muted-foreground">推定勤務時間</p>
-                <p className="text-2xl font-bold">{totalHours.toFixed(1)}h</p>
+              <div className="rounded-xl border p-3" style={{ borderColor, backgroundColor: isDark ? '#0a0a0a' : '#fafafa' }}>
+                <p style={{ color: mutedColor }}>推定勤務時間</p>
+                <p className="text-2xl font-bold" style={{ color: textColor }}>{totalHours.toFixed(1)}h</p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs" style={{ color: mutedColor }}>
               勤務時間は出勤・退勤の差から算出しています。正確な管理が必要な場合は詳細を確認してください。
             </p>
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">勤怠履歴</h2>
-            <button onClick={load} className="text-sm px-3 py-2 rounded-lg border border-border hover:border-accent">
+            <h2 className="text-xl font-semibold" style={{ color: textColor }}>勤怠履歴</h2>
+            <button onClick={load} className="text-sm px-3 py-2 rounded-lg border transition" style={{ borderColor, color: textColor }}>
               再読み込み
             </button>
           </div>
           {loading ? (
-            <p className="text-muted-foreground">読み込み中...</p>
+            <p style={{ color: mutedColor }}>読み込み中...</p>
           ) : !records.length ? (
-            <p className="text-muted-foreground">まだ勤怠がありません。</p>
+            <p style={{ color: mutedColor }}>まだ勤怠がありません。</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="text-left text-muted-foreground">
+                  <tr className="text-left uppercase tracking-wider" style={{ color: mutedColor }}>
                     <th className="py-2 pr-3">スタッフ</th>
                     <th className="py-2 pr-3">日付</th>
                     <th className="py-2 pr-3">出勤</th>
@@ -265,20 +286,21 @@ export default function StaffDashboard() {
                     <th className="py-2 pr-3 text-right">操作</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody>
                   {records.map((r) => (
-                    <tr key={r.id} className="align-top">
-                      <td className="py-2 pr-3">{r.staff_name}</td>
-                      <td className="py-2 pr-3">{r.work_date}</td>
-                      <td className="py-2 pr-3">{r.clock_in}</td>
-                      <td className="py-2 pr-3">{r.clock_out || '-'}</td>
+                    <tr key={r.id} className="align-top border-t" style={{ borderColor }}>
+                      <td className="py-2 pr-3" style={{ color: textColor }}>{r.staff_name}</td>
+                      <td className="py-2 pr-3" style={{ color: textColor }}>{r.work_date}</td>
+                      <td className="py-2 pr-3" style={{ color: textColor }}>{r.clock_in}</td>
+                      <td className="py-2 pr-3" style={{ color: textColor }}>{r.clock_out || '-'}</td>
                       <td className="py-2 pr-3 max-w-[220px]">
-                        <div className="line-clamp-2">{r.note || '-'}</div>
+                        <div className="line-clamp-2" style={{ color: textColor }}>{r.note || '-'}</div>
                       </td>
                       <td className="py-2 pr-3 text-right">
                         <button
                           onClick={() => remove(r.id)}
-                          className="text-xs px-3 py-1 rounded-lg border border-border hover:border-accent"
+                          className="text-xs px-3 py-1 rounded-lg border transition"
+                          style={{ borderColor, color: textColor }}
                         >
                           削除
                         </button>
