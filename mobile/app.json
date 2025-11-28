@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "MERRILY",
+    "slug": "merrily-cafe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.merrily.cafe"
+    },
+    "android": {
+      "package": "com.merrily.cafe",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "eab6557e-d58a-47dc-87f5-1a14427f035c"
+      }
+    },
+    "owner": "cafemerrily"
+  }
+}

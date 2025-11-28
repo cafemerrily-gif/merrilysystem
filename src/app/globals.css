@@ -1,38 +1,36 @@
-/* フラッシュ防止用デフォルトテーマ */
-/* デフォルトのライトモード */
+/* Instagram風のシンプルなカラースキーム */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --border: 214 32% 91%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --border: 0 0% 86%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --muted: 215 20% 65%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 222 47% 11%;
-  --primary: 222 47% 11%;
+  --card-foreground: 0 0% 0%;
+  --muted: 0 0% 45%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
 }
 
-/* デフォルトのダークモード */
 .dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --border: 217 19% 27%;
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --muted: 215 20% 65%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 210 40% 98%;
-  --primary: 210 40% 98%;
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --muted: 0 0% 66%;
+  --muted-foreground: 0 0% 66%;
+  --accent: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
 }
 
-/* ボディのデフォルト背景 */
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ページ遷移時のスムーズなトランジション */
 html {
   color-scheme: light;
 }
@@ -41,7 +39,6 @@ html.dark {
   color-scheme: dark;
 }
 
-/* 読み込み中の透明度調整（オプション） */
 body.loading {
   opacity: 0;
 }
@@ -51,12 +48,10 @@ body.loaded {
   transition: opacity 0.15s ease;
 }
 
-/* Tailwind base styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* カスタムスタイル */
 @layer base {
   * {
     @apply border-border;

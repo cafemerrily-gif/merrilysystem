@@ -60,10 +60,10 @@ export async function POST(request: Request) {
     
     console.log('📤 [Upload API] Supabase Storageにアップロード中...');
     
-    // Supabase Storageにアップロード
+    // Supabase Storageにアップロード（blog-imagesバケット）
     const { data, error } = await supabase.storage
-      .from('public-assets') // バケット名（事前に作成が必要）
-      .upload(`icons/${fileName}`, buffer, {
+      .from('blog-images')
+      .upload(fileName, buffer, {
         contentType: file.type,
         upsert: false,
       });
@@ -77,8 +77,8 @@ export async function POST(request: Request) {
     
     // 公開URLを取得
     const { data: { publicUrl } } = supabase.storage
-      .from('public-assets')
-      .getPublicUrl(`icons/${fileName}`);
+      .from('blog-images')
+      .getPublicUrl(fileName);
     
     console.log('🔗 [Upload API] 公開URL:', publicUrl);
     

@@ -30,6 +30,10 @@ export default function BlogsPage() {
   const [date, setDate] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // 既存のペイロードを保持
+  const [basePayload, setBasePayload] = useState<any>(null);
 
   // 初期読み込み
   useEffect(() => {
@@ -41,6 +45,9 @@ export default function BlogsPage() {
       setLoading(true);
       const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data = await res.json();
+      
+      // 既存のペイロード全体を保存
+      setBasePayload(data);
       
       if (data?.blogPosts) {
         const sorted = data.blogPosts
@@ -91,6 +98,67 @@ export default function BlogsPage() {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    console.log('📤 画像アップロード開始:', file.name, file.type, file.size);
+    
+    // ファイルサイズチェック（5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ファイルサイズは5MB以下にしてください');
+      return;
+    }
+    
+    // ファイルタイプチェック
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('PNG、JPEG、WebP形式の画像のみアップロード可能です');
+      return;
+    }
+    
+    setUploadingImage(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('📡 API呼び出し: /api/upload');
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('📥 レスポンス:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ エラー:', errorData);
+        throw new Error(errorData.error || 'アップロードに失敗しました');
+      }
+      
+      const data = await response.json();
+      console.log('✅ アップロード成功:', data);
+      
+      if (!data.url) {
+        throw new Error('URLが返されませんでした');
+      }
+      
+      // アップロードした画像を追加
+      setImages([...images, data.url]);
+      setMessage('画像をアップロードしました: ' + data.fileName);
+    } catch (e: any) {
+      console.error('❌ アップロードエラー:', e);
+      setError(e?.message || 'アップロードに失敗しました');
+    } finally {
+      setUploadingImage(false);
+      // ファイル選択をリセット
+      event.target.value = '';
+    }
+  };
+
   const handleRemoveImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
@@ -124,23 +192,40 @@ export default function BlogsPage() {
         updatedPosts = [newPost, ...posts];
       }
 
+      // 既存のペイロード全体を保持しつつblogPostsだけ更新
+      const payload = {
+        ...(basePayload || {}),
+        blogPosts: updatedPosts,
+      };
+
+      console.log('💾 保存データ:', { payload });
+
       // APIに保存
       const res = await fetch('/api/pr/website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          blogPosts: updatedPosts,
+          payload,
+          updated_by: 'Blog editor'
         }),
       });
 
+      console.log('📥 保存レスポンス:', res.status, res.statusText);
+
       if (!res.ok) {
-        throw new Error('保存に失敗しました');
+        const errorData = await res.json();
+        console.error('❌ 保存エラー:', errorData);
+        throw new Error(errorData.error || '保存に失敗しました');
       }
 
       setPosts(updatedPosts);
       setMessage(editingPost ? 'ブログを更新しました' : 'ブログを追加しました');
       handleNew();
+      
+      // ベースペイロードも更新
+      setBasePayload(payload);
     } catch (e: any) {
+      console.error('❌ 保存処理エラー:', e);
       setError(e?.message || '保存に失敗しました');
     } finally {
       setSaving(false);
@@ -157,11 +242,18 @@ export default function BlogsPage() {
     try {
       const updatedPosts = posts.filter(p => p.id !== id);
 
+      // 既存のペイロード全体を保持しつつblogPostsだけ更新
+      const payload = {
+        ...(basePayload || {}),
+        blogPosts: updatedPosts,
+      };
+
       const res = await fetch('/api/pr/website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          blogPosts: updatedPosts,
+          payload,
+          updated_by: 'Blog editor'
         }),
       });
 
@@ -174,6 +266,9 @@ export default function BlogsPage() {
       if (editingPost?.id === id) {
         handleNew();
       }
+      
+      // ベースペイロードも更新
+      setBasePayload(payload);
     } catch (e: any) {
       setError(e?.message || '削除に失敗しました');
     } finally {
@@ -282,14 +377,41 @@ export default function BlogsPage() {
 
               {/* 画像 */}
               <div>
-                <label className="text-sm font-medium block mb-1">画像URL</label>
-                <div className="flex gap-2">
+                <label className="text-sm font-medium block mb-1">画像</label>
+                
+                {/* デバイスからアップロード */}
+                <div className="mb-3">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-accent bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                    {uploadingImage ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        <span>アップロード中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📁</span>
+                        <span>デバイスから画像を選択</span>
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPEG, WebP（最大5MB）</p>
+                </div>
+
+                {/* URLで追加 */}
+                <div className="flex gap-2 mb-3">
                   <input
                     type="text"
                     value={newImageUrl}
                     onChange={(e) => setNewImageUrl(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-lg border border-border bg-background"
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="または画像URLを入力"
                   />
                   <button
                     onClick={handleAddImage}
@@ -298,8 +420,10 @@ export default function BlogsPage() {
                     追加
                   </button>
                 </div>
+
+                {/* 画像一覧 */}
                 {images.length > 0 && (
-                  <div className="mt-3 space-y-2">
+                  <div className="space-y-2">
                     {images.map((url, idx) => (
                       <div key={idx} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30">
                         <div className="relative w-16 h-16 flex-shrink-0">

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useUiTheme } from '@/hooks/useUiTheme';
 
 type Daily = { date: string; total: number };
 type Monthly = { month: string; total: number };
@@ -47,8 +46,8 @@ const buildLinePath = (points: [number, number][]) => {
   return cmds.join(' ');
 };
 
-function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: number }) {
-  if (!data.length) return <p className="text-sm text-muted-foreground">データなし</p>;
+function SmoothLineChart({ data, height = 180, strokeColor = '#000000' }: { data: Daily[]; height?: number; strokeColor?: string }) {
+  if (!data.length) return <p className="text-sm" style={{ color: '#737373' }}>データなし</p>;
   const width = 600;
   const labelArea = 30;
   const max = Math.max(...data.map((d) => d.total));
@@ -61,7 +60,7 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 
   const formatLabel = (raw: string) => {
     if (!raw) return '';
-    return raw.length >= 10 ? raw.slice(5) : raw; // 日次:MM-DD / 月次:YYYY-MM
+    return raw.length >= 10 ? raw.slice(5) : raw;
   };
 
   return (
@@ -69,15 +68,15 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
       <path
         d={path}
         fill="none"
-        stroke="hsl(var(--accent))"
-        strokeWidth="4"
+        stroke={strokeColor}
+        strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       {points.map(([x, y], i) => (
         <g key={i}>
-          <circle cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
-          <text x={x} y={height + 18} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+          <circle cx={x} cy={y} r="4" fill={strokeColor} />
+          <text x={x} y={height + 18} textAnchor="middle" className="text-[10px]" fill="#737373">
             {formatLabel(data[i]?.date)}
           </text>
         </g>
@@ -87,10 +86,30 @@ function SmoothLineChart({ data, height = 180 }: { data: Daily[]; height?: numbe
 }
 
 export default function AccountingDashboard() {
-  useUiTheme();
+  const [isDark, setIsDark] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const stored = window.localStorage.getItem('ui-is-dark');
+    
+    const currentIsDark = isMobile ? media.matches : (stored === 'true' ? true : stored === 'false' ? false : media.matches);
+    setIsDark(currentIsDark);
+    
+    document.documentElement.classList.toggle('dark', currentIsDark);
+    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
+    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
+  }, []);
+
+  const bgColor = isDark ? '#000000' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const borderColor = isDark ? '#262626' : '#dbdbdb';
+  const mutedColor = isDark ? '#a8a8a8' : '#737373';
+  const cardBg = isDark ? '#000000' : '#ffffff';
 
   const load = useCallback(
     async (isInitial = false) => {
@@ -119,35 +138,8 @@ export default function AccountingDashboard() {
     };
   }, [load]);
 
-  const menuCards = (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <Link href="/dashboard/accounting" className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition">
-        <h2 className="text-lg font-semibold">ダッシュボード</h2>
-        <p className="text-sm text-muted-foreground">売上推移・時間帯・ランキングを閲覧</p>
-      </Link>
-      <Link
-        href="/accounting/sales"
-        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition"
-      >
-        <h2 className="text-lg font-semibold">売上入力</h2>
-        <p className="text-sm text-muted-foreground">手動入力で金額と日時を登録</p>
-      </Link>
-      <Link
-        href="/dashboard/accounting#ranking"
-        className="p-4 rounded-2xl border border-border bg-card hover:border-accent hover:shadow transition"
-      >
-        <h2 className="text-lg font-semibold">ランキング</h2>
-        <p className="text-sm text-muted-foreground">メニュー別売上トップを確認</p>
-      </Link>
-      <div className="p-4 rounded-2xl border border-dashed border-border bg-muted/30">
-        <h2 className="text-lg font-semibold">今後追加するメニュー</h2>
-        <p className="text-sm text-muted-foreground">分析系の追加メニューをここに並べます。</p>
-      </div>
-    </div>
-  );
-
   const timeSlotEntries = useMemo(() => {
-    const hours = [11, 12, 13, 14, 15, 16]; // 営業時間 11:00-16:59 を1時間刻みで表示
+    const hours = [11, 12, 13, 14, 15, 16];
     if (!summary?.timeSlots) return hours.map((h) => [String(h), 0] as [string, number]);
     return hours.map((h) => [String(h), summary.timeSlots[String(h)] ?? 0] as [string, number]);
   }, [summary]);
@@ -169,41 +161,41 @@ export default function AccountingDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor, color: textColor }}>
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent mb-4"></div>
-          <div className="text-xl text-muted-foreground">読み込み中...</div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-t-transparent mb-4" style={{ borderColor: borderColor, borderTopColor: 'transparent' }}></div>
+          <div className="text-xl" style={{ color: mutedColor }}>読み込み中...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="bg-gradient-to-r from-primary/15 via-accent/10 to-secondary/20 border-b border-border sticky top-0 z-10 backdrop-blur">
+    <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
+      <div className="sticky top-0 z-10 border-b backdrop-blur" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-              <span className="text-2xl" aria-hidden>
-                📊
-              </span>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: cardBg, border: `2px solid ${borderColor}` }}>
+              <span className="text-2xl">📊</span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">会計部</h1>
-              <p className="text-sm text-muted-foreground">売上・時間帯別・ランキングを確認</p>
+              <h1 className="text-3xl font-bold" style={{ color: textColor }}>会計部</h1>
+              <p className="text-sm" style={{ color: mutedColor }}>売上・時間帯別・ランキングを確認</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => load(false)}
               disabled={refreshing}
-              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-60"
+              className="px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-60"
+              style={{ backgroundColor: cardBg, borderColor, color: textColor }}
             >
               {refreshing ? 'リロード中…' : '最新データを再読込'}
             </button>
             <Link
               href="/accounting/sales"
-              className="px-4 py-3 bg-card border border-border hover:border-accent rounded-xl transition-all duration-200 flex items-center gap-2 text-sm"
+              className="px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-2 text-sm"
+              style={{ backgroundColor: cardBg, borderColor, color: textColor }}
             >
               <span>売上を入力</span>
             </Link>
@@ -211,45 +203,64 @@ export default function AccountingDashboard() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">{menuCards}</div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <Link href="/dashboard/accounting" className="p-4 rounded-xl border transition" style={{ borderColor, backgroundColor: cardBg }}>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>ダッシュボード</h2>
+            <p className="text-sm" style={{ color: mutedColor }}>売上推移・時間帯・ランキングを閲覧</p>
+          </Link>
+          <Link href="/accounting/sales" className="p-4 rounded-xl border transition" style={{ borderColor, backgroundColor: cardBg }}>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>売上入力</h2>
+            <p className="text-sm" style={{ color: mutedColor }}>手動入力で金額と日時を登録</p>
+          </Link>
+          <Link href="/dashboard/accounting#ranking" className="p-4 rounded-xl border transition" style={{ borderColor, backgroundColor: cardBg }}>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>ランキング</h2>
+            <p className="text-sm" style={{ color: mutedColor }}>メニュー別売上トップを確認</p>
+          </Link>
+          <div className="p-4 rounded-xl border border-dashed" style={{ borderColor, opacity: 0.6 }}>
+            <h2 className="text-lg font-semibold" style={{ color: mutedColor }}>今後追加するメニュー</h2>
+            <p className="text-sm" style={{ color: mutedColor }}>分析系の追加メニューをここに並べます。</p>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         {summary && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">今日の売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.todayTotal.toLocaleString()}</div>
+            <div className="rounded-2xl border p-5" style={{ backgroundColor: cardBg, borderColor }}>
+              <p className="text-sm mb-2" style={{ color: mutedColor }}>今日の売上</p>
+              <div className="text-3xl font-bold" style={{ color: textColor }}>¥{summary.todayTotal.toLocaleString()}</div>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">今月の売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.currentMonthSales.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">前月比 {formatRatio(summary.currentMonthSales, summary.prevMonthSales)}</p>
-              <p className="text-xs text-muted-foreground">前年同月比 {formatRatio(summary.currentMonthSales, summary.lastYearMonthSales)}</p>
+            <div className="rounded-2xl border p-5" style={{ backgroundColor: cardBg, borderColor }}>
+              <p className="text-sm mb-2" style={{ color: mutedColor }}>今月の売上</p>
+              <div className="text-3xl font-bold" style={{ color: textColor }}>¥{summary.currentMonthSales.toLocaleString()}</div>
+              <p className="text-xs mt-1" style={{ color: mutedColor }}>前月比 {formatRatio(summary.currentMonthSales, summary.prevMonthSales)}</p>
+              <p className="text-xs" style={{ color: mutedColor }}>前年同月比 {formatRatio(summary.currentMonthSales, summary.lastYearMonthSales)}</p>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-lg">
-              <p className="text-sm text-muted-foreground mb-2">累計売上</p>
-              <div className="text-3xl font-bold text-foreground">¥{summary.totalAmount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">原価率：{summary.costRate.toFixed(1)}%</p>
+            <div className="rounded-2xl border p-5" style={{ backgroundColor: cardBg, borderColor }}>
+              <p className="text-sm mb-2" style={{ color: mutedColor }}>累計売上</p>
+              <div className="text-3xl font-bold" style={{ color: textColor }}>¥{summary.totalAmount.toLocaleString()}</div>
+              <p className="text-xs" style={{ color: mutedColor }}>原価率：{summary.costRate.toFixed(1)}%</p>
             </div>
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">日次推移</h2>
-            <span className="text-sm text-muted-foreground">直近データ</span>
+            <h2 className="text-xl font-semibold" style={{ color: textColor }}>日次推移</h2>
+            <span className="text-sm" style={{ color: mutedColor }}>直近データ</span>
           </div>
-          <SmoothLineChart data={summary?.dailySales?.slice(-30) || []} />
+          <SmoothLineChart data={summary?.dailySales?.slice(-30) || []} strokeColor={textColor} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">月次推移</h2>
-              <span className="text-sm text-muted-foreground">直近6か月</span>
+              <h2 className="text-xl font-semibold" style={{ color: textColor }}>月次推移</h2>
+              <span className="text-sm" style={{ color: mutedColor }}>直近6か月</span>
             </div>
             {!summary?.monthlySales?.length ? (
-              <p className="text-muted-foreground">データなし</p>
+              <p style={{ color: mutedColor }}>データなし</p>
             ) : (
               <SmoothLineChart
                 data={summary.monthlySales
@@ -257,17 +268,18 @@ export default function AccountingDashboard() {
                   .slice(-6)
                   .map((m) => ({ date: m.month, total: m.total }))}
                 height={200}
+                strokeColor={textColor}
               />
             )}
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">時間帯別売上</h2>
-              <span className="text-sm text-muted-foreground">1時間刻み</span>
+              <h2 className="text-xl font-semibold" style={{ color: textColor }}>時間帯別売上</h2>
+              <span className="text-sm" style={{ color: mutedColor }}>1時間刻み</span>
             </div>
             {!timeSlotEntries.length ? (
-              <p className="text-muted-foreground">データなし</p>
+              <p style={{ color: mutedColor }}>データなし</p>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -275,118 +287,51 @@ export default function AccountingDashboard() {
                     const ratio = maxTimeSlot ? (amount / maxTimeSlot) * 100 : 0;
                     const hour = Number.isFinite(Number(slot)) ? `${String(parseInt(slot)).padStart(2, '0')}:00` : slot;
                     return (
-                      <div key={slot} className="bg-muted/40 rounded-xl p-3 border border-border">
-                        <p className="text-xs text-muted-foreground mb-1">{hour}</p>
+                      <div key={slot} className="rounded-xl border p-3" style={{ backgroundColor: cardBg, borderColor }}>
+                        <p className="text-xs mb-1" style={{ color: mutedColor }}>{hour}</p>
                         <div className="h-24 flex items-end">
-                          <div className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md" style={{ height: `${Math.min(100, ratio)}%` }} />
+                          <div className="w-full rounded-t-md" style={{ height: `${Math.min(100, ratio)}%`, backgroundColor: textColor }} />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">¥{Math.round(amount).toLocaleString()} / {ratio.toFixed(1)}%</p>
+                        <p className="text-xs mt-1" style={{ color: mutedColor }}>¥{Math.round(amount).toLocaleString()}</p>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  棒の高さは時間帯別の最大値を100%として比べています（合計 {timeSlotTotal ? `¥${timeSlotTotal.toLocaleString()}` : '0'}）。
-                </p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg space-y-4">
-            <h2 className="text-xl font-semibold">詳細分析</h2>
-
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">日次移動平均（7日）</p>
-              {summary?.dailySales?.length ? (
-                <SmoothLineChart
-                  data={summary.dailySales.slice(-30).map((d, idx, arr) => {
-                    const start = Math.max(0, idx - 6);
-                    const slice = arr.slice(start, idx + 1);
-                    const avg = slice.reduce((s, v) => s + v.total, 0) / slice.length;
-                    return { date: d.date, total: Math.round(avg) };
-                  })}
-                  height={180}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">データなし</p>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">売上トップ日（直近30日）</p>
-              {topDays.length ? (
-                <div className="space-y-2">
-                  {topDays.map((d, i) => (
-                    <div key={d.date} className="flex items-center justify-between bg-muted/30 border border-border rounded-lg p-3">
-                      <span className="text-sm text-muted-foreground">#{i + 1} {d.date}</span>
-                      <span className="text-sm font-semibold text-foreground">¥{d.total.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">データなし</p>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">月次成長率</p>
-              {summary?.monthlySales?.length ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {summary.monthlySales
-                    .sort((a, b) => (a.month > b.month ? 1 : -1))
-                    .slice(-6)
-                    .map((m, idx, arr) => {
-                      const prev = idx > 0 ? arr[idx - 1].total : null;
-                      const growth = prev ? ((m.total - prev) / prev) * 100 : null;
-                      return (
-                        <div key={m.month} className="bg-muted/40 rounded-xl p-3 border border-border">
-                          <p className="text-xs text-muted-foreground mb-1">{m.month}</p>
-                          <p className="text-sm font-semibold">¥{m.total.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {growth !== null ? `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%` : 'N/A'}
-                          </p>
-                        </div>
-                      );
-                    })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">データなし</p>
-              )}
-            </div>
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: cardBg, borderColor }}>
+          <div className="flex items-center justify-between mb-4" id="ranking">
+            <h2 className="text-xl font-semibold" style={{ color: textColor }}>メニュー別 売上ランキング</h2>
+            <span className="text-sm" style={{ color: mutedColor }}>TOP 10</span>
           </div>
-
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4" id="ranking">
-              <h2 className="text-xl font-semibold">メニュー別 売上ランキング</h2>
-              <span className="text-sm text-muted-foreground">TOP 10</span>
-            </div>
-            {!summary?.productRanking?.length ? (
-              <p className="text-muted-foreground">データなし</p>
-            ) : (
-              <div className="space-y-3">
-                {summary.productRanking.map((p, idx) => (
-                  <div
-                    key={p.productId}
-                    className="flex items-center gap-3 bg-muted/40 border border-border rounded-xl p-3"
-                  >
-                    <span className="text-sm font-semibold w-6 text-right">{idx + 1}.</span>
-                    <div className="flex-1">
-                      <div className="font-semibold">{p.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        個数 {p.quantity} / 利益率 {p.profitRate.toFixed(1)}%
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold">¥{p.revenue.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">粗利 ¥{p.profit.toLocaleString()}</div>
+          {!summary?.productRanking?.length ? (
+            <p style={{ color: mutedColor }}>データなし</p>
+          ) : (
+            <div className="space-y-3">
+              {summary.productRanking.map((p, idx) => (
+                <div
+                  key={p.productId}
+                  className="flex items-center gap-3 rounded-xl border p-3"
+                  style={{ backgroundColor: cardBg, borderColor }}
+                >
+                  <span className="text-sm font-semibold w-6 text-right" style={{ color: textColor }}>{idx + 1}.</span>
+                  <div className="flex-1">
+                    <div className="font-semibold" style={{ color: textColor }}>{p.name}</div>
+                    <div className="text-xs" style={{ color: mutedColor }}>
+                      個数 {p.quantity} / 利益率 {p.profitRate.toFixed(1)}%
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold" style={{ color: textColor }}>¥{p.revenue.toLocaleString()}</div>
+                    <div className="text-xs" style={{ color: mutedColor }}>粗利 ¥{p.profit.toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
