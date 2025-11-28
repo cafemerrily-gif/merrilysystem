@@ -21,12 +21,9 @@ export default function InstagramNavBar() {
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const appIconUrl = isDark ? '/white.png' : '/black.png';
 
-  // Instagram風ナビバーを表示するページを限定
-  // トップページ（SNS）、投稿作成、アカウントページのみで表示
-  const showOnPages = ['/', '/post/create', '/account'];
-  const shouldShow = showOnPages.includes(pathname);
-  
-  if (!shouldShow) {
+  // 認証関連ページでは非表示
+  const hideOnPages = ['/login', '/reset-password', '/auth'];
+  if (hideOnPages.some(page => pathname === page)) {
     return null;
   }
 
