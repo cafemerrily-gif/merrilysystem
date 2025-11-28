@@ -731,6 +731,8 @@ export default function UiEditor() {
     const file = event.target.files?.[0];
     if (!file) return;
     
+    console.log('📤 アップロード開始:', file.name, file.type, file.size);
+    
     // ファイルサイズチェック（5MB）
     if (file.size > 5 * 1024 * 1024) {
       setError('ファイルサイズは5MB以下にしてください');
@@ -751,20 +753,32 @@ export default function UiEditor() {
       const formData = new FormData();
       formData.append('file', file);
       
+      console.log('📡 API呼び出し: /api/upload');
+      
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
       
+      console.log('📥 レスポンス:', response.status, response.statusText);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ エラー:', errorData);
         throw new Error(errorData.error || 'アップロードに失敗しました');
       }
       
       const data = await response.json();
+      console.log('✅ アップロード成功:', data);
+      
+      if (!data.url) {
+        throw new Error('URLが返されませんでした');
+      }
+      
       setPwaIcon(data.url);
-      setMessage('アイコンをアップロードしました');
+      setMessage('アイコンをアップロードしました: ' + data.fileName);
     } catch (e: any) {
+      console.error('❌ アップロードエラー:', e);
       setError(e?.message || 'アップロードに失敗しました');
     } finally {
       setUploadingPwaIcon(false);
@@ -1048,20 +1062,19 @@ export default function UiEditor() {
                   <p className="text-xs text-muted-foreground mt-1">PNG, JPEG, WebP（最大5MB）</p>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <div className="relative w-16 h-16">
-                    <Image 
-                      src={pwaIcon} 
-                      alt="PWA Icon Preview" 
-                      width={64}
-                      height={64}
-                      className="rounded-2xl border border-border object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/icon-192.png';
-                      }}
-                    />
-                  </div>
+                  <img 
+                    src={pwaIcon} 
+                    alt="PWA Icon Preview" 
+                    className="w-16 h-16 rounded-2xl border border-border object-cover bg-muted"
+                    onError={(e) => {
+                      e.currentTarget.src = '/icon-192.png';
+                    }}
+                  />
                   <p className="text-xs text-muted-foreground">プレビュー</p>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  現在のURL: <span className="font-mono text-[10px] break-all">{pwaIcon}</span>
+                </p>
               </div>
 
               <div className="rounded-2xl border bg-card p-4" style={{ borderColor: cardBorderColor, color: cardTextColor }}>
