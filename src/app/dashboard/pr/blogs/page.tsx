@@ -32,6 +32,9 @@ export default function BlogsPage() {
   const [newImageUrl, setNewImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // 既存のペイロードを保持
+  const [basePayload, setBasePayload] = useState<any>(null);
+
   // 初期読み込み
   useEffect(() => {
     loadPosts();
@@ -42,6 +45,9 @@ export default function BlogsPage() {
       setLoading(true);
       const res = await fetch('/api/pr/website', { cache: 'no-store' });
       const data = await res.json();
+      
+      // 既存のペイロード全体を保存
+      setBasePayload(data);
       
       if (data?.blogPosts) {
         const sorted = data.blogPosts
@@ -186,23 +192,40 @@ export default function BlogsPage() {
         updatedPosts = [newPost, ...posts];
       }
 
+      // 既存のペイロード全体を保持しつつblogPostsだけ更新
+      const payload = {
+        ...(basePayload || {}),
+        blogPosts: updatedPosts,
+      };
+
+      console.log('💾 保存データ:', { payload });
+
       // APIに保存
       const res = await fetch('/api/pr/website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          blogPosts: updatedPosts,
+          payload,
+          updated_by: 'Blog editor'
         }),
       });
 
+      console.log('📥 保存レスポンス:', res.status, res.statusText);
+
       if (!res.ok) {
-        throw new Error('保存に失敗しました');
+        const errorData = await res.json();
+        console.error('❌ 保存エラー:', errorData);
+        throw new Error(errorData.error || '保存に失敗しました');
       }
 
       setPosts(updatedPosts);
       setMessage(editingPost ? 'ブログを更新しました' : 'ブログを追加しました');
       handleNew();
+      
+      // ベースペイロードも更新
+      setBasePayload(payload);
     } catch (e: any) {
+      console.error('❌ 保存処理エラー:', e);
       setError(e?.message || '保存に失敗しました');
     } finally {
       setSaving(false);
@@ -219,11 +242,18 @@ export default function BlogsPage() {
     try {
       const updatedPosts = posts.filter(p => p.id !== id);
 
+      // 既存のペイロード全体を保持しつつblogPostsだけ更新
+      const payload = {
+        ...(basePayload || {}),
+        blogPosts: updatedPosts,
+      };
+
       const res = await fetch('/api/pr/website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          blogPosts: updatedPosts,
+          payload,
+          updated_by: 'Blog editor'
         }),
       });
 
@@ -236,6 +266,9 @@ export default function BlogsPage() {
       if (editingPost?.id === id) {
         handleNew();
       }
+      
+      // ベースペイロードも更新
+      setBasePayload(payload);
     } catch (e: any) {
       setError(e?.message || '削除に失敗しました');
     } finally {
