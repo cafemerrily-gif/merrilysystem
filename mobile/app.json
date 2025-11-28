@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -16,39 +16,23 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.merrily.cafe",
-      "buildNumber": "1.0.0"
+      "bundleIdentifier": "com.merrily.cafe"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
-      },
       "package": "com.merrily.cafe",
-      "versionCode": 1,
-      "permissions": [
-        "CAMERA",
-        "NOTIFICATIONS"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
-    },
-    "plugins": [
-      "expo-notifications"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-project-id"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#000000"
       }
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-project-id"
+    "web": {
+      "favicon": "./assets/icon.png"
     },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    }
+    "extra": {
+      "eas": {
+        "projectId": "eab6557e-d58a-47dc-87f5-1a14427f035c"
+      }
+    },
+    "owner": "cafemerrily"
   }
 }
