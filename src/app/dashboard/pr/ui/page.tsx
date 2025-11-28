@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type ModeKey = 'light' | 'dark';
@@ -38,6 +39,7 @@ type UiPayload = {
     appIconLightUrl?: string;
     appIconDarkUrl?: string;
     homeIconUrl?: string;
+    pwaIconUrl?: string;
     sections?: Record<ModeKey, ModeSections>;
     presets?: Preset[];
     lightBackground?: string;
@@ -1046,14 +1048,18 @@ export default function UiEditor() {
                   <p className="text-xs text-muted-foreground mt-1">PNG, JPEG, WebP（最大5MB）</p>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <img 
-                    src={pwaIcon} 
-                    alt="PWA Icon Preview" 
-                    className="w-16 h-16 rounded-2xl border border-border object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/icon-192.png';
-                    }}
-                  />
+                  <div className="relative w-16 h-16">
+                    <Image 
+                      src={pwaIcon} 
+                      alt="PWA Icon Preview" 
+                      width={64}
+                      height={64}
+                      className="rounded-2xl border border-border object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/icon-192.png';
+                      }}
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">プレビュー</p>
                 </div>
               </div>
