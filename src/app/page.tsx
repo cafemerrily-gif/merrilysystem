@@ -144,26 +144,22 @@ export default function Home() {
   const [appIconLightUrl, setAppIconLightUrl] = useState('/white.png');
   const [appIconDarkUrl, setAppIconDarkUrl] = useState('/black.png');
   const [appTitle, setAppTitle] = useState('MERRILY');
-  const [logs, setLogs] = useState<LogItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [salesSummary, setSalesSummary] = useState<SalesSummary>({ todayTotal: 0, currentMonthSales: 0, totalAmount: 0 });
-  const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
-  const [loadingSales, setLoadingSales] = useState(true);
   const [uiSettings, setUiSettings] = useState<any>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     const stored = window.localStorage.getItem('ui-is-dark');
-    // スマホは常にデバイス設定、PC/タブレットは保存された設定またはデバイス設定
     if (isMobile) return window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (stored === 'true') return true;
     if (stored === 'false') return false;
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   const privileged = useMemo(() => ['職員', 'マネジメント部', 'エンジニアチーム'], []);
 
@@ -175,7 +171,10 @@ export default function Home() {
     });
   }, [userDepartments, privileged]);
 
-  // デバイス設定の監視（スマホでは常に追従）
+  const unreadNotifications = useMemo(() => {
+    return notifications.slice(0, 5);
+  }, [notifications]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -184,7 +183,6 @@ export default function Home() {
       const isMobile = window.matchMedia('(max-width: 768px)').matches;
       const stored = window.localStorage.getItem('ui-is-dark');
       
-      // スマホまたは手動設定がない場合はデバイス設定に従う
       if (isMobile || stored === null) {
         setIsDark(e.matches);
         if (uiSettings) applyUiToDocument(uiSettings, e.matches);
@@ -206,20 +204,6 @@ export default function Home() {
   }, [supabase]);
 
   useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        setLoadingLogs(true);
-        const res = await fetch('/api/logs');
-        const data = await res.json();
-        if (!data.error) {
-          const sorted = data.slice().sort((a: any, b: any) => (a.created_at > b.created_at ? -1 : 1));
-          setLogs(sorted);
-        }
-      } finally {
-        setLoadingLogs(false);
-      }
-    };
-
     const loadNotifications = async () => {
       try {
         setLoadingNotifications(true);
@@ -261,27 +245,8 @@ export default function Home() {
       }
     };
 
-    const loadSales = async () => {
-      try {
-        setLoadingSales(true);
-        const res = await fetch('/api/analytics/sales', { cache: 'no-store' });
-        const data = await res.json();
-        if (!data.error) {
-          setSalesSummary({
-            todayTotal: Number(data.todayTotal || 0),
-            currentMonthSales: Number(data.currentMonthSales || 0),
-            totalAmount: Number(data.totalAmount || 0),
-          });
-        }
-      } finally {
-        setLoadingSales(false);
-      }
-    };
-
-    loadLogs();
     loadNotifications();
     loadBlogs();
-    loadSales();
   }, [isDark]);
 
   useEffect(() => {
@@ -316,20 +281,6 @@ export default function Home() {
     return { bg, bgAlpha, bgGradient, fg, border };
   })();
 
-  const currentWelcome = (() => {
-    const ui = uiSettings || {};
-    const bg = isDark ? ui.welcomeBgDark || ui.welcomeBackground || '#0f172a' : ui.welcomeBgLight || ui.welcomeBackground || '#ffffff';
-    const bgAlpha = isDark ? ui.welcomeBgAlphaDark ?? 1 : ui.welcomeBgAlphaLight ?? 1;
-    const bgGradient = isDark ? ui.welcomeBgGradientDark || '' : ui.welcomeBgGradientLight || '';
-    const fg = isDark ? ui.welcomeFgDark || ui.welcomeForeground || '#e5e7eb' : ui.welcomeFgLight || ui.welcomeForeground || '#0f172a';
-    const border = isDark ? ui.welcomeBorderDark || '#1f2937' : ui.welcomeBorderLight || '#e2e8f0';
-    const title = isDark ? ui.welcomeTitleColorDark || fg : ui.welcomeTitleColorLight || fg;
-    const body = isDark ? ui.welcomeBodyColorDark || fg : ui.welcomeBodyColorLight || fg;
-    const textTitle = ui.welcomeTitleText || 'バー形式で全ダッシュボードをまとめました';
-    const textBody = ui.welcomeBodyText || '最新の動きに応じて必要なボードをまとめたバーへ誘導します。最新ログや通知はカード側で閲覧できます。';
-    return { bg, bgAlpha, bgGradient, fg, border, title, body, textTitle, textBody };
-  })();
-
   const cardStyle = {
     backgroundImage: currentCard.bgGradient || 'var(--card-gradient)',
     backgroundColor: toHsla(hexToHslTriplet(currentCard.bg), currentCard.bgAlpha ?? 1),
@@ -346,31 +297,17 @@ export default function Home() {
     borderColor: currentHeader.border,
   };
 
-  const welcomeStyle = {
-    backgroundImage: currentWelcome.bgGradient || undefined,
-    backgroundColor: toHsla(hexToHslTriplet(currentWelcome.bg), currentWelcome.bgAlpha ?? 1),
-    color: currentWelcome.fg,
-    borderColor: currentWelcome.border,
-  };
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="w-full flex items-center justify-between py-4 sticky top-0 z-30" style={headerStyle}>
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      {/* ヘッダー */}
+      <header className="w-full flex items-center justify-between px-4 py-3 sticky top-0 z-30 border-b" style={headerStyle}>
         <div className="flex items-center gap-3">
-          <div className="w-16 h-16 flex items-center justify-center shrink-0">
-            <Image src={isDark ? appIconDarkUrl : appIconLightUrl} width={64} height={64} alt="MERRILY" className="object-contain" />
+          <div className="w-10 h-10 flex items-center justify-center shrink-0">
+            <Image src={isDark ? appIconDarkUrl : appIconLightUrl} width={40} height={40} alt="MERRILY" className="object-contain" />
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em]" style={{ color: currentHeader.subtitle }}>
-              Cafe Management System
-            </p>
-            <h1 className="text-2xl font-bold" style={{ color: currentHeader.title }}>
-              {appTitle}
-            </h1>
-            <p className="text-sm" style={{ color: currentHeader.user }}>
-              {userName ? `${userName} / ${userDepartments.join('・') || '部署未設定'}` : 'ログイン情報取得中...'}
-            </p>
-          </div>
+          <h1 className="text-xl font-bold" style={{ color: currentHeader.title }}>
+            {appTitle}
+          </h1>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -378,27 +315,50 @@ export default function Home() {
             onClick={() => setIsDark((prev) => !prev)}
           >
             <span className="text-lg">{isDark ? '🌙' : '☀️'}</span>
-            <span className="text-sm">{isDark ? 'ダーク' : 'ライト'}</span>
           </button>
-          <div className="hidden sm:flex items-center gap-2">
-            {isAdmin && (
-              <>
-                <Link href="/profile" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
-                  プロフィール
-                </Link>
-                <Link href="/admin/users" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
-                  メンバー管理
-                </Link>
-              </>
-            )}
-            <Link
-              href="/dashboard/pr/ui"
-              className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+          
+          {/* 通知アイコン */}
+          <div className="relative">
+            <button
+              onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
+              className="relative p-2 rounded-lg hover:bg-card/70 transition"
+              aria-label="通知"
             >
-              UI編集
-            </Link>
-            <LogoutButton />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {unreadNotifications.length > 0 && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
+            </button>
+            
+            {/* 通知パネル */}
+            {notificationPanelOpen && (
+              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border shadow-lg z-50" style={cardStyle}>
+                <div className="p-4 border-b" style={{ borderColor: currentCard.border }}>
+                  <h3 className="font-semibold">通知</h3>
+                </div>
+                <div className="divide-y" style={{ borderColor: currentCard.border }}>
+                  {loadingNotifications ? (
+                    <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>
+                  ) : unreadNotifications.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">通知はありません</div>
+                  ) : (
+                    unreadNotifications.map((n) => (
+                      <div key={n.id} className="p-4 hover:bg-muted/30 transition cursor-pointer">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>{new Date(n.created_at).toLocaleDateString('ja-JP')}</span>
+                        </div>
+                        <p className="font-semibold text-sm">{n.title}</p>
+                        {n.detail && <p className="text-xs text-muted-foreground line-clamp-2">{n.detail}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="relative sm:hidden">
             <button
               onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -421,203 +381,117 @@ export default function Home() {
                     </Link>
                   </>
                 )}
+                <Link href="/dashboard/pr/ui" className="block rounded-lg px-3 py-2 text-sm hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>
+                  UI編集
+                </Link>
                 <div className="px-3 py-2">
                   <LogoutButton />
                 </div>
               </div>
             )}
           </div>
+          
+          <div className="hidden sm:flex items-center gap-2">
+            {isAdmin && (
+              <>
+                <Link href="/profile" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
+                  プロフィール
+                </Link>
+                <Link href="/admin/users" className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition">
+                  メンバー管理
+                </Link>
+              </>
+            )}
+            <Link
+              href="/dashboard/pr/ui"
+              className="text-sm px-3 py-2 rounded-lg border border-border bg-card/70 hover:bg-card transition"
+            >
+              UI編集
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
       </header>
-      <main className="max-w-6xl mx-auto px-4 pb-12">
 
-        <section className="mt-6 mb-6 p-[1px] rounded-2xl shadow-lg border" style={welcomeStyle}>
-          <div className="rounded-2xl px-6 py-5 grid gap-3 sm:grid-cols-3 items-center">
-            <div className="col-span-2 space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: currentHeader.subtitle }}>
-                Welcome
-              </p>
-              <h2 className="text-2xl font-bold" style={{ color: currentWelcome.title }}>
-                {currentWelcome.textTitle}
-              </h2>
-              <p className="text-sm" style={{ color: currentWelcome.body }}>
-                {currentWelcome.textBody}
-              </p>
-            </div>
-            <div className="justify-self-end text-sm text-muted-foreground flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Powered by Supabase</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex items-center justify-between px-4 py-4 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-lg"
-              style={cardStyle}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white text-foreground flex items-center justify-center shadow-lg text-lg group-hover:scale-105 transition-transform border border-border">
-                  <span aria-hidden>{item.icon}</span>
+      {/* メインコンテンツ（ブログフィード） */}
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        {loadingBlogs ? (
+          <div className="text-center py-8 text-muted-foreground">読み込み中...</div>
+        ) : blogPosts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">まだ投稿はありません</div>
+        ) : (
+          <div className="space-y-6">
+            {blogPosts.map((post) => (
+              <div key={post.id} className="rounded-2xl border shadow-sm overflow-hidden" style={cardStyle}>
+                {/* 投稿ヘッダー */}
+                <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: currentCard.border }}>
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-semibold">
+                    {post.author ? post.author[0].toUpperCase() : 'B'}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{post.author || 'ブログ'}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(post.date).toLocaleDateString('ja-JP')}</p>
+                  </div>
                 </div>
-                <div className="text-left" style={{ color: currentCard.fg }}>
-                  <h2 className="text-base font-semibold leading-tight">{item.title}</h2>
-                  <p className="text-xs" style={{ color: currentCard.fg }}>
-                    {item.subtitle}
-                  </p>
-                  <p className="text-[11px] line-clamp-1" style={{ color: currentCard.fg }}>
-                    {item.desc}
-                  </p>
+
+                {/* 画像 */}
+                {post.images && post.images.length > 0 && (
+                  <div className="relative w-full bg-muted" style={{ minHeight: '300px', maxHeight: '500px' }}>
+                    <Image
+                      src={post.images[0]}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 672px"
+                    />
+                  </div>
+                )}
+
+                {/* 投稿内容 */}
+                <div className="p-4 space-y-2">
+                  <h2 className="text-lg font-bold">{post.title}</h2>
+                  <p className="text-sm" style={{ color: currentCard.fg }}>{post.body}</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: currentCard.fg }}>
-                <span>{item.accent}</span>
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Link>
-          ))}
-        </section>
 
-        <section className="space-y-6">
-          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
-                売上サマリー
-              </h3>
-              <span className="text-xs" style={{ color: currentCard.fg }}>
-                最新データ
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">今日</p>
-                <p className="text-xl font-bold">{loadingSales ? '…' : `¥${salesSummary.todayTotal.toLocaleString()}`}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">今月</p>
-                <p className="text-xl font-bold">{loadingSales ? '…' : `¥${salesSummary.currentMonthSales.toLocaleString()}`}</p>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">累計</p>
-                <p className="text-xl font-bold">{loadingSales ? '…' : `¥${salesSummary.totalAmount.toLocaleString()}`}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
-                最新ブログ
-              </h3>
-              <span className="text-xs" style={{ color: currentCard.fg }}>
-                ホームページの投稿を表示
-              </span>
-            </div>
-            <div className="space-y-3 text-sm max-h-56 overflow-y-auto pr-1 scrollbar-thin">
-              {loadingBlogs ? (
-                <p className="text-muted-foreground">読み込み中...</p>
-              ) : blogPosts.length === 0 ? (
-                <p className="text-muted-foreground">ブログ投稿はまだありません。</p>
-              ) : (
-                blogPosts.map((post) => (
-                  <div key={post.id} className="p-3 rounded-xl border border-border bg-muted/30">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>{new Date(post.date).toLocaleDateString('ja-JP')}</span>
-                      <span>{post.author || 'ブログ'}</span>
-                    </div>
-                    <p className="font-semibold text-foreground">{post.title}</p>
-                    {post.images && post.images.length > 0 ? (
-                      <div className="space-y-2 mb-2">
-                        {post.images.map((url, idx) => (
-                          <div key={`${post.id}-img-${idx}`} className="relative w-full rounded-lg border border-border overflow-hidden bg-background" style={{ minHeight: '200px', maxHeight: '256px' }}>
-                            <Image
-                              src={url}
-                              alt={post.title}
-                              fill
-                              className="object-contain"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            />
-                          </div>
-                        ))}
+                {/* 追加の画像 */}
+                {post.images && post.images.length > 1 && (
+                  <div className="px-4 pb-4 space-y-4">
+                    {post.images.slice(1).map((url, idx) => (
+                      <div key={`${post.id}-img-${idx + 1}`} className="relative w-full bg-muted rounded-lg overflow-hidden" style={{ minHeight: '300px', maxHeight: '500px' }}>
+                        <Image
+                          src={url}
+                          alt={`${post.title} - ${idx + 2}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 672px"
+                        />
                       </div>
-                    ) : null}
-                    <p className="text-muted-foreground line-clamp-2">{post.body}</p>
+                    ))}
                   </div>
-                ))
-              )}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">広報部ダッシュボードで編集したブログを表示しています。</p>
+                )}
+              </div>
+            ))}
           </div>
-
-          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
-                操作ログ
-              </h3>
-              <span className="text-xs" style={{ color: currentCard.fg }}>
-                最新50件
-              </span>
-            </div>
-            <div className="space-y-3 text-sm max-h-52 overflow-y-auto pr-1 scrollbar-thin">
-              {loadingLogs ? (
-                <p className="text-muted-foreground">読み込み中...</p>
-              ) : logs.length === 0 ? (
-                <p className="text-muted-foreground">ログはまだありません。</p>
-              ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
-                    <div className="w-2 h-2 mt-1.5 rounded-full bg-accent"></div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('ja-JP')}</p>
-                      <p className="text-foreground">
-                        <span className="font-semibold">{log.user_name || '不明なユーザー'}</span>：{log.message}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">実際のログを表示しています（/api/logs）。</p>
-          </div>
-
-          <div className="rounded-2xl p-6 shadow-lg border" style={cardStyle}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold" style={{ color: currentCard.fg }}>
-                通知
-              </h3>
-              <span className="text-xs" style={{ color: currentCard.fg }}>
-                最新50件（全員/個別を含む）
-              </span>
-            </div>
-            <div className="space-y-2 text-sm max-h-48 overflow-y-auto pr-1 scrollbar-thin">
-              {loadingNotifications ? (
-                <p className="text-muted-foreground">読み込み中...</p>
-              ) : notifications.length === 0 ? (
-                <p className="text-muted-foreground">通知はまだありません。</p>
-              ) : (
-                notifications.map((n) => (
-                  <div key={n.id} className="border border-border rounded-lg p-3 bg-muted/30">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>{new Date(n.created_at).toLocaleString('ja-JP')}</span>
-                      <span>通知</span>
-                    </div>
-                    <p className="font-semibold text-foreground">{n.title}</p>
-                    <p className="text-muted-foreground">{n.detail || ''}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">通知エンドポイントから取得しています（/api/notifications）。</p>
-          </div>
-        </section>
+        )}
       </main>
+
+      {/* 下部固定バー（Instagram風） */}
+      <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={headerStyle}>
+        <div className="max-w-2xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-around">
+            {visibleNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg hover:bg-card/30 transition group"
+              >
+                <span className="text-2xl group-hover:scale-110 transition-transform" aria-hidden>{item.icon}</span>
+                <span className="text-[10px] font-medium" style={{ color: currentHeader.fg }}>{item.accent}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }
