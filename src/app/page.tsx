@@ -27,15 +27,7 @@ export default function Home() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const stored = window.localStorage.getItem('ui-is-dark');
-    if (isMobile) return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (stored === 'true') return true;
-    if (stored === 'false') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [isDark, setIsDark] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
@@ -135,19 +127,52 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
     const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const stored = window.localStorage.getItem('ui-is-dark');
+    
+    let currentIsDark: boolean;
+    if (isMobile) {
+      currentIsDark = media.matches;
+    } else {
+      if (stored === 'true') {
+        currentIsDark = true;
+      } else if (stored === 'false') {
+        currentIsDark = false;
+      } else {
+        currentIsDark = media.matches;
+      }
+    }
+    
+    setIsDark(currentIsDark);
+    document.documentElement.classList.toggle('dark', currentIsDark);
+    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
+    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
+    
+    const handleThemeChange = (e: CustomEvent) => {
+      setIsDark(e.detail.isDark);
+    };
+    
+    window.addEventListener('theme-change', handleThemeChange as EventListener);
     
     const handleChange = (e: MediaQueryListEvent) => {
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      const stored = window.localStorage.getItem('ui-is-dark');
+      const isMob = window.matchMedia('(max-width: 768px)').matches;
+      const str = window.localStorage.getItem('ui-is-dark');
       
-      if (isMobile || stored === null) {
+      if (isMob || str === null) {
         setIsDark(e.matches);
+        document.documentElement.classList.toggle('dark', e.matches);
+        document.body.style.backgroundColor = e.matches ? '#000000' : '#ffffff';
+        document.body.style.color = e.matches ? '#ffffff' : '#000000';
       }
     };
     
     media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
+    return () => {
+      media.removeEventListener('change', handleChange);
+      window.removeEventListener('theme-change', handleThemeChange as EventListener);
+    };
   }, []);
 
   useEffect(() => {

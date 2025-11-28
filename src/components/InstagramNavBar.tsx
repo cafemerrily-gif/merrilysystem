@@ -8,15 +8,49 @@ import Image from 'next/image';
 export default function InstagramNavBar() {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === 'undefined') return;
+    
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     const stored = window.localStorage.getItem('ui-is-dark');
     
-    const currentIsDark = isMobile ? media.matches : (stored === 'true' ? true : stored === 'false' ? false : media.matches);
+    let currentIsDark: boolean;
+    if (isMobile) {
+      currentIsDark = media.matches;
+    } else {
+      if (stored === 'true') {
+        currentIsDark = true;
+      } else if (stored === 'false') {
+        currentIsDark = false;
+      } else {
+        currentIsDark = media.matches;
+      }
+    }
+    
     setIsDark(currentIsDark);
+    
+    // 初期表示時にbodyのスタイルを設定
+    document.documentElement.classList.toggle('dark', currentIsDark);
+    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
+    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      const isMob = window.matchMedia('(max-width: 768px)').matches;
+      const str = window.localStorage.getItem('ui-is-dark');
+      if (isMob || str === null) {
+        setIsDark(e.matches);
+        document.documentElement.classList.toggle('dark', e.matches);
+        document.body.style.backgroundColor = e.matches ? '#000000' : '#ffffff';
+        document.body.style.color = e.matches ? '#ffffff' : '#000000';
+      }
+    };
+    
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
   }, []);
 
   const bgColor = isDark ? '#000000' : '#ffffff';
@@ -32,13 +66,18 @@ export default function InstagramNavBar() {
     document.body.style.backgroundColor = next ? '#000000' : '#ffffff';
     document.body.style.color = next ? '#ffffff' : '#000000';
     
-    // ページをリロードして全体のテーマを更新
-    window.location.reload();
+    // カスタムイベントを発火して他のコンポーネントに通知
+    window.dispatchEvent(new CustomEvent('theme-change', { detail: { isDark: next } }));
   };
 
   // トップページ、ログイン、パスワードリセットでは非表示
   const hideOnPages = ['/', '/login', '/reset-password', '/auth'];
   if (hideOnPages.some(page => pathname === page)) {
+    return null;
+  }
+
+  // ハイドレーションミスマッチを防ぐ
+  if (!mounted) {
     return null;
   }
 
