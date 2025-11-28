@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ThemeScript } from '@/components/ThemeScript';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeInitScript } from '@/components/ThemeInitScript';
 import InstagramNavBar from '@/components/InstagramNavBar';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -23,12 +24,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeScript />
-        <InstagramNavBar />
-        <main className="pb-16 md:pb-0 md:pt-16">
-          {children}
-        </main>
+      <head>
+        <ThemeInitScript />
+      </head>
+      <body className={inter.className} suppressHydrationWarning>
+        <ThemeProvider>
+          <InstagramNavBar />
+          <main className="pb-16 md:pb-0 md:pt-16">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );

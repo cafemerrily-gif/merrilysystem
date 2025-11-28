@@ -4,74 +4,25 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function InstagramNavBar() {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window === 'undefined') return;
-    
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const stored = window.localStorage.getItem('ui-is-dark');
-    
-    let currentIsDark: boolean;
-    if (isMobile) {
-      currentIsDark = media.matches;
-    } else {
-      if (stored === 'true') {
-        currentIsDark = true;
-      } else if (stored === 'false') {
-        currentIsDark = false;
-      } else {
-        currentIsDark = media.matches;
-      }
-    }
-    
-    setIsDark(currentIsDark);
-    
-    // 初期表示時にbodyのスタイルを設定
-    document.documentElement.classList.toggle('dark', currentIsDark);
-    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
-    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
-    
-    const handleChange = (e: MediaQueryListEvent) => {
-      const isMob = window.matchMedia('(max-width: 768px)').matches;
-      const str = window.localStorage.getItem('ui-is-dark');
-      if (isMob || str === null) {
-        setIsDark(e.matches);
-        document.documentElement.classList.toggle('dark', e.matches);
-        document.body.style.backgroundColor = e.matches ? '#000000' : '#ffffff';
-        document.body.style.color = e.matches ? '#ffffff' : '#000000';
-      }
-    };
-    
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
   }, []);
 
+  const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const appIconUrl = isDark ? '/white.png' : '/black.png';
 
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    window.localStorage.setItem('ui-is-dark', next ? 'true' : 'false');
-    document.documentElement.classList.toggle('dark', next);
-    document.body.style.backgroundColor = next ? '#000000' : '#ffffff';
-    document.body.style.color = next ? '#ffffff' : '#000000';
-    
-    // カスタムイベントを発火して他のコンポーネントに通知
-    window.dispatchEvent(new CustomEvent('theme-change', { detail: { isDark: next } }));
-  };
-
   // トップページ、ログイン、パスワードリセットでは非表示
-  const hideOnPages = ['/', '/login', '/reset-password', '/auth'];
+  const hideOnPages = ['/login', '/reset-password', '/auth'];
   if (hideOnPages.some(page => pathname === page)) {
     return null;
   }
@@ -120,16 +71,16 @@ export default function InstagramNavBar() {
               </svg>
             </button>
 
-            {/* 新規投稿アイコン（準備中） */}
-            <button
-              className="p-2 rounded-lg transition-all duration-200 opacity-50 cursor-not-allowed"
-              disabled
-              title="新規投稿（準備中）"
+            {/* 新規投稿アイコン */}
+            <Link
+              href="/post/create"
+              className="p-2 rounded-lg transition-all duration-200"
+              title="新規投稿"
             >
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-            </button>
+            </Link>
 
             {/* 通知アイコン */}
             <Link
@@ -150,15 +101,15 @@ export default function InstagramNavBar() {
             >
               {isDark ? (
                 <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  <circle cx="12" cy="12" r="5" strokeWidth={2} />
+                  <line x1="12" y1="1" x2="12" y2="3" strokeWidth={2} />
+                  <line x1="12" y1="21" x2="12" y2="23" strokeWidth={2} />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" strokeWidth={2} />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" strokeWidth={2} />
+                  <line x1="1" y1="12" x2="3" y2="12" strokeWidth={2} />
+                  <line x1="21" y1="12" x2="23" y2="12" strokeWidth={2} />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" strokeWidth={2} />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" strokeWidth={2} />
                 </svg>
               ) : (
                 <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
@@ -167,19 +118,19 @@ export default function InstagramNavBar() {
               )}
             </button>
 
-            {/* プロフィールアイコン */}
+            {/* アカウントアイコン */}
             <Link
-              href="/profile"
+              href="/account"
               className="p-2 rounded-lg transition-all duration-200"
               style={{ 
-                backgroundColor: pathname === '/profile' ? (isDark ? '#262626' : '#efefef') : 'transparent'
+                backgroundColor: pathname === '/account' ? (isDark ? '#262626' : '#efefef') : 'transparent'
               }}
-              title="プロフィール"
+              title="アカウント"
             >
               <div className="w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs" style={{ 
                 backgroundColor: isDark ? '#262626' : '#dbdbdb',
                 color: textColor,
-                border: pathname === '/profile' ? `2px solid ${textColor}` : 'none'
+                border: pathname === '/account' ? `2px solid ${textColor}` : 'none'
               }}>
                 <svg className="w-4 h-4" fill="none" stroke={textColor} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

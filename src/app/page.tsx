@@ -4,408 +4,258 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import LogoutButton from '@/components/LogoutButton';
+import { useTheme } from '@/components/ThemeProvider';
 
-type NavItem = {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  accent: string;
-  requiredTags?: string[];
+type Post = {
+  id: string;
+  user_id: string;
+  content: string;
+  images: string[] | null;
+  created_at: string;
+  user_profile: {
+    display_name: string;
+    avatar_url: string | null;
+  } | null;
+  likes_count: number;
+  comments_count: number;
+  is_liked: boolean;
 };
-
-type NotificationItem = { id: number; title: string; detail: string | null; created_at: string };
-type BlogPost = { id: string; title: string; body: string; date: string; images?: string[]; author?: string };
 
 export default function Home() {
   const supabase = createClientComponentClient();
-  const [userName, setUserName] = useState('');
-  const [userDepartments, setUserDepartments] = useState<string[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [appTitle] = useState('MERRILY');
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
-  const [loadingBlogs, setLoadingBlogs] = useState(true);
-  const [isDark, setIsDark] = useState<boolean>(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const { theme } = useTheme();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const privileged = useMemo(() => ['職員', 'マネジメント部', 'エンジニアチーム'], []);
-
-  const navItems: NavItem[] = useMemo(() => [
-    {
-      href: '/dashboard/staff/menu',
-      icon: isDark ? (
-        <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ) : (
-        <svg className="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: 'スタッフ',
-      accent: 'スタッフ',
-      requiredTags: ['店舗スタッフ']
-    },
-    {
-      href: '/dashboard/accounting/menu',
-      icon: isDark ? (
-        <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ) : (
-        <svg className="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      title: '会計',
-      accent: '会計',
-      requiredTags: ['会計部']
-    },
-    {
-      href: '/dashboard/dev/menu',
-      icon: isDark ? (
-        <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ) : (
-        <svg className="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      title: '開発',
-      accent: '開発',
-      requiredTags: ['開発部']
-    },
-    {
-      href: '/dashboard/pr/menu',
-      icon: isDark ? (
-        <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-        </svg>
-      ) : (
-        <svg className="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-        </svg>
-      ),
-      title: '広報',
-      accent: '広報',
-      requiredTags: ['広報部']
-    },
-    {
-      href: '/dashboard/debug/menu',
-      icon: isDark ? (
-        <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-      ) : (
-        <svg className="w-6 h-6" fill="none" stroke="black" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-      ),
-      title: 'デバッグ',
-      accent: 'デバッグ',
-      requiredTags: ['エンジニアチーム']
-    },
-  ], [isDark]);
-
-  const visibleNavItems = useMemo(() => {
-    return navItems.filter((item) => {
-      if (!item.requiredTags || item.requiredTags.length === 0) return true;
-      if (userDepartments.some((d) => privileged.includes(d))) return true;
-      return item.requiredTags.some((t) => userDepartments.includes(t));
-    });
-  }, [navItems, userDepartments, privileged]);
-
-  const unreadNotifications = useMemo(() => {
-    return notifications.slice(0, 5);
-  }, [notifications]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const stored = window.localStorage.getItem('ui-is-dark');
-    
-    let currentIsDark: boolean;
-    if (isMobile) {
-      currentIsDark = media.matches;
-    } else {
-      if (stored === 'true') {
-        currentIsDark = true;
-      } else if (stored === 'false') {
-        currentIsDark = false;
-      } else {
-        currentIsDark = media.matches;
-      }
-    }
-    
-    setIsDark(currentIsDark);
-    document.documentElement.classList.toggle('dark', currentIsDark);
-    document.body.style.backgroundColor = currentIsDark ? '#000000' : '#ffffff';
-    document.body.style.color = currentIsDark ? '#ffffff' : '#000000';
-    
-    const handleThemeChange = (e: CustomEvent) => {
-      setIsDark(e.detail.isDark);
-    };
-    
-    window.addEventListener('theme-change', handleThemeChange as EventListener);
-    
-    const handleChange = (e: MediaQueryListEvent) => {
-      const isMob = window.matchMedia('(max-width: 768px)').matches;
-      const str = window.localStorage.getItem('ui-is-dark');
-      
-      if (isMob || str === null) {
-        setIsDark(e.matches);
-        document.documentElement.classList.toggle('dark', e.matches);
-        document.body.style.backgroundColor = e.matches ? '#000000' : '#ffffff';
-        document.body.style.color = e.matches ? '#ffffff' : '#000000';
-      }
-    };
-    
-    media.addEventListener('change', handleChange);
-    return () => {
-      media.removeEventListener('change', handleChange);
-      window.removeEventListener('theme-change', handleThemeChange as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const meta = data.user?.user_metadata;
-      if (meta?.full_name) setUserName(meta.full_name);
-      if (Array.isArray(meta?.departments)) setUserDepartments(meta.departments);
-      if (meta?.is_admin === true || meta?.role === 'admin') setIsAdmin(true);
-    })();
-  }, [supabase]);
-
-  useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        setLoadingNotifications(true);
-        const res = await fetch('/api/notifications');
-        const data = await res.json();
-        if (!data.error) setNotifications(data);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    };
-
-    const loadBlogs = async () => {
-      try {
-        setLoadingBlogs(true);
-        const res = await fetch('/api/pr/website', { cache: 'no-store' });
-        const data = await res.json();
-        if (data?.blogPosts) {
-          const sorted = data.blogPosts
-            .slice()
-            .map((p: any) => ({
-              ...p,
-              images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
-              author: p.author || '',
-            }))
-            .sort((a: any, b: any) => (a.date > b.date ? -1 : 1));
-          setBlogPosts(sorted);
-        } else {
-          setBlogPosts([]);
-        }
-      } finally {
-        setLoadingBlogs(false);
-      }
-    };
-
-    loadNotifications();
-    loadBlogs();
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    document.documentElement.classList.toggle('dark', isDark);
-    document.body.style.backgroundColor = isDark ? '#000000' : '#ffffff';
-    document.body.style.color = isDark ? '#ffffff' : '#000000';
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('ui-is-dark', isDark ? 'true' : 'false');
-    }
-  }, [isDark]);
-
-  const appIconUrl = isDark ? '/white.png' : '/black.png';
+  const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const mutedColor = isDark ? '#a8a8a8' : '#737373';
 
+  useEffect(() => {
+    loadPosts();
+    getCurrentUser();
+  }, []);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+  };
+
+  const loadPosts = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // 投稿を取得
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          user_profiles!inner(display_name, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (postsError) {
+        console.error('Error loading posts:', postsError);
+        return;
+      }
+
+      // いいね数を取得
+      const postIds = postsData?.map(p => p.id) || [];
+      const { data: likesData } = await supabase
+        .from('post_likes')
+        .select('post_id, user_id')
+        .in('post_id', postIds);
+
+      // コメント数を取得
+      const { data: commentsData } = await supabase
+        .from('post_comments')
+        .select('post_id')
+        .in('post_id', postIds);
+
+      // データを整形
+      const formattedPosts: Post[] = (postsData || []).map(post => {
+        const likes = likesData?.filter(l => l.post_id === post.id) || [];
+        const comments = commentsData?.filter(c => c.post_id === post.id) || [];
+        
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          content: post.content,
+          images: post.images,
+          created_at: post.created_at,
+          user_profile: post.user_profiles,
+          likes_count: likes.length,
+          comments_count: comments.length,
+          is_liked: user ? likes.some(l => l.user_id === user.id) : false,
+        };
+      });
+
+      setPosts(formattedPosts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!currentUserId) {
+      alert('ログインが必要です');
+      return;
+    }
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    if (post.is_liked) {
+      // いいねを削除
+      await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', currentUserId);
+
+      setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, is_liked: false, likes_count: p.likes_count - 1 }
+          : p
+      ));
+    } else {
+      // いいねを追加
+      await supabase
+        .from('post_likes')
+        .insert({ post_id: postId, user_id: currentUserId });
+
+      setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, is_liked: true, likes_count: p.likes_count + 1 }
+          : p
+      ));
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'たった今';
+    if (minutes < 60) return `${minutes}分前`;
+    if (hours < 24) return `${hours}時間前`;
+    if (days < 7) return `${days}日前`;
+    return date.toLocaleDateString('ja-JP');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor, color: textColor }}>
+        <p style={{ color: mutedColor }}>読み込み中...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
-      {/* ヘッダー */}
-      <header className="w-full flex items-center justify-between px-4 py-3 sticky top-0 z-30 border-b md:hidden" style={{ backgroundColor: bgColor, borderColor }}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 flex items-center justify-center shrink-0">
-            <Image src={appIconUrl} width={40} height={40} alt="MERRILY" className="object-contain" />
-          </div>
-          <h1 className="text-xl font-bold" style={{ color: textColor }}>
-            {appTitle}
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* 通知アイコン */}
-          <div className="relative" id="notifications">
-            <button
-              onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
-              className="relative p-2 rounded-lg transition"
-              aria-label="通知"
+      <main className="w-full mx-auto px-0 md:px-4 py-0 md:py-6 max-w-2xl">
+        {posts.length === 0 ? (
+          <div className="text-center py-12">
+            <p style={{ color: mutedColor }}>まだ投稿がありません</p>
+            <Link
+              href="/post/create"
+              className="inline-block mt-4 px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+              style={{
+                backgroundColor: isDark ? '#ffffff' : '#000000',
+                color: isDark ? '#000000' : '#ffffff',
+              }}
             >
-              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {unreadNotifications.length > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
-            
-            {/* 通知パネル */}
-            {notificationPanelOpen && (
-              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border shadow-lg z-50" style={{ backgroundColor: bgColor, borderColor }}>
-                <div className="p-4 border-b" style={{ borderColor }}>
-                  <h3 className="font-semibold">通知</h3>
-                </div>
-                <div className="divide-y" style={{ borderColor }}>
-                  {loadingNotifications ? (
-                    <div className="p-4 text-sm" style={{ color: mutedColor }}>読み込み中...</div>
-                  ) : unreadNotifications.length === 0 ? (
-                    <div className="p-4 text-sm" style={{ color: mutedColor }}>通知はありません</div>
-                  ) : (
-                    unreadNotifications.map((n) => (
-                      <div key={n.id} className="p-4 cursor-pointer" style={{ backgroundColor: bgColor }}>
-                        <div className="flex justify-between text-xs mb-1" style={{ color: mutedColor }}>
-                          <span>{new Date(n.created_at).toLocaleDateString('ja-JP')}</span>
-                        </div>
-                        <p className="font-semibold text-sm">{n.title}</p>
-                        {n.detail && <p className="text-xs line-clamp-2" style={{ color: mutedColor }}>{n.detail}</p>}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
+              最初の投稿を作成
+            </Link>
           </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="rounded-lg border p-2"
-              style={{ borderColor }}
-              aria-label="メニュー"
-            >
-              <svg className="h-5 w-5" fill="none" stroke={textColor} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            {mobileMenuOpen && (
-              <div className="absolute right-0 z-20 mt-2 w-44 space-y-2 rounded-xl border p-3 shadow-lg" style={{ backgroundColor: bgColor, borderColor }}>
-                {isAdmin && (
-                  <>
-                    <Link href="/profile" className="block rounded-lg px-3 py-2 text-sm" onClick={() => setMobileMenuOpen(false)}>
-                      プロフィール
-                    </Link>
-                    <Link href="/admin/users" className="block rounded-lg px-3 py-2 text-sm" onClick={() => setMobileMenuOpen(false)}>
-                      メンバー管理
-                    </Link>
-                  </>
-                )}
-                <div className="px-3 py-2">
-                  <LogoutButton />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* メインコンテンツ（ブログフィード） */}
-      <main className="w-full mx-auto px-0 md:px-4 py-0 md:py-6">
-        {loadingBlogs ? (
-          <div className="text-center py-8" style={{ color: mutedColor }}>読み込み中...</div>
-        ) : blogPosts.length === 0 ? (
-          <div className="text-center py-8" style={{ color: mutedColor }}>まだ投稿はありません</div>
         ) : (
           <div className="space-y-0 md:space-y-6">
-            {blogPosts.map((post) => (
+            {posts.map((post) => (
               <div key={post.id} className="border-b md:rounded-2xl md:border overflow-hidden" style={{ backgroundColor: bgColor, borderColor }}>
                 {/* 投稿ヘッダー */}
                 <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: isDark ? '#262626' : '#efefef' }}>
-                    {post.author ? post.author[0].toUpperCase() : 'B'}
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#262626' : '#efefef' }}>
+                    {post.user_profile?.avatar_url ? (
+                      <Image src={post.user_profile.avatar_url} alt={post.user_profile.display_name} fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-sm">{post.author || 'ブログ'}</p>
-                    <p className="text-xs" style={{ color: mutedColor }}>{new Date(post.date).toLocaleDateString('ja-JP')}</p>
+                    <p className="font-semibold text-sm">{post.user_profile?.display_name || 'ユーザー'}</p>
+                    <p className="text-xs" style={{ color: mutedColor }}>{formatDate(post.created_at)}</p>
                   </div>
+                </div>
+
+                {/* 投稿内容 */}
+                <div className="p-4">
+                  <p className="text-sm whitespace-pre-wrap">{post.content}</p>
                 </div>
 
                 {/* 画像 */}
                 {post.images && post.images.length > 0 && (
-                  <div className="relative w-full" style={{ backgroundColor: isDark ? '#262626' : '#efefef', minHeight: '300px', maxHeight: '600px' }}>
-                    <Image
-                      src={post.images[0]}
-                      alt={post.title}
-                      fill
-                      className="object-contain"
-                      sizes="100vw"
-                    />
-                  </div>
-                )}
-
-                {/* 投稿内容 */}
-                <div className="p-4 space-y-2">
-                  <h2 className="text-lg font-bold">{post.title}</h2>
-                  <p className="text-sm" style={{ color: textColor }}>{post.body}</p>
-                </div>
-
-                {/* 追加の画像 */}
-                {post.images && post.images.length > 1 && (
-                  <div className="px-4 pb-4 space-y-4">
-                    {post.images.slice(1).map((url, idx) => (
-                      <div key={`${post.id}-img-${idx + 1}`} className="relative w-full rounded-lg overflow-hidden" style={{ backgroundColor: isDark ? '#262626' : '#efefef', minHeight: '300px', maxHeight: '600px' }}>
+                  <div className={post.images.length === 1 ? '' : 'grid grid-cols-2 gap-1'}>
+                    {post.images.map((imageUrl, idx) => (
+                      <div key={idx} className="relative w-full bg-black" style={{ 
+                        backgroundColor: isDark ? '#262626' : '#efefef',
+                        aspectRatio: post.images!.length === 1 ? 'auto' : '1',
+                        minHeight: post.images!.length === 1 ? '300px' : 'auto',
+                        maxHeight: post.images!.length === 1 ? '600px' : 'auto'
+                      }}>
                         <Image
-                          src={url}
-                          alt={`${post.title} - ${idx + 2}`}
+                          src={imageUrl}
+                          alt={`投稿画像 ${idx + 1}`}
                           fill
                           className="object-contain"
-                          sizes="100vw"
+                          sizes="(max-width: 768px) 100vw, 600px"
                         />
                       </div>
                     ))}
                   </div>
                 )}
+
+                {/* アクション */}
+                <div className="px-4 py-3 flex items-center gap-4 border-t" style={{ borderColor }}>
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className="flex items-center gap-2 transition-all duration-200"
+                  >
+                    <svg 
+                      className="w-6 h-6" 
+                      fill={post.is_liked ? '#ff3b30' : 'none'} 
+                      stroke={post.is_liked ? '#ff3b30' : textColor} 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">{post.likes_count}</span>
+                  </button>
+
+                  <button className="flex items-center gap-2">
+                    <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="text-sm font-medium">{post.comments_count}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </main>
-
-      {/* 下部固定バー（スマホのみ） - Instagram風 */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t z-40 md:hidden" style={{ backgroundColor: bgColor, borderColor }}>
-        <div className="max-w-2xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-around">
-            {visibleNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition group"
-              >
-                <span className="group-hover:scale-110 transition-transform">{item.icon}</span>
-                <span className="text-[10px] font-medium" style={{ color: textColor }}>{item.accent}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </nav>
     </div>
   );
 }
