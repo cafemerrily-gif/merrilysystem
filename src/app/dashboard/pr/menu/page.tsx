@@ -27,148 +27,45 @@ export default function PrMenu() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
-      <div className="border-b sticky top-0 z-10 backdrop-blur" style={{ backgroundColor: bgColor, borderColor }}>
-        <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: bgColor, border: `2px solid ${borderColor}` }}>
-              <span className="text-2xl">📢</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold" style={{ color: textColor }}>広報部メニュー</h1>
-              <p className="text-sm" style={{ color: mutedColor }}>ホームページ・ブログ編集</p>
-            </div>
+      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold" style={{ color: textColor }}>広報部メニュー</h1>
+            <p className="text-sm" style={{ color: mutedColor }}>ホームページ編集・UI編集・ブログ編集への入口です。</p>
           </div>
           <Link 
             href="/" 
-            className="px-4 py-3 rounded-xl border transition-all duration-200 text-sm"
+            className="text-sm px-3 py-2 rounded-lg border transition"
             style={{ borderColor, backgroundColor: bgColor, color: textColor }}
           >
             ホームへ戻る
           </Link>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="rounded-2xl border p-6 space-y-3" style={{ backgroundColor: bgColor, borderColor }}>
-            <div className="text-sm font-semibold uppercase tracking-wider" style={{ color: mutedColor }}>統計</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-2xl font-bold" style={{ color: textColor }}>12</div>
-                <div className="text-xs" style={{ color: mutedColor }}>公開記事</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold" style={{ color: textColor }}>3</div>
-                <div className="text-xs" style={{ color: mutedColor }}>下書き</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border p-6 space-y-3" style={{ backgroundColor: bgColor, borderColor }}>
-            <div className="text-sm font-semibold uppercase tracking-wider" style={{ color: mutedColor }}>訪問者</div>
-            <div>
-              <div className="text-2xl font-bold" style={{ color: textColor }}>1,234</div>
-              <div className="text-xs" style={{ color: mutedColor }}>今月の訪問者数</div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border p-6 space-y-3" style={{ backgroundColor: bgColor, borderColor }}>
-            <div className="text-sm font-semibold uppercase tracking-wider" style={{ color: mutedColor }}>ステータス</div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#34c759' }}></div>
-              <div className="text-sm" style={{ color: textColor }}>すべて正常</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold" style={{ color: textColor }}>実装済み機能</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link 
-              href="/dashboard/pr/website" 
-              className="rounded-2xl border p-6 transition-all duration-200 hover:shadow-lg group"
-              style={{ backgroundColor: bgColor, borderColor }}
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">🏠</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1 group-hover:opacity-70 transition" style={{ color: textColor }}>ホームページ編集</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>サイトのコンテンツとレイアウトを管理</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link 
-              href="/dashboard/pr/blogs" 
-              className="rounded-2xl border p-6 transition-all duration-200 hover:shadow-lg group"
-              style={{ backgroundColor: bgColor, borderColor }}
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">✍️</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1 group-hover:opacity-70 transition" style={{ color: textColor }}>ブログ編集</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>記事の作成・編集・公開管理</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        <div className="space-y-4 mt-10">
-          <h2 className="text-xl font-semibold" style={{ color: textColor }}>準備中の機能</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-dashed p-6" style={{ borderColor, opacity: 0.5 }}>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">📱</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: mutedColor }}>SNS連携</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>SNSへの自動投稿とスケジュール管理</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-dashed p-6" style={{ borderColor, opacity: 0.5 }}>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">📊</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: mutedColor }}>アクセス解析</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>サイト訪問者の分析とレポート</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-dashed p-6" style={{ borderColor, opacity: 0.5 }}>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">🖼️</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: mutedColor }}>メディアライブラリ</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>画像・動画の管理</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-dashed p-6" style={{ borderColor, opacity: 0.5 }}>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', border: `1px solid ${borderColor}` }}>
-                  <span className="text-2xl">📧</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: mutedColor }}>ニュースレター</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>メールマガジンの作成と配信</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link 
+            href="/dashboard/pr/website" 
+            className="rounded-xl border transition p-4 shadow-sm"
+            style={{ borderColor, backgroundColor: bgColor }}
+          >
+            <p className="text-sm mb-1" style={{ color: mutedColor }}>ホームページ編集</p>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>トップ・ヘッダー・内容編集</h2>
+          </Link>
+          <Link 
+            href="/dashboard/pr/ui" 
+            className="rounded-xl border transition p-4 shadow-sm"
+            style={{ borderColor, backgroundColor: bgColor }}
+          >
+            <p className="text-sm mb-1" style={{ color: mutedColor }}>UI編集</p>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>配色・アイコンの変更</h2>
+          </Link>
+          <Link 
+            href="/dashboard/pr/blogs" 
+            className="rounded-xl border transition p-4 shadow-sm"
+            style={{ borderColor, backgroundColor: bgColor }}
+          >
+            <p className="text-sm mb-1" style={{ color: mutedColor }}>ブログ編集</p>
+            <h2 className="text-lg font-semibold" style={{ color: textColor }}>記事・画像の更新</h2>
+          </Link>
         </div>
       </div>
     </div>
