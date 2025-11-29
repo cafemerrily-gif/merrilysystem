@@ -11,10 +11,6 @@ interface Post {
   content: string;
   images: string[] | null;
   created_at: string;
-  user_profile: {
-    display_name: string;
-    avatar_url: string | null;
-  } | null;
 }
 
 export default function PostsManagementPage() {
@@ -24,13 +20,21 @@ export default function PostsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  // テーマ関連
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     const stored = window.localStorage.getItem('ui-is-dark');
-    
-    const currentIsDark = isMobile ? media.matches : (stored === 'true' ? true : stored === 'false' ? false : media.matches);
+
+    const currentIsDark = isMobile
+      ? media.matches
+      : stored === 'true'
+      ? true
+      : stored === 'false'
+      ? false
+      : media.matches;
+
     setIsDark(currentIsDark);
 
     const handleChange = (e: MediaQueryListEvent) => {
@@ -40,7 +44,7 @@ export default function PostsManagementPage() {
         setIsDark(e.matches);
       }
     };
-    
+
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
   }, []);
@@ -58,7 +62,9 @@ export default function PostsManagementPage() {
   }, []);
 
   const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     setCurrentUserId(user?.id || null);
   };
 
@@ -67,10 +73,7 @@ export default function PostsManagementPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('posts')
-        .select(`
-          *,
-          user_profiles(display_name, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -78,7 +81,7 @@ export default function PostsManagementPage() {
         return;
       }
 
-      setPosts(data as Post[]);
+      setPosts((data || []) as Post[]);
     } finally {
       setLoading(false);
     }
@@ -87,10 +90,7 @@ export default function PostsManagementPage() {
   const handleDelete = async (postId: string) => {
     if (!confirm('この投稿を削除しますか？')) return;
 
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', postId);
+    const { error } = await supabase.from('posts').delete().eq('id', postId);
 
     if (error) {
       console.error('Error deleting post:', error);
@@ -109,7 +109,10 @@ export default function PostsManagementPage() {
   const cardBg = isDark ? '#000000' : '#ffffff';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: bgColor, color: textColor }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* ヘッダー */}
         <div className="flex items-center justify-between">
@@ -132,10 +135,24 @@ export default function PostsManagementPage() {
         <Link
           href="/dashboard/pr/posts/create"
           className="block border rounded-2xl p-6 text-center transition-all duration-200 hover:scale-[1.02]"
-          style={{ backgroundColor: cardBg, borderColor, borderStyle: 'dashed' }}
+          style={{
+            backgroundColor: cardBg,
+            borderColor,
+            borderStyle: 'dashed',
+          }}
         >
-          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke={textColor} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-12 h-12 mx-auto mb-2"
+            fill="none"
+            stroke={textColor}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           <p className="font-semibold">新規投稿を作成</p>
         </Link>
@@ -158,20 +175,35 @@ export default function PostsManagementPage() {
                 style={{ backgroundColor: cardBg, borderColor }}
               >
                 {/* 投稿ヘッダー */}
-                <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor }}>
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#262626' : '#efefef' }}>
-                    {post.user_profile?.avatar_url ? (
-                      <Image src={post.user_profile.avatar_url} alt={post.user_profile.display_name} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
+                <div
+                  className="flex items-center gap-3 p-4 border-b"
+                  style={{ borderColor }}
+                >
+                  <div
+                    className="relative w-10 h-10 rounded-full overflow-hidden"
+                    style={{
+                      backgroundColor: isDark ? '#262626' : '#efefef',
+                    }}
+                  >
+                    {/* いまはプレースホルダーアイコンだけ表示 */}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke={mutedColor}
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-sm">{post.user_profile?.display_name || 'ユーザー'}</p>
+                    <p className="font-semibold text-sm">ユーザー</p>
                     <p className="text-xs" style={{ color: mutedColor }}>
                       {new Date(post.created_at).toLocaleDateString('ja-JP')}
                     </p>
@@ -194,9 +226,21 @@ export default function PostsManagementPage() {
 
                 {/* 画像 */}
                 {post.images && post.images.length > 0 && (
-                  <div className={post.images.length === 1 ? 'px-4 pb-4' : 'grid grid-cols-2 gap-1 px-4 pb-4'}>
+                  <div
+                    className={
+                      post.images.length === 1
+                        ? 'px-4 pb-4'
+                        : 'grid grid-cols-2 gap-1 px-4 pb-4'
+                    }
+                  >
                     {post.images.map((imageUrl, idx) => (
-                      <div key={idx} className="relative w-full aspect-square rounded-lg overflow-hidden" style={{ backgroundColor: isDark ? '#262626' : '#efefef' }}>
+                      <div
+                        key={idx}
+                        className="relative w-full aspect-square rounded-lg overflow-hidden"
+                        style={{
+                          backgroundColor: isDark ? '#262626' : '#efefef',
+                        }}
+                      >
                         <Image
                           src={imageUrl}
                           alt={`投稿画像 ${idx + 1}`}
