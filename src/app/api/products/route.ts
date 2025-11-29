@@ -5,7 +5,6 @@ import { supabaseAdmin } from '@/lib/supabase';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const categoryId = searchParams.get('category_id');
-  const collectionId = searchParams.get('collection_id');
 
   try {
     let query = supabaseAdmin
@@ -16,10 +15,6 @@ export async function GET(request: NextRequest) {
 
     if (categoryId) {
       query = query.eq('category_id', categoryId);
-    }
-
-    if (collectionId) {
-      query = query.eq('collection_id', collectionId);
     }
 
     const { data, error } = await query;
@@ -40,7 +35,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, category_id, collection_id, cost_price, selling_price, image_url, description } = body;
+    const { name, category_id, cost_price, selling_price, image_url, description } = body;
 
     if (!name) {
       return NextResponse.json({ error: '商品名は必須です' }, { status: 400 });
@@ -51,7 +46,6 @@ export async function POST(request: NextRequest) {
       .insert({
         name,
         category_id: category_id || null,
-        collection_id: collection_id || null,
         cost_price: cost_price || 0,
         selling_price: selling_price || 0,
         image_url: image_url || null,
@@ -76,7 +70,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, category_id, collection_id, cost_price, selling_price, image_url, description } = body;
+    const { id, name, category_id, cost_price, selling_price, image_url, description } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'IDは必須です' }, { status: 400 });
@@ -86,7 +80,6 @@ export async function PUT(request: NextRequest) {
     
     if (name !== undefined) updateData.name = name;
     if (category_id !== undefined) updateData.category_id = category_id;
-    if (collection_id !== undefined) updateData.collection_id = collection_id;
     if (cost_price !== undefined) updateData.cost_price = cost_price;
     if (selling_price !== undefined) updateData.selling_price = selling_price;
     if (image_url !== undefined) updateData.image_url = image_url;
