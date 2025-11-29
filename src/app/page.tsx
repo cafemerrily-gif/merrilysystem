@@ -238,7 +238,7 @@ export default function Home() {
             <span className="text-xl font-bold">MERRILY</span>
           </Link>
 
-          {/* 右側：設定アイコンに変更 */}
+          {/* 右側：設定アイコン */}
           <Link href="/account" className="p-2">
             <svg
               className="w-6 h-6"
@@ -345,7 +345,7 @@ export default function Home() {
                     <span>{post.likes_count}</span>
                   </button>
 
-                  {/* コメント数表示（今は数だけ） */}
+                  {/* コメント数表示 */}
                   <div className="flex items-center gap-1">
                     <svg
                       className="w-6 h-6"
@@ -477,11 +477,11 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* 真ん中の大きい＋ボタン */}
+          {/* 真ん中の＋ボタン（角丸四角） */}
           <button
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
-            className="absolute -top-7 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center shadow-lg border transition-transform active:scale-95"
+            className="absolute -top-7 left-1/2 -translate-x-1/2 w-16 h-16 flex items-center justify-center shadow-lg border transition-transform active:scale-95 rounded-2xl"
             style={{
               backgroundColor: textColor,
               color: bgColor,
@@ -491,12 +491,13 @@ export default function Home() {
             <span className="text-3xl leading-none">+</span>
           </button>
 
-          {/* ＋メニュー */}
+          {/* ＋メニュー（インスタっぽい線アイコンに変更） */}
           {menuOpen && (
             <div
               className="absolute -top-32 left-1/2 -translate-x-1/2 w-60 rounded-2xl shadow-lg border p-3 space-y-2"
               style={{ backgroundColor: bgColor, borderColor }}
             >
+              {/* 新規投稿 */}
               <button
                 className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
                 onClick={() => {
@@ -505,17 +506,56 @@ export default function Home() {
                 }}
               >
                 <span>新規投稿</span>
-                <span>📣</span>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke={textColor}
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                >
+                  {/* インスタっぽい「プラス入り四角」アイコン */}
+                  <rect
+                    x="4"
+                    y="4"
+                    width="16"
+                    height="16"
+                    rx="4"
+                    ry="4"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 8v8M8 12h8"
+                  />
+                </svg>
               </button>
+
+              {/* 売上入力（会計部） */}
               <button
                 className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
                 onClick={() => {
                   setMenuOpen(false);
-                  router.push('/dashboard/accounting');
+                  router.push('/dashboard/accounting/menu'); // ★ 正しい遷移先
                 }}
               >
                 <span>売上入力（会計部）</span>
-                <span>📊</span>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke={textColor}
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                >
+                  {/* インスタ風のシンプルな棒グラフアイコン */}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 19h16"
+                  />
+                  <rect x="6" y="10" width="2.5" height="6" rx="0.5" />
+                  <rect x="10.75" y="7" width="2.5" height="9" rx="0.5" />
+                  <rect x="15.5" y="12" width="2.5" height="4" rx="0.5" />
+                </svg>
               </button>
             </div>
           )}
