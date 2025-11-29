@@ -90,24 +90,27 @@ export default function CreatePostPage() {
         return;
       }
 
-      // ユーザープロフィールが存在するか確認
-      const { data: profile, error: profileError } = await supabase
+      // ユーザープロフィール確認
+      const { data: profile } = await supabase
         .from('user_profiles')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('id', user.id) // user_id → id に変更
         .single();
 
-      // プロフィールが存在しない場合は作成
-      if (profileError || !profile) {
-        console.log('Creating user profile...');
-        const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー';
-        
+      // プロフィールが存在しなければ作成
+      if (!profile) {
+        const displayName =
+          user.user_metadata?.full_name ||
+          user.email?.split('@')[0] ||
+          'ユーザー';
+
         const { error: createProfileError } = await supabase
           .from('user_profiles')
           .insert({
-            user_id: user.id,
+            id: user.id,                // ← user_profiles.id に一致させる
             display_name: displayName,
-            role: 'member'
+            avatar_url: null,
+            bio: null,
           });
 
         if (createProfileError) {
@@ -116,6 +119,7 @@ export default function CreatePostPage() {
           return;
         }
       }
+
 
       // 画像をアップロード
       const imageUrls: string[] = [];
@@ -156,13 +160,10 @@ export default function CreatePostPage() {
       }
 
       alert('投稿しました！');
-      router.push('/');
-    } catch (err: any) {
-      console.error('Unexpected error:', err);
-      setError(`エラー: ${err.message}`);
-    } finally {
-      setPosting(false);
-    }
+
+      // 正しい投稿一覧へ
+      router.push('/dashboard/pr/posts');
+
   };
 
   if (!mounted) {
