@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTheme } from '@/components/ThemeProvider';
 
-export default function DevMenu() {
+export default function MenuManagementPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { theme } = useTheme();
@@ -41,96 +41,30 @@ export default function DevMenu() {
     );
   }
 
-  const menuItems = [
-    {
-      title: 'メニュー管理',
-      description: 'カフェメニューの追加・編集',
-      href: '/dashboard/dev/menu-management',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-        </svg>
-      ),
-      color: isDark ? '#60a5fa' : '#2563eb',
-    },
-    {
-      title: '在庫管理',
-      description: '食材・材料の在庫',
-      href: '/dashboard/dev/inventory',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-        </svg>
-      ),
-      color: isDark ? '#4ade80' : '#16a34a',
-    },
-    {
-      title: 'レシピ管理',
-      description: 'メニューレシピ',
-      href: '/dashboard/dev/recipes',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-        </svg>
-      ),
-      color: isDark ? '#a78bfa' : '#7c3aed',
-    },
-    {
-      title: '売れ筋分析',
-      description: 'メニュー別売上分析',
-      href: '/dashboard/dev/analytics',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-        </svg>
-      ),
-      color: isDark ? '#fb923c' : '#ea580c',
-    },
-  ];
-
   return (
     <div className="min-h-screen pb-16" style={{ backgroundColor: bgColor, color: textColor }}>
       <header className="fixed top-0 left-0 right-0 z-40 border-b" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <Link href="/" className="p-2">
+              <Link href="/dashboard/dev/menu" className="p-2">
                 <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-lg font-semibold">開発部</h1>
+              <h1 className="text-lg font-semibold">メニュー管理</h1>
             </div>
           </div>
         </div>
       </header>
 
       <main className="pt-20 max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-3">
-          {menuItems.map((item, index) => (
-            <Link
-              key={index}
-              href={item.href}
-              className="block p-4 border rounded-2xl transition-all duration-200 hover:shadow-lg"
-              style={{ borderColor }}
-            >
-              <div className="flex items-center gap-4">
-                <div 
-                  className="p-3 rounded-xl"
-                  style={{ backgroundColor: `${item.color}20`, color: item.color }}
-                >
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-base mb-1">{item.title}</h3>
-                  <p className="text-sm" style={{ color: mutedColor }}>{item.description}</p>
-                </div>
-                <svg className="w-5 h-5" fill="none" stroke={mutedColor} viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Link>
-          ))}
+        <div className="border rounded-2xl p-6 text-center" style={{ borderColor }}>
+          <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          <h2 className="text-xl font-semibold mb-2">メニュー管理</h2>
+          <p style={{ color: mutedColor }}>この機能は現在開発中です</p>
         </div>
       </main>
 
