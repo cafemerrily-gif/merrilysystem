@@ -7,29 +7,28 @@ import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTheme } from '@/components/ThemeProvider';
 
-type UserProfile = {
+interface UserProfile {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
-  role?: string | null; // 表示用
-};
+  role?: string | null;
+}
 
 export default function AccountPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { theme, toggleTheme } = useTheme();
 
-  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  // -------------------------
   // 初期ロード
-  // -------------------------
   useEffect(() => {
     setMounted(true);
     loadProfile();
@@ -37,6 +36,8 @@ export default function AccountPage() {
   }, []);
 
   const loadProfile = async () => {
+    setLoading(true);
+
     const {
       data: { user },
       error: userError,
@@ -51,17 +52,15 @@ export default function AccountPage() {
       return;
     }
 
-    // id = auth.uid() で取得
     const { data: profileData, error } = await supabase
       .from('user_profiles')
-      .select('id, display_name, avatar_url, bio')
+      .select('id, display_name, avatar_url, bio, role')
       .eq('id', user.id)
       .maybeSingle();
 
-    // 「行がない」場合だけ新規作成（PGRST116）
+    // 行が存在しないときだけ新規作成（PGRST116）
     if (error) {
       const code = (error as any).code;
-      // 行が存在しない
       if (code === 'PGRST116') {
         const defaultName =
           (user.user_metadata as any)?.full_name ||
@@ -76,7 +75,7 @@ export default function AccountPage() {
             avatar_url: null,
             bio: null,
           })
-          .select('id, display_name, avatar_url, bio')
+          .select('id, display_name, avatar_url, bio, role')
           .single();
 
         if (insertError) {
@@ -91,7 +90,6 @@ export default function AccountPage() {
         setLoading(false);
         return;
       } else {
-        // RLS など別のエラーのとき
         console.error('loadProfile error:', error);
         alert(`プロフィール取得に失敗しました: ${error.message}`);
         setLoading(false);
@@ -99,26 +97,29 @@ export default function AccountPage() {
       }
     }
 
-    // 既存プロフィールあり
     if (profileData) {
       setProfile(profileData as UserProfile);
       setDisplayName(profileData.display_name || '');
+    } else {
+      // ここに来ることはほぼないけどガード
+      alert('プロフィール情報が取得できませんでした');
     }
 
     setLoading(false);
   };
 
-  // -------------------------
-  // 表示名の保存
-  // -------------------------
   const handleSave = async () => {
-    if (!profile) return;
+    if (!profile) {
+      alert('プロフィール情報が読み込まれていません');
+      return;
+    }
 
     setSaving(true);
+
     const { error } = await supabase
       .from('user_profiles')
       .update({ display_name: displayName })
-      .eq('id', profile.id); // id で更新
+      .eq('id', profile.id);
 
     if (error) {
       console.error('save error:', error);
@@ -132,12 +133,13 @@ export default function AccountPage() {
     setSaving(false);
   };
 
-  // -------------------------
-  // アイコン画像の変更
-  // -------------------------
   const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !profile) return;
+    if (!file) return;
+    if (!profile) {
+      alert('プロフィール情報が読み込まれていません');
+      return;
+    }
 
     try {
       setAvatarUploading(true);
@@ -146,9 +148,9 @@ export default function AccountPage() {
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      // avatars バケットにアップロード（同名なら上書き）
+      // Storage にアップロード（avatars バケット）
       const { error: uploadError } = await supabase.storage
-        .from('avatars') // ★ バケット名を使っているものとする
+        .from('avatars') // ←バケット名ここ
         .upload(filePath, file, {
           upsert: true,
         });
@@ -159,10 +161,12 @@ export default function AccountPage() {
         return;
       }
 
+      // 公開URL取得
       const {
         data: { publicUrl },
       } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
+      // プロフィールに保存
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({ avatar_url: publicUrl })
@@ -174,7 +178,11 @@ export default function AccountPage() {
         return;
       }
 
-      await loadProfile();
+      // プレビュー更新（即反映）
+      setProfile((prev) =>
+        prev ? { ...prev, avatar_url: publicUrl } : prev,
+      );
+      alert('アイコンを更新しました');
     } finally {
       setAvatarUploading(false);
     }
@@ -185,9 +193,6 @@ export default function AccountPage() {
     router.push('/login');
   };
 
-  // -------------------------
-  // カラーテーマ
-  // -------------------------
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
@@ -239,9 +244,9 @@ export default function AccountPage() {
         </div>
       </header>
 
-      {/* メインコンテンツ */}
+      {/* メイン */}
       <main className="pt-20 max-w-2xl mx-auto px-4 py-6">
-        {/* プロフィール情報カード */}
+        {/* プロフィールカード */}
         <div
           className="border rounded-2xl overflow-hidden mb-6"
           style={{ borderColor }}
@@ -338,7 +343,7 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* 設定項目カード */}
+        {/* その他設定 */}
         <div
           className="border rounded-2xl overflow-hidden mb-6"
           style={{ borderColor }}
@@ -410,7 +415,7 @@ export default function AccountPage() {
           </Link>
         </div>
 
-        {/* ログアウトボタン */}
+        {/* ログアウト */}
         <button
           onClick={handleLogout}
           className="w-full px-6 py-3 rounded-lg font-semibold transition-all duration-200 border"
@@ -423,14 +428,13 @@ export default function AccountPage() {
         </button>
       </main>
 
-      {/* 下部固定ナビゲーション */}
+      {/* 下部ナビ */}
       <nav
         className="fixed bottom-0 left-0 right-0 border-t z-40"
         style={{ backgroundColor: bgColor, borderColor }}
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-5 h-16">
-            {/* 会計部 */}
             <Link
               href="/dashboard/accounting"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -453,7 +457,6 @@ export default function AccountPage() {
               </span>
             </Link>
 
-            {/* 開発部 */}
             <Link
               href="/dashboard/dev/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -481,7 +484,6 @@ export default function AccountPage() {
               </span>
             </Link>
 
-            {/* 広報部 */}
             <Link
               href="/dashboard/pr/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -504,7 +506,6 @@ export default function AccountPage() {
               </span>
             </Link>
 
-            {/* スタッフ管理 */}
             <Link
               href="/dashboard/staff"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -527,7 +528,6 @@ export default function AccountPage() {
               </span>
             </Link>
 
-            {/* アカウント（アクティブ） */}
             <Link
               href="/account"
               className="flex flex-col items-center justify-center gap-1"
