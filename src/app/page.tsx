@@ -7,25 +7,168 @@ import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTheme } from '@/components/ThemeProvider';
 
+type Post = {
+  id: string;
+  user_id: string;
+  content: string;
+  images: string[] | null;
+  created_at: string;
+  user_profile: {
+    display_name: string;
+    avatar_url: string | null;
+  } | null;
+  likes_count: number;
+  comments_count: number;
+  is_liked: boolean;
+};
+
+type UserProfile = {
+  role: string;
+};
+
 export default function Home() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     checkUser();
+    loadPosts();
   }, []);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    setLoading(false);
     
     if (!user) {
       router.push('/login');
+      return;
     }
+
+    setCurrentUserId(user.id);
+
+    // ユーザープロフィールを取得（管理者権限確認）
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    setUserProfile(profile);
+    setLoading(false);
+  };
+
+  const loadPosts = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // 投稿を取得
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          user_profiles!inner(display_name, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (postsError) {
+        console.error('Error loading posts:', postsError);
+        return;
+      }
+
+      // いいね数を取得
+      const postIds = postsData?.map(p => p.id) || [];
+      const { data: likesData } = await supabase
+        .from('post_likes')
+        .select('post_id, user_id')
+        .in('post_id', postIds);
+
+      // コメント数を取得
+      const { data: commentsData } = await supabase
+        .from('post_comments')
+        .select('post_id')
+        .in('post_id', postIds);
+
+      // データを整形
+      const formattedPosts: Post[] = (postsData || []).map(post => {
+        const likes = likesData?.filter(l => l.post_id === post.id) || [];
+        const comments = commentsData?.filter(c => c.post_id === post.id) || [];
+        
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          content: post.content,
+          images: post.images,
+          created_at: post.created_at,
+          user_profile: post.user_profiles,
+          likes_count: likes.length,
+          comments_count: comments.length,
+          is_liked: user ? likes.some(l => l.user_id === user.id) : false,
+        };
+      });
+
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!currentUserId) return;
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    if (post.is_liked) {
+      await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', currentUserId);
+
+      setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, is_liked: false, likes_count: p.likes_count - 1 }
+          : p
+      ));
+    } else {
+      await supabase
+        .from('post_likes')
+        .insert({ post_id: postId, user_id: currentUserId });
+
+      setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, is_liked: true, likes_count: p.likes_count + 1 }
+          : p
+      ));
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'たった今';
+    if (minutes < 60) return `${minutes}分前`;
+    if (hours < 24) return `${hours}時間前`;
+    if (days < 7) return `${days}日前`;
+    return date.toLocaleDateString('ja-JP');
   };
 
   const isDark = theme === 'dark';
@@ -34,6 +177,8 @@ export default function Home() {
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const mutedColor = isDark ? '#a8a8a8' : '#737373';
   const appIconUrl = isDark ? '/white.png' : '/black.png';
+
+  const isAdmin = userProfile?.role === 'admin';
 
   if (!mounted || loading) {
     return (
@@ -55,46 +200,164 @@ export default function Home() {
               </div>
               <span className="text-xl font-bold" style={{ color: textColor }}>MERRILY</span>
             </Link>
+
+            {/* ハンバーガーメニューボタン */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2"
+              aria-label="メニュー"
+            >
+              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* メインコンテンツ */}
-      <main className="pt-16 max-w-2xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="mb-8">
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: isDark ? '#262626' : '#f0f0f0' }}>
-              <Image src={appIconUrl} width={64} height={64} alt="MERRILY" className="object-contain" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2">MERRILY へようこそ</h1>
-            <p style={{ color: mutedColor }}>下部のメニューから各機能にアクセスできます</p>
+      {/* ハンバーガーメニュー */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-50"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className="absolute top-16 right-4 w-64 rounded-lg shadow-lg border overflow-hidden"
+            style={{ backgroundColor: bgColor, borderColor }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isAdmin && (
+              <Link
+                href="/admin/members"
+                className="flex items-center gap-3 px-4 py-3 border-b transition-opacity hover:opacity-70"
+                style={{ borderColor }}
+                onClick={() => setMenuOpen(false)}
+              >
+                <svg className="w-5 h-5" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+                <span style={{ color: textColor }}>メンバー管理</span>
+              </Link>
+            )}
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 w-full text-left transition-opacity hover:opacity-70"
+            >
+              <svg className="w-5 h-5" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+              <span style={{ color: textColor }}>ログアウト</span>
+            </button>
           </div>
         </div>
+      )}
+
+      {/* メインコンテンツ（投稿フィード） */}
+      <main className="pt-16 max-w-2xl mx-auto px-0 md:px-4 py-0 md:py-6">
+        {posts.length === 0 ? (
+          <div className="text-center py-12 px-4">
+            <p style={{ color: mutedColor }} className="mb-4">まだ投稿がありません</p>
+            <Link
+              href="/post/create"
+              className="inline-block px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+              style={{
+                backgroundColor: isDark ? '#ffffff' : '#000000',
+                color: isDark ? '#000000' : '#ffffff',
+              }}
+            >
+              最初の投稿を作成
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-0 md:space-y-6">
+            {posts.map((post) => (
+              <div key={post.id} className="border-b md:rounded-2xl md:border overflow-hidden" style={{ backgroundColor: bgColor, borderColor }}>
+                {/* 投稿ヘッダー */}
+                <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor }}>
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#262626' : '#efefef' }}>
+                    {post.user_profile?.avatar_url ? (
+                      <Image src={post.user_profile.avatar_url} alt={post.user_profile.display_name} fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{post.user_profile?.display_name || 'ユーザー'}</p>
+                    <p className="text-xs" style={{ color: mutedColor }}>{formatDate(post.created_at)}</p>
+                  </div>
+                </div>
+
+                {/* 投稿内容 */}
+                {post.content && (
+                  <div className="px-4 py-3">
+                    <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+                  </div>
+                )}
+
+                {/* 画像（スライド対応） */}
+                {post.images && post.images.length > 0 && (
+                  <ImageSlider images={post.images} isDark={isDark} />
+                )}
+
+                {/* アクション */}
+                <div className="px-4 py-3 flex items-center gap-4 border-t" style={{ borderColor }}>
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className="flex items-center gap-2 transition-all duration-200"
+                  >
+                    <svg 
+                      className="w-6 h-6" 
+                      fill={post.is_liked ? '#ff3b30' : 'none'} 
+                      stroke={post.is_liked ? '#ff3b30' : textColor} 
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">{post.likes_count}</span>
+                  </button>
+
+                  <button className="flex items-center gap-2">
+                    <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="text-sm font-medium">{post.comments_count}</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
 
-      {/* 下部固定ナビゲーションバー（ダッシュボードメニュー） */}
+      {/* 下部固定ナビゲーションバー */}
       <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-5 h-16">
             
-            {/* 会計部 */}
+            {/* 会計部 - グラフアイコン */}
             <Link
               href="/dashboard/accounting"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
               </svg>
               <span className="text-xs" style={{ color: textColor }}>会計部</span>
             </Link>
 
-            {/* 開発部 */}
+            {/* 開発部 - コードアイコン */}
             <Link
               href="/dashboard/dev/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
               </svg>
               <span className="text-xs" style={{ color: textColor }}>開発部</span>
             </Link>
@@ -135,6 +398,105 @@ export default function Home() {
           </div>
         </div>
       </nav>
+    </div>
+  );
+}
+
+// 画像スライダーコンポーネント
+function ImageSlider({ images, isDark }: { images: string[], isDark: boolean }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const goToPrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  if (images.length === 1) {
+    return (
+      <div className="relative w-full bg-black" style={{ 
+        backgroundColor: isDark ? '#262626' : '#efefef',
+        minHeight: '300px',
+        maxHeight: '600px'
+      }}>
+        <Image
+          src={images[0]}
+          alt="投稿画像"
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, 600px"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div className="relative w-full overflow-hidden" style={{ 
+        backgroundColor: isDark ? '#262626' : '#efefef',
+        aspectRatio: '1',
+      }}>
+        <div 
+          className="flex transition-transform duration-300 ease-out h-full"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {images.map((imageUrl, idx) => (
+            <div key={idx} className="min-w-full h-full relative">
+              <Image
+                src={imageUrl}
+                alt={`投稿画像 ${idx + 1}`}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 600px"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* 前へボタン */}
+        {currentIndex > 0 && (
+          <button
+            onClick={goToPrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* 次へボタン */}
+        {currentIndex < images.length - 1 && (
+          <button
+            onClick={goToNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* インジケーター */}
+      <div className="flex justify-center gap-1 py-2">
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className="w-1.5 h-1.5 rounded-full transition-all"
+            style={{
+              backgroundColor: idx === currentIndex 
+                ? (isDark ? '#ffffff' : '#000000')
+                : (isDark ? '#555555' : '#cccccc')
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

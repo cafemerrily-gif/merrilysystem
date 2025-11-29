@@ -1,209 +1,175 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useTheme } from '@/components/ThemeProvider';
 
-export default function PRMenuPage() {
-  const [isDark, setIsDark] = useState(false);
+export default function PRMenu() {
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  const { theme } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const stored = window.localStorage.getItem('ui-is-dark');
-    
-    const currentIsDark = isMobile ? media.matches : (stored === 'true' ? true : stored === 'false' ? false : media.matches);
-    setIsDark(currentIsDark);
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      const isMob = window.matchMedia('(max-width: 768px)').matches;
-      const str = window.localStorage.getItem('ui-is-dark');
-      if (isMob || str === null) {
-        setIsDark(e.matches);
-      }
-    };
-    
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
+    setMounted(true);
+    checkUser();
   }, []);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    document.documentElement.classList.toggle('dark', isDark);
-    document.body.style.backgroundColor = isDark ? '#000000' : '#ffffff';
-    document.body.style.color = isDark ? '#ffffff' : '#000000';
-  }, [isDark]);
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setLoading(false);
+  };
 
+  const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const mutedColor = isDark ? '#a8a8a8' : '#737373';
-  const cardBg = isDark ? '#000000' : '#ffffff';
 
-  const implementedFeatures = [
-    {
-      title: 'ホームページ編集',
-      description: 'メインページのコンテンツを編集',
-      href: '/dashboard/pr/website',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-    },
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor }}>
+        <p style={{ color: mutedColor }}>読み込み中...</p>
+      </div>
+    );
+  }
+
+  const menuItems = [
     {
       title: '投稿管理',
-      description: '投稿の作成・編集・削除',
+      description: 'SNS投稿の管理',
       href: '/dashboard/pr/posts',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
         </svg>
       ),
-    },
-  ];
-
-  const comingSoonFeatures = [
-    {
-      title: 'SNS連携',
-      description: 'ソーシャルメディアとの連携',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-        </svg>
-      ),
+      color: isDark ? '#ec4899' : '#db2777',
     },
     {
-      title: 'アクセス解析',
-      description: 'サイト訪問者の分析',
+      title: '新規投稿',
+      description: '新しい投稿を作成',
+      href: '/post/create',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       ),
+      color: isDark ? '#4ade80' : '#16a34a',
     },
     {
-      title: 'メディアライブラリ',
-      description: '画像・動画の管理',
+      title: 'スケジュール',
+      description: '投稿スケジュール管理',
+      href: '/dashboard/pr/schedule',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
         </svg>
       ),
+      color: isDark ? '#60a5fa' : '#2563eb',
     },
     {
-      title: 'ニュースレター',
-      description: 'メール配信の管理',
+      title: 'アナリティクス',
+      description: '投稿パフォーマンス分析',
+      href: '/dashboard/pr/analytics',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
         </svg>
       ),
+      color: isDark ? '#a78bfa' : '#7c3aed',
     },
-  ];
-
-  const stats = [
-    { label: '公開投稿', value: '12' },
-    { label: '下書き', value: '3' },
-    { label: '今月の訪問者', value: '1,234' },
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* ヘッダー */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">広報部メニュー</h1>
-            <p className="text-sm mt-1" style={{ color: mutedColor }}>
-              Webサイトと投稿の管理
-            </p>
+    <div className="min-h-screen pb-16" style={{ backgroundColor: bgColor, color: textColor }}>
+      <header className="fixed top-0 left-0 right-0 z-40 border-b" style={{ backgroundColor: bgColor, borderColor }}>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="p-2">
+                <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <h1 className="text-lg font-semibold">広報部</h1>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* 統計カード */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="border rounded-2xl p-6"
-              style={{ backgroundColor: cardBg, borderColor }}
+      <main className="pt-16 max-w-2xl mx-auto px-4 py-6">
+        <div className="space-y-3">
+          {menuItems.map((item, index) => (
+            <Link
+              key={index}
+              href={item.href}
+              className="block p-4 border rounded-2xl transition-all duration-200 hover:shadow-lg"
+              style={{ borderColor }}
             >
-              <p className="text-sm" style={{ color: mutedColor }}>
-                {stat.label}
-              </p>
-              <p className="text-3xl font-bold mt-2">{stat.value}</p>
-            </div>
+              <div className="flex items-center gap-4">
+                <div 
+                  className="p-3 rounded-xl"
+                  style={{ backgroundColor: `${item.color}20`, color: item.color }}
+                >
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-base mb-1">{item.title}</h3>
+                  <p className="text-sm" style={{ color: mutedColor }}>{item.description}</p>
+                </div>
+                <svg className="w-5 h-5" fill="none" stroke={mutedColor} viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
           ))}
         </div>
+      </main>
 
-        {/* 実装済み機能 */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">機能</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {implementedFeatures.map((feature) => (
-              <Link
-                key={feature.title}
-                href={feature.href}
-                className="border rounded-2xl p-6 transition-all duration-200 hover:scale-[1.02]"
-                style={{ backgroundColor: cardBg, borderColor }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="shrink-0">{feature.icon}</div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold mb-1">{feature.title}</h3>
-                    <p className="text-sm" style={{ color: mutedColor }}>
-                      {feature.description}
-                    </p>
-                  </div>
-                  <svg
-                    className="w-5 h-5 shrink-0"
-                    fill="none"
-                    stroke={mutedColor}
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </Link>
-            ))}
+      <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={{ backgroundColor: bgColor, borderColor }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-5 h-16">
+            <Link href="/dashboard/accounting" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
+              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
+              <span className="text-xs" style={{ color: textColor }}>会計部</span>
+            </Link>
+            <Link href="/dashboard/dev/menu" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
+              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <span className="text-xs" style={{ color: textColor }}>開発部</span>
+            </Link>
+            <Link href="/dashboard/pr/menu" className="flex flex-col items-center justify-center gap-1">
+              <svg className="w-6 h-6" fill={textColor} stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
+              </svg>
+              <span className="text-xs font-semibold" style={{ color: textColor }}>広報部</span>
+            </Link>
+            <Link href="/dashboard/staff" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
+              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+              </svg>
+              <span className="text-xs" style={{ color: textColor }}>スタッフ</span>
+            </Link>
+            <Link href="/account" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
+              <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-xs" style={{ color: textColor }}>設定</span>
+            </Link>
           </div>
         </div>
-
-        {/* 準備中の機能 */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">準備中</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {comingSoonFeatures.map((feature) => (
-              <div
-                key={feature.title}
-                className="border rounded-2xl p-6"
-                style={{
-                  backgroundColor: cardBg,
-                  borderColor,
-                  borderStyle: 'dashed',
-                  opacity: 0.5,
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="shrink-0">{feature.icon}</div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold mb-1">{feature.title}</h3>
-                    <p className="text-sm" style={{ color: mutedColor }}>
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </nav>
     </div>
   );
 }
