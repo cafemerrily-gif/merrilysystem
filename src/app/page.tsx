@@ -258,9 +258,66 @@ export default function Home() {
       </header>
 
       {/* -------------------------
+          ヘッダー直下のタブナビ
+          （投稿 / 進捗 / メニュー / グラフ）
+      ------------------------- */}
+      <nav
+        className="fixed top-16 left-0 right-0 z-30 border-b"
+        style={{ backgroundColor: bgColor, borderColor }}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex">
+            {/* 投稿（現在の画面） */}
+            <button
+              className="flex-1 py-2 text-center text-sm font-semibold border-b-2"
+              style={{
+                borderColor: textColor,
+                color: textColor,
+              }}
+            >
+              投稿
+            </button>
+
+            {/* 進捗 */}
+            <button
+              className="flex-1 py-2 text-center text-sm"
+              style={{
+                color: mutedColor,
+                borderColor: 'transparent',
+              }}
+            >
+              進捗
+            </button>
+
+            {/* メニュー */}
+            <button
+              className="flex-1 py-2 text-center text-sm"
+              style={{
+                color: mutedColor,
+                borderColor: 'transparent',
+              }}
+            >
+              メニュー
+            </button>
+
+            {/* グラフ */}
+            <button
+              className="flex-1 py-2 text-center text-sm"
+              style={{
+                color: mutedColor,
+                borderColor: 'transparent',
+              }}
+            >
+              グラフ
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* -------------------------
           投稿一覧
       ------------------------- */}
-      <main className="pt-20 max-w-2xl mx-auto">
+      <main className="pt-28 max-w-2xl mx-auto">
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <p style={{ color: mutedColor }}>まだ投稿がありません</p>
@@ -402,10 +459,10 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 開発部 */}
+            {/* 開発部（＋から少し下げる） */}
             <Link
               href="/dashboard/dev/menu"
-              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
+              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70 pt-3"
             >
               <svg
                 className="w-6 h-6"
@@ -430,10 +487,10 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 広報部 */}
+            {/* 広報部（＋から少し下げる） */}
             <Link
               href="/dashboard/pr/menu"
-              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
+              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70 pt-3"
             >
               <svg
                 className="w-6 h-6"
@@ -477,7 +534,7 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* 真ん中の＋ボタン（角丸四角） */}
+          {/* 真ん中の＋ボタン（角丸四角＆中の＋を大きく） */}
           <button
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
@@ -488,10 +545,10 @@ export default function Home() {
               borderColor,
             }}
           >
-            <span className="text-3xl leading-none">+</span>
+            <span className="text-4xl leading-none">+</span>
           </button>
 
-          {/* ＋メニュー（インスタっぽい線アイコンに変更） */}
+          {/* ＋メニュー */}
           {menuOpen && (
             <div
               className="absolute -top-32 left-1/2 -translate-x-1/2 w-60 rounded-2xl shadow-lg border p-3 space-y-2"
@@ -513,7 +570,7 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                 >
-                  {/* インスタっぽい「プラス入り四角」アイコン */}
+                  {/* プラス入り四角 */}
                   <rect
                     x="4"
                     y="4"
@@ -535,7 +592,7 @@ export default function Home() {
                 className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
                 onClick={() => {
                   setMenuOpen(false);
-                  router.push('/dashboard/accounting/menu'); // ★ 正しい遷移先
+                  router.push('/dashboard/accounting/menu');
                 }}
               >
                 <span>売上入力（会計部）</span>
@@ -546,7 +603,7 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                 >
-                  {/* インスタ風のシンプルな棒グラフアイコン */}
+                  {/* 棒グラフ */}
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
