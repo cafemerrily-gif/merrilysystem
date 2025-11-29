@@ -5,19 +5,12 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 
-interface UserProfile {
-  display_name: string;
-  avatar_url: string | null;
-}
-
 interface Post {
   id: string;
   user_id: string;
   content: string;
   images: string[] | null;
   created_at: string;
-  // ← 配列として定義
-  user_profiles?: UserProfile[] | null;
 }
 
 export default function PostsManagementPage() {
@@ -82,18 +75,10 @@ export default function PostsManagementPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(`
-          id,
-          user_id,
-          content,
-          images,
-          created_at,
-          user_profiles (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select<'*', Post>('*')
         .order('created_at', { ascending: false });
+
+      console.log('LOAD POSTS data:', data, 'error:', error);
 
       if (error) {
         console.error('Error loading posts:', error);
@@ -101,8 +86,7 @@ export default function PostsManagementPage() {
         return;
       }
 
-      // TypeScript がうるさいので unknown を噛ませてキャスト
-      setPosts(((data || []) as unknown) as Post[]);
+      setPosts(data || []);
     } finally {
       setLoading(false);
     }
@@ -185,108 +169,93 @@ export default function PostsManagementPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => {
-              // リレーション結果は配列なので、先頭だけ使う
-              const profile = post.user_profiles?.[0] ?? null;
-
-              return (
+            {posts.map((post) => (
+              <div
+                key={post.id}
+                className="border rounded-2xl overflow-hidden"
+                style={{ backgroundColor: cardBg, borderColor }}
+              >
+                {/* 投稿ヘッダー */}
                 <div
-                  key={post.id}
-                  className="border rounded-2xl overflow-hidden"
-                  style={{ backgroundColor: cardBg, borderColor }}
+                  className="flex items-center gap-3 p-4 border-b"
+                  style={{ borderColor }}
                 >
-                  {/* 投稿ヘッダー */}
                   <div
-                    className="flex items-center gap-3 p-4 border-b"
-                    style={{ borderColor }}
+                    className="relative w-10 h-10 rounded-full overflow-hidden"
+                    style={{
+                      backgroundColor: isDark ? '#262626' : '#efefef',
+                    }}
                   >
-                    <div
-                      className="relative w-10 h-10 rounded-full overflow-hidden"
-                      style={{
-                        backgroundColor: isDark ? '#262626' : '#efefef',
-                      }}
+                    {/* いまはプレースホルダーアイコンだけ */}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke={mutedColor}
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">ユーザー</p>
+                    <p className="text-xs" style={{ color: mutedColor }}>
+                      {new Date(post.created_at).toLocaleDateString('ja-JP')}
+                    </p>
+                  </div>
+                  {post.user_id === currentUserId && (
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
+                      style={{ backgroundColor: '#ff3b30', color: '#ffffff' }}
                     >
-                      {profile?.avatar_url ? (
+                      削除
+                    </button>
+                  )}
+                </div>
+
+                {/* 投稿内容 */}
+                <div className="p-4">
+                  <p className="text-sm whitespace-pre-wrap">
+                    {post.content}
+                  </p>
+                </div>
+
+                {/* 画像 */}
+                {post.images && post.images.length > 0 && (
+                  <div
+                    className={
+                      post.images.length === 1
+                        ? 'px-4 pb-4'
+                        : 'grid grid-cols-2 gap-1 px-4 pb-4'
+                    }
+                  >
+                    {post.images.map((imageUrl, idx) => (
+                      <div
+                        key={idx}
+                        className="relative w-full aspect-square rounded-lg overflow-hidden"
+                        style={{
+                          backgroundColor: isDark ? '#262626' : '#efefef',
+                        }}
+                      >
                         <Image
-                          src={profile.avatar_url}
-                          alt={profile.display_name}
+                          src={imageUrl}
+                          alt={`投稿画像 ${idx + 1}`}
                           fill
                           className="object-cover"
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke={mutedColor}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">
-                        {profile?.display_name || 'ユーザー'}
-                      </p>
-                      <p className="text-xs" style={{ color: mutedColor }}>
-                        {new Date(post.created_at).toLocaleDateString('ja-JP')}
-                      </p>
-                    </div>
-                    {post.user_id === currentUserId && (
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
-                        style={{ backgroundColor: '#ff3b30', color: '#ffffff' }}
-                      >
-                        削除
-                      </button>
-                    )}
+                      </div>
+                    ))}
                   </div>
-
-                  {/* 投稿内容 */}
-                  <div className="p-4">
-                    <p className="text-sm whitespace-pre-wrap">
-                      {post.content}
-                    </p>
-                  </div>
-
-                  {/* 画像 */}
-                  {post.images && post.images.length > 0 && (
-                    <div
-                      className={
-                        post.images.length === 1
-                          ? 'px-4 pb-4'
-                          : 'grid grid-cols-2 gap-1 px-4 pb-4'
-                      }
-                    >
-                      {post.images.map((imageUrl, idx) => (
-                        <div
-                          key={idx}
-                          className="relative w-full aspect-square rounded-lg overflow-hidden"
-                          style={{
-                            backgroundColor: isDark ? '#262626' : '#efefef',
-                          }}
-                        >
-                          <Image
-                            src={imageUrl}
-                            alt={`投稿画像 ${idx + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
