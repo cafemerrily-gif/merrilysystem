@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     let query = supabaseAdmin
       .from('product_collections')
-      .select(includeProducts ? `
-        *,
-        products(id, name, cost_price, selling_price, image_url)
-      ` : '*')
+      .select('*')
       .is('deleted_at', null)
       .order('id', { ascending: true });
 
@@ -33,13 +30,35 @@ export async function GET(request: NextRequest) {
         .gte('end_date', today);
     }
 
-    const { data, error } = await query;
+    const { data: collections, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data || []);
+    // 商品を含める場合は別クエリで取得
+    if (includeProducts && collections && collections.length > 0) {
+      const collectionIds = collections.map(c => c.id);
+      const { data: products, error: productError } = await supabaseAdmin
+        .from('products')
+        .select('id, name, cost_price, selling_price, image_url, collection_id')
+        .in('collection_id', collectionIds)
+        .is('deleted_at', null);
+
+      if (productError) {
+        return NextResponse.json({ error: productError.message }, { status: 500 });
+      }
+
+      // フォルダに商品を紐付け
+      const result = collections.map(collection => ({
+        ...collection,
+        products: (products || []).filter(p => p.collection_id === collection.id)
+      }));
+
+      return NextResponse.json(result);
+    }
+
+    return NextResponse.json(collections || []);
   } catch (error) {
     return NextResponse.json({ error: '商品フォルダの取得に失敗しました' }, { status: 500 });
   }
