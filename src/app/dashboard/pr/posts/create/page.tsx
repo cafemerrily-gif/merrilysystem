@@ -1,366 +1,273 @@
 'use client';
 
-import { useState, useEffect, ChangeEvent } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useTheme } from '@/components/ThemeProvider';
 
-export default function CreatePostPage() {
+export default function PostCreatePage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [posting, setPosting] = useState(false);
+  const { theme } = useTheme();
+
   const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // テーマを安全に検出
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
-      const checkDark = () =>
-        document.documentElement.classList.contains('dark') ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-      setIsDark(checkDark());
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-      const observer = new MutationObserver(() => {
-        setIsDark(document.documentElement.classList.contains('dark'));
-      });
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-
-      const media = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
-      media.addEventListener('change', handleChange);
-
-      return () => {
-        observer.disconnect();
-        media.removeEventListener('change', handleChange);
-      };
-    }
-  }, []);
-
+  const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
   const mutedColor = isDark ? '#a8a8a8' : '#737373';
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length + images.length > 10) {
-      alert('画像は最大10枚までです');
-      return;
-    }
-
-    setImages((prev) => [...prev, ...files]);
-
-    const newPreviews = files.map(
-      (file) =>
-        new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        }),
-    );
-
-    Promise.all(newPreviews).then((previews) => {
-      setImagePreviews((prev) => [...prev, ...previews]);
-    });
-  };
-
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handlePost = async () => {
-    if (!content.trim()) {
-      alert('投稿内容を入力してください');
-      return;
-    }
-
-    try {
-      setPosting(true);
-      setError(null);
-
+  // ログインチェック
+  useEffect(() => {
+    setMounted(true);
+    const init = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        alert('ログインが必要です');
         router.push('/login');
         return;
       }
 
-      // ------- ここからプロフィール確認・作成（テーブル構造に合わせて修正） -------
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id', user.id) // user_id ではなく id で紐付け
-        .single();
+      setCurrentUserId(user.id);
+      setLoading(false);
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      if (profileError) {
-        // 「行がありません」のエラーも出るのでログだけ
-        console.log('Profile load error (may be not found):', profileError);
-      }
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length === 0) return;
 
-      if (!profile) {
-        console.log('Creating user profile...');
-        const displayName =
-          user.user_metadata?.full_name ||
-          user.email?.split('@')[0] ||
-          'ユーザー';
+    const allFiles = [...files, ...newFiles];
+    setFiles(allFiles);
 
-        const { error: createProfileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: user.id, // auth.users.id をそのまま使う
-            display_name: displayName,
-            avatar_url: null,
-            bio: null,
-          });
+    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...newPreviews]);
+  };
 
-        if (createProfileError) {
-          console.error('Error creating profile:', createProfileError);
-          setError(`プロフィール作成エラー: ${createProfileError.message}`);
-          return;
-        }
-      }
-      // ------------------ プロフィール処理ここまで ------------------
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!currentUserId) {
+      alert('ログイン情報を取得できませんでした');
+      return;
+    }
+    if (!title.trim() && !content.trim() && files.length === 0) {
+      alert('タイトル・本文・画像のいずれかは入力してください');
+      return;
+    }
 
-      // 画像アップロード
+    setSubmitting(true);
+
+    try {
+      // 1. 画像を Storage にアップロード
       const imageUrls: string[] = [];
 
-      for (const image of images) {
-        const fileExt = image.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}-${Math.random()
+      for (const file of files) {
+        const ext = file.name.split('.').pop();
+        const fileName = `${currentUserId}-${Date.now()}-${Math.random()
           .toString(36)
-          .slice(2)}.${fileExt}`;
+          .slice(2)}.${ext}`;
+        const filePath = fileName;
 
-        console.log("UPLOADING:", fileName);
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('post-images')
-          .upload(fileName, image);
+          .upload(filePath, file);
 
         if (uploadError) {
-          console.error("UPLOAD ERROR:", uploadError);
-          alert("画像アップロードに失敗しました: " + uploadError.message);
-          continue;
+          console.error('image upload error:', uploadError);
+          alert('画像のアップロードに失敗しました');
+          setSubmitting(false);
+          return;
         }
 
-        console.log("UPLOAD SUCCESS:", uploadData);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('post-images').getPublicUrl(filePath);
 
-        // URL を取得
-        const { data: urlData } = supabase.storage
-          .from('post-images')
-          .getPublicUrl(fileName);
-
-        console.log("PUBLIC URL:", urlData);
-
-        if (!urlData?.publicUrl) {
-          console.error("PUBLIC URL ERROR:", urlData);
-          alert("画像URL取得に失敗しました");
-          continue;
-        }
-
-        imageUrls.push(urlData.publicUrl);
+        imageUrls.push(publicUrl);
       }
 
-      console.log("FINAL imageUrls:", imageUrls);
-
-      // 投稿を作成
+      // 2. posts テーブルに INSERT（ここで user_id を保存）
       const { error: insertError } = await supabase.from('posts').insert({
-        user_id: user.id,
+        user_id: currentUserId, // ★ ユーザーごとに保存する肝
+        title: title.trim() || null,
         content: content.trim(),
         images: imageUrls.length > 0 ? imageUrls : null,
       });
 
       if (insertError) {
-        console.error('Error creating post:', insertError);
-        setError(`投稿エラー: ${insertError.message}`);
+        console.error('insert post error:', insertError);
+        alert('投稿の保存に失敗しました');
+        setSubmitting(false);
         return;
       }
 
-      alert('投稿しました！');
-
-      // 投稿一覧ページへ遷移
-      router.push('/dashboard/pr/posts');
-    } catch (err: any) {
-      console.error('Unexpected error:', err);
-      setError(`エラー: ${err.message}`);
+      alert('投稿しました');
+      router.push('/dashboard/pr/posts'); // 投稿管理画面へ戻るなど
     } finally {
-      setPosting(false);
+      setSubmitting(false);
     }
   };
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
         style={{ backgroundColor: bgColor }}
       >
-        <div
-          className="animate-spin rounded-full h-8 w-8 border-b-2"
-          style={{ borderColor: textColor }}
-        ></div>
+        <p style={{ color: mutedColor }}>読み込み中...</p>
       </div>
     );
   }
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen pb-16"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* ヘッダー */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => router.back()}
-            className="p-2 rounded-lg transition-all duration-200"
-            style={{ color: textColor }}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold">新規投稿</h1>
-          <button
-            onClick={handlePost}
-            disabled={posting || !content.trim()}
-            className="px-4 py-2 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50"
-            style={{
-              backgroundColor: isDark ? '#ffffff' : '#000000',
-              color: isDark ? '#000000' : '#ffffff',
-            }}
-          >
-            {posting ? '投稿中...' : '投稿'}
-          </button>
-        </div>
-
-        {/* エラー表示 */}
-        {error && (
-          <div className="mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* 投稿フォーム */}
-        <div className="space-y-4">
-          {/* テキスト入力 */}
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="今何してる？"
-            rows={8}
-            className="w-full px-4 py-3 rounded-lg border outline-none resize-none transition-all duration-200"
-            style={{
-              backgroundColor: bgColor,
-              borderColor,
-              color: textColor,
-            }}
-            maxLength={2000}
-          />
-          <p
-            className="text-xs text-right"
-            style={{ color: mutedColor }}
-          >
-            {content.length} / 2000文字
-          </p>
-
-          {/* 画像プレビュー */}
-          {imagePreviews.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
-              {imagePreviews.map((preview, index) => (
-                <div
-                  key={index}
-                  className="relative aspect-square rounded-lg overflow-hidden"
-                  style={{
-                    backgroundColor: isDark ? '#262626' : '#efefef',
-                  }}
+      {/* ヘッダー */}
+      <header
+        className="fixed top-0 left-0 right-0 z-40 border-b"
+        style={{ backgroundColor: bgColor, borderColor }}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <Link href="/dashboard/pr/posts" className="p-2">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke={textColor}
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
                 >
-                  <Image
-                    src={preview}
-                    alt={`Preview ${index + 1}`}
-                    fill
-                    className="object-cover"
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 19l-7-7 7-7"
                   />
-                  <button
-                    onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 p-1 rounded-full transition-all duration-200"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="#ffffff"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+                </svg>
+              </Link>
+              <h1 className="text-lg font-semibold">新規投稿</h1>
             </div>
-          )}
+          </div>
+        </div>
+      </header>
 
-          {/* 画像追加ボタン */}
-          {images.length < 10 && (
+      {/* フォーム本体 */}
+      <main className="pt-20 max-w-2xl mx-auto px-4 py-6">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* タイトル */}
+          <div>
+            <label className="block text-sm font-medium mb-1">タイトル</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border"
+              style={{
+                backgroundColor: bgColor,
+                color: textColor,
+                borderColor,
+              }}
+              placeholder="タイトルを入力"
+            />
+          </div>
+
+          {/* 画像 */}
+          <div>
+            <label className="block text-sm font-medium mb-1">画像</label>
             <label
-              className="flex items-center justify-center gap-2 py-3 rounded-lg border cursor-pointer transition-all duration-200"
+              className="flex flex-col items-center justify-center w-full px-4 py-6 border-2 border-dashed rounded-xl cursor-pointer"
               style={{ borderColor }}
             >
               <svg
-                className="w-5 h-5"
+                className="w-8 h-8 mb-2"
                 fill="none"
-                stroke={textColor}
+                stroke={mutedColor}
                 viewBox="0 0 24 24"
+                strokeWidth={1.5}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 9.75L12 5.25m0 0L7.5 9.75M12 5.25V15"
                 />
               </svg>
-              <span className="text-sm font-medium">画像を追加</span>
+              <span className="text-sm" style={{ color: mutedColor }}>
+                画像を選択（複数可）
+              </span>
               <input
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={handleImageChange}
                 className="hidden"
+                onChange={handleFileChange}
               />
             </label>
-          )}
 
-          <p className="text-xs" style={{ color: mutedColor }}>
-            画像は最大10枚まで添付できます
-          </p>
-        </div>
-      </div>
+            {previewUrls.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {previewUrls.map((url, i) => (
+                  <div key={i} className="relative w-full aspect-square">
+                    <Image
+                      src={url}
+                      alt={`preview-${i}`}
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 本文 */}
+          <div>
+            <label className="block text-sm font-medium mb-1">本文</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border min-h-[120px]"
+              style={{
+                backgroundColor: bgColor,
+                color: textColor,
+                borderColor,
+              }}
+              placeholder="本文を入力"
+            />
+          </div>
+
+          {/* 送信ボタン */}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+            style={{
+              backgroundColor: isDark ? '#ffffff' : '#000000',
+              color: isDark ? '#000000' : '#ffffff',
+              opacity: submitting ? 0.5 : 1,
+            }}
+          >
+            {submitting ? '投稿中...' : '投稿する'}
+          </button>
+        </form>
+      </main>
     </div>
   );
 }
