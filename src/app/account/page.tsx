@@ -52,59 +52,55 @@ export default function AccountPage() {
       return;
     }
 
+    // 1回プロフィールを取りに行く
     const { data: profileData, error } = await supabase
       .from('user_profiles')
       .select('id, display_name, avatar_url, bio, role')
       .eq('id', user.id)
       .maybeSingle();
 
-    // 行が存在しないときだけ新規作成（PGRST116）
+    // RLS などで本当にエラーのとき
     if (error) {
-      const code = (error as any).code;
-      if (code === 'PGRST116') {
-        const defaultName =
-          (user.user_metadata as any)?.full_name ||
-          user.email?.split('@')[0] ||
-          'ユーザー';
+      console.error('loadProfile error:', error);
+      alert(`プロフィール取得に失敗しました: ${error.message}`);
+      setLoading(false);
+      return;
+    }
 
-        const { data: newProfile, error: insertError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: user.id,
-            display_name: defaultName,
-            avatar_url: null,
-            bio: null,
-          })
-          .select('id, display_name, avatar_url, bio, role')
-          .single();
+    // 行が存在しない場合 → ここで新規作成
+    if (!profileData) {
+      const defaultName =
+        (user.user_metadata as any)?.full_name ||
+        user.email?.split('@')[0] ||
+        'ユーザー';
 
-        if (insertError) {
-          console.error('create profile error:', insertError);
-          alert(`プロフィール作成に失敗しました: ${insertError.message}`);
-          setLoading(false);
-          return;
-        }
+      const { data: newProfile, error: insertError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: user.id,
+          display_name: defaultName,
+          avatar_url: null,
+          bio: null,
+        })
+        .select('id, display_name, avatar_url, bio, role')
+        .single();
 
-        setProfile(newProfile as UserProfile);
-        setDisplayName(newProfile.display_name || '');
-        setLoading(false);
-        return;
-      } else {
-        console.error('loadProfile error:', error);
-        alert(`プロフィール取得に失敗しました: ${error.message}`);
+      if (insertError) {
+        console.error('create profile error:', insertError);
+        alert(`プロフィール作成に失敗しました: ${insertError.message}`);
         setLoading(false);
         return;
       }
+
+      setProfile(newProfile as UserProfile);
+      setDisplayName(newProfile.display_name || '');
+      setLoading(false);
+      return;
     }
 
-    if (profileData) {
-      setProfile(profileData as UserProfile);
-      setDisplayName(profileData.display_name || '');
-    } else {
-      // ここに来ることはほぼないけどガード
-      alert('プロフィール情報が取得できませんでした');
-    }
-
+    // 既存プロフィールあり
+    setProfile(profileData as UserProfile);
+    setDisplayName(profileData.display_name || '');
     setLoading(false);
   };
 
@@ -150,7 +146,7 @@ export default function AccountPage() {
 
       // Storage にアップロード（avatars バケット）
       const { error: uploadError } = await supabase.storage
-        .from('avatars') // ←バケット名ここ
+        .from('avatars') // ← バケット名
         .upload(filePath, file, {
           upsert: true,
         });
@@ -178,7 +174,7 @@ export default function AccountPage() {
         return;
       }
 
-      // プレビュー更新（即反映）
+      // プレビューを即更新
       setProfile((prev) =>
         prev ? { ...prev, avatar_url: publicUrl } : prev,
       );
