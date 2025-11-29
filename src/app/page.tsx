@@ -459,10 +459,10 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 開発部（＋から少し下げる） */}
+            {/* 開発部（高さはそのまま） */}
             <Link
               href="/dashboard/dev/menu"
-              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70 pt-3"
+              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg
                 className="w-6 h-6"
@@ -487,10 +487,10 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 広報部（＋から少し下げる） */}
+            {/* 広報部（高さはそのまま） */}
             <Link
               href="/dashboard/pr/menu"
-              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70 pt-3"
+              className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg
                 className="w-6 h-6"
@@ -534,18 +534,18 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* 真ん中の＋ボタン（角丸四角＆中の＋を大きく） */}
+          {/* 真ん中の＋ボタン（角丸四角＆中の＋をもっと大きく / 位置も少し上へ） */}
           <button
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
-            className="absolute -top-7 left-1/2 -translate-x-1/2 w-16 h-16 flex items-center justify-center shadow-lg border transition-transform active:scale-95 rounded-2xl"
+            className="absolute -top-9 left-1/2 -translate-x-1/2 w-16 h-16 flex items-center justify-center shadow-lg border transition-transform active:scale-95 rounded-2xl"
             style={{
               backgroundColor: textColor,
               color: bgColor,
               borderColor,
             }}
           >
-            <span className="text-4xl leading-none">+</span>
+            <span className="text-5xl leading-none">+</span>
           </button>
 
           {/* ＋メニュー */}
