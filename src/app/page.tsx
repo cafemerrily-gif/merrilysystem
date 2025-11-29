@@ -683,6 +683,8 @@ function ImageSlider({
   isDark: boolean;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -690,6 +692,34 @@ function ImageSlider({
 
   const goToPrev = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(null);
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const diff = touchStartX - touchEndX;
+
+    // 閾値（どれぐらい動いたらスワイプとみなすか）
+    const swipeThreshold = 50;
+
+    if (diff > swipeThreshold) {
+      // 右 → 左 にスワイプ（次の画像へ）
+      goToNext();
+    } else if (diff < -swipeThreshold) {
+      // 左 → 右 にスワイプ（前の画像へ）
+      goToPrev();
+    }
+
+    setTouchStartX(null);
+    setTouchEndX(null);
   };
 
   if (images.length === 1) {
@@ -721,6 +751,9 @@ function ImageSlider({
           backgroundColor: isDark ? '#262626' : '#efefef',
           aspectRatio: '1',
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           className="flex transition-transform duration-300 ease-out h-full"
@@ -739,7 +772,7 @@ function ImageSlider({
           ))}
         </div>
 
-        {/* 前へボタン */}
+        {/* 前へボタン（PC用） */}
         {currentIndex > 0 && (
           <button
             onClick={goToPrev}
@@ -762,7 +795,7 @@ function ImageSlider({
           </button>
         )}
 
-        {/* 次へボタン */}
+        {/* 次へボタン（PC用） */}
         {currentIndex < images.length - 1 && (
           <button
             onClick={goToNext}
