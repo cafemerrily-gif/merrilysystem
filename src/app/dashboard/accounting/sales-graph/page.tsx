@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useTheme } from '@/components/ThemeProvider';
 
 type HourlySales = {
   hour: number;
@@ -30,9 +29,9 @@ type ProductSales = {
 export default function SalesGraphPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [themeState, setThemeState] = useState<'light' | 'dark'>('light');
 
   // 表示モード
   const [viewMode, setViewMode] = useState<'hourly' | 'daily' | 'product'>('hourly');
@@ -57,7 +56,27 @@ export default function SalesGraphPage() {
   const [dailySales, setDailySales] = useState<DailySales[]>([]);
   const [productSales, setProductSales] = useState<ProductSales[]>([]);
 
-  const isDark = theme === 'dark';
+  // テーマを安全に取得
+  useEffect(() => {
+    setMounted(true);
+    // クライアントサイドでテーマを検出
+    if (typeof window !== 'undefined') {
+      const isDark = document.documentElement.classList.contains('dark') || 
+                     window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setThemeState(isDark ? 'dark' : 'light');
+      
+      // テーマ変更を監視
+      const observer = new MutationObserver(() => {
+        const isDarkNow = document.documentElement.classList.contains('dark');
+        setThemeState(isDarkNow ? 'dark' : 'light');
+      });
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      
+      return () => observer.disconnect();
+    }
+  }, []);
+
+  const isDark = themeState === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
@@ -71,12 +90,13 @@ export default function SalesGraphPage() {
   const businessHours = [11, 12, 13, 14, 15, 16];
 
   useEffect(() => {
-    setMounted(true);
-    checkUser();
-  }, []);
+    if (mounted) {
+      checkUser();
+    }
+  }, [mounted]);
 
   useEffect(() => {
-    if (mounted) {
+    if (mounted && !loading) {
       if (viewMode === 'hourly') {
         fetchHourlySales();
       } else if (viewMode === 'daily') {
@@ -85,7 +105,7 @@ export default function SalesGraphPage() {
         fetchProductSales();
       }
     }
-  }, [mounted, viewMode, selectedDate, startDate, endDate]);
+  }, [mounted, loading, viewMode, selectedDate, startDate, endDate]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();

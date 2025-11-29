@@ -37,19 +37,6 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    checkUser();
-    loadPosts();
-    
-    // 10秒ごとに投稿を再読み込み
-    const interval = setInterval(() => {
-      loadPosts();
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -128,6 +115,19 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    setMounted(true);
+    checkUser();
+    loadPosts();
+    
+    // 10秒ごとに投稿を再読み込み
+    const interval = setInterval(() => {
+      loadPosts();
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLike = async (postId: string) => {
     if (!currentUserId) return;
 
@@ -203,8 +203,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 flex items-center justify-center">
-                <Image src={appIconUrl} width={32} height={32} alt="MERRILY" className="object-contain" />
+              <div className="w-12 h-12 flex items-center justify-center">
+                <Image src={appIconUrl} width={48} height={48} alt="MERRILY" className="object-contain" />
               </div>
               <span className="text-xl font-bold" style={{ color: textColor }}>MERRILY</span>
             </Link>
@@ -363,7 +363,7 @@ export default function Home() {
             
             {/* 会計部 - グラフアイコン */}
             <Link
-              href="/dashboard/accounting"
+              href="/dashboard/accounting/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
