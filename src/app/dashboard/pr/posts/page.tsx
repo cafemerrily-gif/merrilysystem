@@ -5,12 +5,18 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 
+interface UserProfile {
+  display_name: string;
+  avatar_url: string | null;
+}
+
 interface Post {
   id: string;
   user_id: string;
   content: string;
   images: string[] | null;
   created_at: string;
+  user_profiles?: UserProfile | null;
 }
 
 export default function PostsManagementPage() {
@@ -20,7 +26,7 @@ export default function PostsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // テーマ関連
+  // テーマ
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -37,7 +43,7 @@ export default function PostsManagementPage() {
 
     setIsDark(currentIsDark);
 
-    const handleChange = (e: MediaQueryListEvent) => {
+    const handleChange = (e: any) => {
       const isMob = window.matchMedia('(max-width: 768px)').matches;
       const str = window.localStorage.getItem('ui-is-dark');
       if (isMob || str === null) {
@@ -59,6 +65,7 @@ export default function PostsManagementPage() {
   useEffect(() => {
     loadPosts();
     getCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getCurrentUser = async () => {
@@ -71,13 +78,27 @@ export default function PostsManagementPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
+
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(
+          `
+          id,
+          user_id,
+          content,
+          images,
+          created_at,
+          user_profiles:user_profiles!posts_user_id_fkey (
+            display_name,
+            avatar_url
+          )
+        `,
+        )
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading posts:', error);
+        setPosts([]);
         return;
       }
 
@@ -135,11 +156,7 @@ export default function PostsManagementPage() {
         <Link
           href="/dashboard/pr/posts/create"
           className="block border rounded-2xl p-6 text-center transition-all duration-200 hover:scale-[1.02]"
-          style={{
-            backgroundColor: cardBg,
-            borderColor,
-            borderStyle: 'dashed',
-          }}
+          style={{ backgroundColor: cardBg, borderColor, borderStyle: 'dashed' }}
         >
           <svg
             className="w-12 h-12 mx-auto mb-2"
@@ -168,91 +185,107 @@ export default function PostsManagementPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="border rounded-2xl overflow-hidden"
-                style={{ backgroundColor: cardBg, borderColor }}
-              >
-                {/* 投稿ヘッダー */}
+            {posts.map((post) => {
+              const profile = post.user_profiles ?? null;
+
+              return (
                 <div
-                  className="flex items-center gap-3 p-4 border-b"
-                  style={{ borderColor }}
+                  key={post.id}
+                  className="border rounded-2xl overflow-hidden"
+                  style={{ backgroundColor: cardBg, borderColor }}
                 >
+                  {/* 投稿ヘッダー */}
                   <div
-                    className="relative w-10 h-10 rounded-full overflow-hidden"
-                    style={{
-                      backgroundColor: isDark ? '#262626' : '#efefef',
-                    }}
+                    className="flex items-center gap-3 p-4 border-b"
+                    style={{ borderColor }}
                   >
-                    {/* いまはプレースホルダーアイコンだけ表示 */}
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke={mutedColor}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">ユーザー</p>
-                    <p className="text-xs" style={{ color: mutedColor }}>
-                      {new Date(post.created_at).toLocaleDateString('ja-JP')}
-                    </p>
-                  </div>
-                  {post.user_id === currentUserId && (
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
-                      style={{ backgroundColor: '#ff3b30', color: '#ffffff' }}
+                    <div
+                      className="relative w-10 h-10 rounded-full overflow-hidden"
+                      style={{
+                        backgroundColor: isDark ? '#262626' : '#efefef',
+                      }}
                     >
-                      削除
-                    </button>
-                  )}
-                </div>
-
-                {/* 投稿内容 */}
-                <div className="p-4">
-                  <p className="text-sm whitespace-pre-wrap">{post.content}</p>
-                </div>
-
-                {/* 画像 */}
-                {post.images && post.images.length > 0 && (
-                  <div
-                    className={
-                      post.images.length === 1
-                        ? 'px-4 pb-4'
-                        : 'grid grid-cols-2 gap-1 px-4 pb-4'
-                    }
-                  >
-                    {post.images.map((imageUrl, idx) => (
-                      <div
-                        key={idx}
-                        className="relative w-full aspect-square rounded-lg overflow-hidden"
-                        style={{
-                          backgroundColor: isDark ? '#262626' : '#efefef',
-                        }}
-                      >
+                      {profile?.avatar_url ? (
                         <Image
-                          src={imageUrl}
-                          alt={`投稿画像 ${idx + 1}`}
+                          src={profile.avatar_url}
+                          alt={profile.display_name}
                           fill
                           className="object-cover"
                         />
-                      </div>
-                    ))}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke={mutedColor}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">
+                        {profile?.display_name || 'ユーザー'}
+                      </p>
+                      <p className="text-xs" style={{ color: mutedColor }}>
+                        {new Date(post.created_at).toLocaleDateString('ja-JP')}
+                      </p>
+                    </div>
+                    {post.user_id === currentUserId && (
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        className="px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
+                        style={{ backgroundColor: '#ff3b30', color: '#ffffff' }}
+                      >
+                        削除
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* 投稿内容 */}
+                  <div className="p-4">
+                    <p className="text-sm whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+                  </div>
+
+                  {/* 画像 */}
+                  {post.images && post.images.length > 0 && (
+                    <div
+                      className={
+                        post.images.length === 1
+                          ? 'px-4 pb-4'
+                          : 'grid grid-cols-2 gap-1 px-4 pb-4'
+                      }
+                    >
+                      {post.images.map((imageUrl, idx) => (
+                        <div
+                          key={idx}
+                          className="relative w-full aspect-square rounded-lg overflow-hidden"
+                          style={{
+                            backgroundColor: isDark ? '#262626' : '#efefef',
+                          }}
+                        >
+                          <Image
+                            src={imageUrl}
+                            alt={`投稿画像 ${idx + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
