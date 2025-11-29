@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         products(id, name, cost_price, selling_price, image_url)
       ` : '*')
       .is('deleted_at', null)
-      .order('display_order', { ascending: true });
+      .order('id', { ascending: true });
 
     // 特定日で有効なフォルダのみ取得
     if (targetDate) {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, display_order, start_date, end_date } = body;
+    const { name, description, start_date, end_date } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'フォルダ名は必須です' }, { status: 400 });
@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
       .insert({
         name: name.trim(),
         description,
-        display_order: display_order || 0,
         start_date,
         end_date
       })
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, description, display_order, start_date, end_date } = body;
+    const { id, name, description, start_date, end_date } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'idは必須です' }, { status: 400 });
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest) {
 
     if (name !== undefined) updateData.name = name.trim();
     if (description !== undefined) updateData.description = description;
-    if (display_order !== undefined) updateData.display_order = display_order;
     if (start_date !== undefined) updateData.start_date = start_date;
     if (end_date !== undefined) updateData.end_date = end_date;
 
