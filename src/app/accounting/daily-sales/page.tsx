@@ -6,17 +6,73 @@ import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTheme } from '@/components/ThemeProvider';
 
+type Product = {
+  id: number;
+  name: string;
+  cost_price: number;
+  selling_price: number;
+  image_url?: string;
+};
+
+type ProductCollection = {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  products: Product[];
+};
+
+type SalesInput = {
+  product_id: number;
+  quantity_sold: number;
+};
+
 export default function DailySalesPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { theme } = useTheme();
-  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // 日付
+  const [saleDate, setSaleDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+
+  // 商品フォルダと商品
+  const [collections, setCollections] = useState<ProductCollection[]>([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [salesInputs, setSalesInputs] = useState<Map<number, number>>(new Map());
+
+  // メッセージ
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // 既存データの有無
+  const [hasExistingData, setHasExistingData] = useState(false);
+
+  const isDark = theme === 'dark';
+  const bgColor = isDark ? '#000000' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const borderColor = isDark ? '#262626' : '#dbdbdb';
+  const mutedColor = isDark ? '#a8a8a8' : '#737373';
+  const cardBg = isDark ? '#121212' : '#fafafa';
+  const inputBg = isDark ? '#1a1a1a' : '#ffffff';
+  const accentColor = isDark ? '#4ade80' : '#16a34a';
 
   useEffect(() => {
     setMounted(true);
     checkUser();
   }, []);
+
+  useEffect(() => {
+    if (mounted && saleDate) {
+      fetchCollections();
+      checkExistingData();
+    }
+  }, [mounted, saleDate]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -27,11 +83,163 @@ export default function DailySalesPage() {
     setLoading(false);
   };
 
-  const isDark = theme === 'dark';
-  const bgColor = isDark ? '#000000' : '#ffffff';
-  const textColor = isDark ? '#ffffff' : '#000000';
-  const borderColor = isDark ? '#262626' : '#dbdbdb';
-  const mutedColor = isDark ? '#a8a8a8' : '#737373';
+  // 販売日に対応する商品フォルダを取得
+  const fetchCollections = async () => {
+    try {
+      const res = await fetch(`/api/sales?action=get_collections&sale_date=${saleDate}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        setCollections(data);
+        
+        // フォルダが1つだけなら自動選択
+        if (data.length === 1) {
+          setSelectedCollectionId(data[0].id);
+          initializeSalesInputs(data[0].products);
+        } else if (data.length > 1) {
+          // 複数ある場合は最初のフォルダを選択
+          setSelectedCollectionId(data[0].id);
+          initializeSalesInputs(data[0].products);
+        } else {
+          setSelectedCollectionId(null);
+          setSalesInputs(new Map());
+        }
+      }
+    } catch (err) {
+      console.error('商品フォルダ取得エラー:', err);
+      setError('商品フォルダの取得に失敗しました');
+    }
+  };
+
+  // 既存の売上データを確認
+  const checkExistingData = async () => {
+    try {
+      const res = await fetch(`/api/sales?action=product_sales&sale_date=${saleDate}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setHasExistingData(true);
+        // 既存データで入力欄を初期化
+        const existingInputs = new Map<number, number>();
+        data.forEach((item: any) => {
+          existingInputs.set(item.product_id, item.quantity_sold);
+        });
+        setSalesInputs(existingInputs);
+      } else {
+        setHasExistingData(false);
+      }
+    } catch (err) {
+      console.error('既存データ確認エラー:', err);
+    }
+  };
+
+  // 売上入力欄を初期化
+  const initializeSalesInputs = (products: Product[]) => {
+    // 既存データがあればそれを優先、なければ0で初期化
+    if (!hasExistingData) {
+      const newInputs = new Map<number, number>();
+      products.forEach(p => {
+        newInputs.set(p.id, salesInputs.get(p.id) || 0);
+      });
+      setSalesInputs(newInputs);
+    }
+  };
+
+  // フォルダ選択時
+  const handleCollectionChange = (collectionId: number) => {
+    setSelectedCollectionId(collectionId);
+    const collection = collections.find(c => c.id === collectionId);
+    if (collection) {
+      initializeSalesInputs(collection.products);
+    }
+  };
+
+  // 数量変更
+  const handleQuantityChange = (productId: number, value: string) => {
+    const quantity = parseInt(value) || 0;
+    setSalesInputs(prev => {
+      const newMap = new Map(prev);
+      newMap.set(productId, Math.max(0, quantity));
+      return newMap;
+    });
+  };
+
+  // 数量増減
+  const adjustQuantity = (productId: number, delta: number) => {
+    setSalesInputs(prev => {
+      const newMap = new Map(prev);
+      const current = newMap.get(productId) || 0;
+      newMap.set(productId, Math.max(0, current + delta));
+      return newMap;
+    });
+  };
+
+  // 売上保存
+  const handleSave = async () => {
+    if (!selectedCollectionId) {
+      setError('商品フォルダを選択してください');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const salesData: SalesInput[] = [];
+      salesInputs.forEach((quantity, productId) => {
+        salesData.push({ product_id: productId, quantity_sold: quantity });
+      });
+
+      const res = await fetch('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sale_date: saleDate,
+          sales_data: salesData
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || '保存に失敗しました');
+      }
+
+      setMessage(`売上を登録しました！ 合計: ¥${result.summary.total_sales.toLocaleString()}`);
+      setHasExistingData(true);
+    } catch (err: any) {
+      setError(err.message || '売上の保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 選択中のフォルダ
+  const selectedCollection = collections.find(c => c.id === selectedCollectionId);
+
+  // 売上合計計算
+  const calculateTotals = () => {
+    let totalSales = 0;
+    let totalCost = 0;
+    let itemCount = 0;
+
+    if (selectedCollection) {
+      selectedCollection.products.forEach(product => {
+        const quantity = salesInputs.get(product.id) || 0;
+        totalSales += product.selling_price * quantity;
+        totalCost += product.cost_price * quantity;
+        itemCount += quantity;
+      });
+    }
+
+    const grossProfit = totalSales - totalCost;
+    const grossMargin = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+
+    return { totalSales, totalCost, itemCount, grossProfit, grossMargin };
+  };
+
+  const totals = calculateTotals();
 
   if (!mounted || loading) {
     return (
@@ -42,9 +250,10 @@ export default function DailySalesPage() {
   }
 
   return (
-    <div className="min-h-screen pb-16" style={{ backgroundColor: bgColor, color: textColor }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: bgColor, color: textColor }}>
+      {/* ヘッダー */}
       <header className="fixed top-0 left-0 right-0 z-40 border-b" style={{ backgroundColor: bgColor, borderColor }}>
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-3xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Link href="/dashboard/accounting" className="p-2">
@@ -54,20 +263,182 @@ export default function DailySalesPage() {
               </Link>
               <h1 className="text-lg font-semibold">売上入力</h1>
             </div>
+            <button
+              onClick={handleSave}
+              disabled={saving || !selectedCollectionId}
+              className="px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-all"
+              style={{ backgroundColor: accentColor, color: '#ffffff' }}
+            >
+              {saving ? '保存中...' : '保存'}
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="pt-16 max-w-2xl mx-auto px-4 py-6">
-        <div className="border rounded-2xl p-6 text-center" style={{ borderColor }}>
-          <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke={mutedColor} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 className="text-xl font-semibold mb-2">売上入力</h2>
-          <p style={{ color: mutedColor }}>この機能は現在開発中です</p>
+      {/* メインコンテンツ */}
+      <main className="pt-20 max-w-3xl mx-auto px-4 py-6">
+        {/* メッセージ */}
+        {message && (
+          <div className="mb-4 p-4 rounded-xl border" style={{ backgroundColor: `${accentColor}20`, borderColor: accentColor, color: accentColor }}>
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-4 rounded-xl border" style={{ backgroundColor: '#ef444420', borderColor: '#ef4444', color: '#ef4444' }}>
+            {error}
+          </div>
+        )}
+
+        {/* 日付選択 */}
+        <div className="mb-6 p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+          <label className="block text-sm font-medium mb-2">販売日</label>
+          <input
+            type="date"
+            value={saleDate}
+            onChange={(e) => setSaleDate(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg text-lg"
+            style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textColor }}
+          />
+          {hasExistingData && (
+            <p className="mt-2 text-sm" style={{ color: accentColor }}>
+              ✓ この日の売上データが既に存在します（上書き更新されます）
+            </p>
+          )}
         </div>
+
+        {/* 商品フォルダ選択 */}
+        {collections.length > 0 ? (
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2">商品フォルダ</label>
+            <div className="flex flex-wrap gap-2">
+              {collections.map(collection => (
+                <button
+                  key={collection.id}
+                  onClick={() => handleCollectionChange(collection.id)}
+                  className="px-4 py-2 rounded-xl border transition-all"
+                  style={{
+                    backgroundColor: selectedCollectionId === collection.id ? accentColor : cardBg,
+                    borderColor: selectedCollectionId === collection.id ? accentColor : borderColor,
+                    color: selectedCollectionId === collection.id ? '#ffffff' : textColor
+                  }}
+                >
+                  {collection.name}
+                  <span className="ml-2 text-xs opacity-70">
+                    ({collection.start_date} ～ {collection.end_date})
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-6 rounded-xl border text-center" style={{ backgroundColor: cardBg, borderColor }}>
+            <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke={mutedColor} viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+            <p style={{ color: mutedColor }}>この日付に該当する商品フォルダがありません</p>
+            <p className="text-sm mt-1" style={{ color: mutedColor }}>
+              開発部のメニュー管理で販売期間を設定してください
+            </p>
+          </div>
+        )}
+
+        {/* 商品一覧 */}
+        {selectedCollection && selectedCollection.products.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold mb-3">商品別売上入力</h2>
+            {selectedCollection.products.map(product => {
+              const quantity = salesInputs.get(product.id) || 0;
+              const subtotal = product.selling_price * quantity;
+
+              return (
+                <div
+                  key={product.id}
+                  className="p-4 rounded-xl border"
+                  style={{ backgroundColor: cardBg, borderColor }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h3 className="font-medium">{product.name}</h3>
+                      <p className="text-sm" style={{ color: mutedColor }}>
+                        ¥{product.selling_price.toLocaleString()} / 個
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold" style={{ color: accentColor }}>
+                        ¥{subtotal.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => adjustQuantity(product.id, -1)}
+                      className="w-12 h-12 rounded-xl border flex items-center justify-center text-xl font-bold transition-all active:scale-95"
+                      style={{ borderColor, backgroundColor: inputBg }}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-xl text-center text-xl font-semibold"
+                      style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textColor }}
+                      min="0"
+                    />
+                    <button
+                      onClick={() => adjustQuantity(product.id, 1)}
+                      className="w-12 h-12 rounded-xl border flex items-center justify-center text-xl font-bold transition-all active:scale-95"
+                      style={{ borderColor, backgroundColor: inputBg }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => adjustQuantity(product.id, 10)}
+                      className="px-3 py-3 rounded-xl border text-sm transition-all active:scale-95"
+                      style={{ borderColor, backgroundColor: inputBg }}
+                    >
+                      +10
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 合計サマリー */}
+        {selectedCollection && (
+          <div className="mt-6 p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+            <h3 className="font-semibold mb-3">売上サマリー</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span style={{ color: mutedColor }}>販売個数</span>
+                <span className="font-medium">{totals.itemCount} 個</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: mutedColor }}>売上合計</span>
+                <span className="font-semibold text-lg">¥{totals.totalSales.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: mutedColor }}>原価合計</span>
+                <span>¥{totals.totalCost.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t" style={{ borderColor }}>
+                <span style={{ color: mutedColor }}>粗利益</span>
+                <span className="font-semibold" style={{ color: accentColor }}>
+                  ¥{totals.grossProfit.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: mutedColor }}>粗利率</span>
+                <span style={{ color: accentColor }}>{totals.grossMargin.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
+      {/* 下部ナビゲーション */}
       <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-5 h-16">
