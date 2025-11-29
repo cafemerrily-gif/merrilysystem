@@ -1,168 +1,221 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { logActivity } from '@/lib/logger';
 
-interface SaleItem {
-  productId: number;
-  quantity: number;
-  unitPrice: number;
-}
-
-interface SaleRequest {
-  saleDate: string;
-  saleTime: string;
-  staffId: number;
-  locationId?: number;
-  items?: SaleItem[];
-  totalAmount?: number;
-}
-
-// GET /api/sales : サマリー（グラフ用）
+// GET: 売上データ取得 or 販売期間で該当フォルダ取得
 export async function GET(request: NextRequest) {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('sales')
-      .select('id,sale_date,sale_time,time_slot,total_amount,payment_method')
-      .order('sale_date', { ascending: true });
-
-    if (error) {
-      console.error('売上取得エラー:', error);
-      return NextResponse.json({ error: '売上の取得に失敗しました' }, { status: 500 });
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const dailyMap: Record<string, number> = {};
-    const timeSlotMap: Record<string, number> = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
-    let total = 0;
-    let todayTotal = 0;
-
-    data.forEach((sale) => {
-      const amt = sale.total_amount || 0;
-      total += amt;
-      if (sale.sale_date === today) todayTotal += amt;
-      dailyMap[sale.sale_date] = (dailyMap[sale.sale_date] || 0) + amt;
-      if (sale.time_slot) {
-        timeSlotMap[sale.time_slot] = (timeSlotMap[sale.time_slot] || 0) + amt;
-      }
-    });
-
-    const dailySales = Object.entries(dailyMap).map(([date, amount]) => ({ date, total: amount }));
-    const recentSales = data.slice().sort((a, b) => (a.sale_date < b.sale_date ? 1 : -1)).slice(0, 15);
-
-    return NextResponse.json({
-      totalAmount: total,
-      todayTotal,
-      dailySales,
-      timeSlots: timeSlotMap,
-      recentSales,
-    });
-  } catch (error) {
-    console.error('売上サマリー取得エラー:', error);
-    return NextResponse.json({ error: '売上の取得に失敗しました' }, { status: 500 });
-  }
-}
-
-// DELETE /api/sales?saleId=123 : 売上削除
-export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const saleId = searchParams.get('saleId');
-
-  if (!saleId) {
-    return NextResponse.json({ error: 'saleId は必須です' }, { status: 400 });
-  }
+  const action = searchParams.get('action');
+  const saleDate = searchParams.get('sale_date');
+  const startDate = searchParams.get('start_date');
+  const endDate = searchParams.get('end_date');
 
   try {
-    const { error } = await supabaseAdmin.from('sales').delete().eq('id', Number(saleId));
+    // 販売期間で該当する商品フォルダを取得
+    if (action === 'get_collections') {
+      if (!saleDate) {
+        return NextResponse.json({ error: '販売日を指定してください' }, { status: 400 });
+      }
 
-    if (error) {
-      console.error('売上削除エラー:', error);
-      return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
+      const { data, error } = await supabaseAdmin
+        .from('product_collections')
+        .select(`
+          id,
+          name,
+          start_date,
+          end_date,
+          products(
+            id,
+            name,
+            cost_price,
+            selling_price,
+            image_url
+          )
+        `)
+        .is('deleted_at', null)
+        .lte('start_date', saleDate)
+        .gte('end_date', saleDate);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json(data || []);
     }
 
-    await logActivity(`会計: 売上削除 saleId=${saleId}`, null);
+    // 日別売上サマリー取得
+    if (action === 'daily_summary') {
+      let query = supabaseAdmin
+        .from('daily_sales_summary')
+        .select('*')
+        .order('sale_date', { ascending: false });
 
-    return NextResponse.json({ message: '削除しました', saleId: Number(saleId) });
+      if (startDate) {
+        query = query.gte('sale_date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('sale_date', endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json(data || []);
+    }
+
+    // 商品別売上取得
+    if (action === 'product_sales') {
+      let query = supabaseAdmin
+        .from('product_sales_summary')
+        .select(`
+          *,
+          products(id, name, category_id)
+        `)
+        .order('sale_date', { ascending: false });
+
+      if (saleDate) {
+        query = query.eq('sale_date', saleDate);
+      }
+      if (startDate) {
+        query = query.gte('sale_date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('sale_date', endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json(data || []);
+    }
+
+    return NextResponse.json({ error: 'actionパラメータを指定してください' }, { status: 400 });
   } catch (error) {
-    console.error('売上削除エラー:', error);
-    return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
+    return NextResponse.json({ error: 'データの取得に失敗しました' }, { status: 500 });
   }
 }
 
-// POST /api/sales : 売上登録（商品があれば sale_items にも挿入）
+// POST: 売上一括入力
 export async function POST(request: NextRequest) {
   try {
-    const body: SaleRequest = await request.json();
-    const { saleDate, saleTime, staffId, items, totalAmount } = body;
+    const body = await request.json();
+    const { sale_date, sales_data } = body;
+    // sales_data: Array of { product_id, quantity_sold }
 
-    if (!saleDate || !saleTime) {
-      return NextResponse.json({ error: 'saleDate, saleTime は必須です' }, { status: 400 });
+    if (!sale_date || !Array.isArray(sales_data)) {
+      return NextResponse.json({ error: '販売日と売上データは必須です' }, { status: 400 });
     }
 
-    const hasItems = Array.isArray(items) && items.length > 0;
-    const computedTotal =
-      totalAmount ||
-      (hasItems ? items!.reduce((sum, i) => sum + Number(i.unitPrice) * Number(i.quantity), 0) : 0);
+    // 商品情報を取得して原価・売価を計算
+    const productIds = sales_data.map((s: any) => s.product_id);
+    const { data: products, error: productError } = await supabaseAdmin
+      .from('products')
+      .select('id, cost_price, selling_price')
+      .in('id', productIds);
 
-    const timeSlot =
-      Number(saleTime.slice(0, 2)) < 10
-        ? 'morning'
-        : Number(saleTime.slice(0, 2)) < 14
-        ? 'lunch'
-        : Number(saleTime.slice(0, 2)) < 18
-        ? 'afternoon'
-        : 'evening';
-
-    const { data: saleData, error: saleError } = await supabaseAdmin
-      .from('sales')
-      .insert({
-        sale_date: saleDate,
-        sale_time: saleTime,
-        time_slot: timeSlot,
-        total_amount: computedTotal,
-        payment_method: 'cash',
-        entered_by: staffId || 1,
-      })
-      .select('id')
-      .single();
-
-    if (saleError) {
-      console.error('売上登録エラー:', saleError);
-      return NextResponse.json({ error: '売上の登録に失敗しました' }, { status: 500 });
+    if (productError) {
+      return NextResponse.json({ error: productError.message }, { status: 500 });
     }
 
-    const saleId = saleData.id;
+    const productMap = new Map(products?.map((p: any) => [p.id, p]) || []);
 
-    if (hasItems) {
-      const saleItems = items!.map((item) => ({
-        sale_id: saleId,
-        product_id: item.productId,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        subtotal: item.unitPrice * item.quantity,
-      }));
+    // 商品別売上サマリーを作成
+    const productSalesSummaries = sales_data
+      .filter((s: any) => s.quantity_sold > 0)
+      .map((s: any) => {
+        const product = productMap.get(s.product_id);
+        const costPrice = product?.cost_price || 0;
+        const sellingPrice = product?.selling_price || 0;
+        const quantity = Number(s.quantity_sold);
 
-      const { error: itemsError } = await supabaseAdmin.from('sale_items').insert(saleItems);
+        return {
+          sale_date,
+          product_id: s.product_id,
+          quantity_sold: quantity,
+          total_sales: sellingPrice * quantity,
+          total_cost: costPrice * quantity
+        };
+      });
 
-      if (itemsError) {
-        console.error('売上項目登録エラー:', itemsError);
-        await supabaseAdmin.from('sales').delete().eq('id', saleId);
+    // 商品別売上をUPSERT
+    if (productSalesSummaries.length > 0) {
+      const { error: upsertError } = await supabaseAdmin
+        .from('product_sales_summary')
+        .upsert(productSalesSummaries, { onConflict: 'sale_date,product_id' });
 
-        return NextResponse.json({ error: '売上項目の登録に失敗しました' }, { status: 500 });
+      if (upsertError) {
+        return NextResponse.json({ error: upsertError.message }, { status: 500 });
       }
     }
 
-    await logActivity(`会計: 売上登録 saleId=${saleId} 金額=${computedTotal}`, null);
+    // 日次サマリーを計算して更新
+    const totalSales = productSalesSummaries.reduce((sum, p) => sum + p.total_sales, 0);
+    const totalCost = productSalesSummaries.reduce((sum, p) => sum + p.total_cost, 0);
+    const itemCount = productSalesSummaries.reduce((sum, p) => sum + p.quantity_sold, 0);
+    const grossProfit = totalSales - totalCost;
+    const grossMargin = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
 
-    return NextResponse.json(
-      {
-        message: '売上を登録しました',
-        saleId,
-        totalAmount: computedTotal,
-      },
-      { status: 201 }
-    );
+    const { error: dailyError } = await supabaseAdmin
+      .from('daily_sales_summary')
+      .upsert({
+        sale_date,
+        total_sales: totalSales,
+        total_cost: totalCost,
+        item_count: itemCount,
+        gross_profit: grossProfit,
+        gross_margin: Math.round(grossMargin * 100) / 100,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'sale_date' });
+
+    if (dailyError) {
+      return NextResponse.json({ error: dailyError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      message: '売上を登録しました',
+      summary: {
+        sale_date,
+        total_sales: totalSales,
+        total_cost: totalCost,
+        item_count: itemCount,
+        gross_profit: grossProfit,
+        gross_margin: Math.round(grossMargin * 100) / 100
+      }
+    }, { status: 201 });
   } catch (error) {
-    console.error('売上登録エラー:', error);
     return NextResponse.json({ error: '売上の登録に失敗しました' }, { status: 500 });
+  }
+}
+
+// DELETE: 日次売上削除
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const saleDate = searchParams.get('sale_date');
+
+  if (!saleDate) {
+    return NextResponse.json({ error: 'sale_dateは必須です' }, { status: 400 });
+  }
+
+  try {
+    // 商品別売上削除
+    await supabaseAdmin
+      .from('product_sales_summary')
+      .delete()
+      .eq('sale_date', saleDate);
+
+    // 日次サマリー削除
+    await supabaseAdmin
+      .from('daily_sales_summary')
+      .delete()
+      .eq('sale_date', saleDate);
+
+    return NextResponse.json({ message: '削除しました' });
+  } catch (error) {
+    return NextResponse.json({ error: '売上の削除に失敗しました' }, { status: 500 });
   }
 }
