@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       .from('products')
       .select('*')
       .is('deleted_at', null)
-      .order('display_order', { ascending: true });
+      .order('id', { ascending: true });
 
     if (categoryId) {
       query = query.eq('category_id', categoryId);
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, category_id, collection_id, cost_price, selling_price, image_url, description, display_order } = body;
+    const { name, category_id, collection_id, cost_price, selling_price, image_url, description } = body;
 
     if (!name) {
       return NextResponse.json({ error: '商品名は必須です' }, { status: 400 });
@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
         cost_price: cost_price || 0,
         selling_price: selling_price || 0,
         image_url: image_url || null,
-        description: description || null,
-        display_order: display_order || 0
+        description: description || null
       })
       .select()
       .single();
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, category_id, collection_id, cost_price, selling_price, image_url, description, display_order } = body;
+    const { id, name, category_id, collection_id, cost_price, selling_price, image_url, description } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'IDは必須です' }, { status: 400 });
@@ -92,7 +91,6 @@ export async function PUT(request: NextRequest) {
     if (selling_price !== undefined) updateData.selling_price = selling_price;
     if (image_url !== undefined) updateData.image_url = image_url;
     if (description !== undefined) updateData.description = description;
-    if (display_order !== undefined) updateData.display_order = display_order;
 
     const { data, error } = await supabaseAdmin
       .from('products')
