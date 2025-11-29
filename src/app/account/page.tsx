@@ -27,6 +27,9 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
+  // -------------------------
+  // 初期ロード
+  // -------------------------
   useEffect(() => {
     setMounted(true);
     loadProfile();
@@ -36,7 +39,12 @@ export default function AccountPage() {
   const loadProfile = async () => {
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error('auth error:', userError);
+    }
 
     if (!user) {
       router.push('/login');
@@ -53,6 +61,7 @@ export default function AccountPage() {
     // 「行がない」場合だけ新規作成（PGRST116）
     if (error) {
       const code = (error as any).code;
+      // 行が存在しない
       if (code === 'PGRST116') {
         const defaultName =
           (user.user_metadata as any)?.full_name ||
@@ -72,6 +81,7 @@ export default function AccountPage() {
 
         if (insertError) {
           console.error('create profile error:', insertError);
+          alert(`プロフィール作成に失敗しました: ${insertError.message}`);
           setLoading(false);
           return;
         }
@@ -81,7 +91,9 @@ export default function AccountPage() {
         setLoading(false);
         return;
       } else {
+        // RLS など別のエラーのとき
         console.error('loadProfile error:', error);
+        alert(`プロフィール取得に失敗しました: ${error.message}`);
         setLoading(false);
         return;
       }
@@ -96,6 +108,9 @@ export default function AccountPage() {
     setLoading(false);
   };
 
+  // -------------------------
+  // 表示名の保存
+  // -------------------------
   const handleSave = async () => {
     if (!profile) return;
 
@@ -105,16 +120,21 @@ export default function AccountPage() {
       .update({ display_name: displayName })
       .eq('id', profile.id); // id で更新
 
-    if (!error) {
-      alert('保存しました');
-      await loadProfile();
-    } else {
+    if (error) {
       console.error('save error:', error);
-      alert('保存に失敗しました');
+      alert(`保存に失敗しました: ${error.message}`);
+      setSaving(false);
+      return;
     }
+
+    alert('保存しました');
+    await loadProfile();
     setSaving(false);
   };
 
+  // -------------------------
+  // アイコン画像の変更
+  // -------------------------
   const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
@@ -126,14 +146,16 @@ export default function AccountPage() {
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      // avatars バケットにアップロード
+      // avatars バケットにアップロード（同名なら上書き）
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
+        .from('avatars') // ★ バケット名を使っているものとする
+        .upload(filePath, file, {
+          upsert: true,
+        });
 
       if (uploadError) {
         console.error('avatar upload error:', uploadError);
-        alert('アイコンのアップロードに失敗しました');
+        alert(`アイコンのアップロードに失敗しました: ${uploadError.message}`);
         return;
       }
 
@@ -148,7 +170,7 @@ export default function AccountPage() {
 
       if (updateError) {
         console.error('avatar url update error:', updateError);
-        alert('アイコンURLの保存に失敗しました');
+        alert(`アイコンURLの保存に失敗しました: ${updateError.message}`);
         return;
       }
 
@@ -163,6 +185,9 @@ export default function AccountPage() {
     router.push('/login');
   };
 
+  // -------------------------
+  // カラーテーマ
+  // -------------------------
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
