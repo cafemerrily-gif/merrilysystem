@@ -54,12 +54,13 @@ export default function Home() {
     setCurrentUserId(user.id);
 
     // ユーザープロフィールを取得（管理者権限確認）
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
+    console.log('User profile:', profile, 'Error:', error);
     setUserProfile(profile);
     setLoading(false);
   };
@@ -228,7 +229,7 @@ export default function Home() {
           >
             {isAdmin && (
               <Link
-                href="/admin/members"
+                href="/admin/users"
                 className="flex items-center gap-3 px-4 py-3 border-b transition-opacity hover:opacity-70"
                 style={{ borderColor }}
                 onClick={() => setMenuOpen(false)}
