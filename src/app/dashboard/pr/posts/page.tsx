@@ -16,7 +16,8 @@ interface Post {
   content: string;
   images: string[] | null;
   created_at: string;
-  user_profiles?: UserProfile | null;
+  // ← 配列として定義
+  user_profiles?: UserProfile[] | null;
 }
 
 export default function PostsManagementPage() {
@@ -43,7 +44,7 @@ export default function PostsManagementPage() {
 
     setIsDark(currentIsDark);
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: MediaQueryListEvent) => {
       const isMob = window.matchMedia('(max-width: 768px)').matches;
       const str = window.localStorage.getItem('ui-is-dark');
       if (isMob || str === null) {
@@ -81,19 +82,17 @@ export default function PostsManagementPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(
-          `
+        .select(`
           id,
           user_id,
           content,
           images,
           created_at,
-          user_profiles:user_profiles!posts_user_id_fkey (
+          user_profiles (
             display_name,
             avatar_url
           )
-        `,
-        )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -102,7 +101,8 @@ export default function PostsManagementPage() {
         return;
       }
 
-      setPosts((data || []) as Post[]);
+      // TypeScript がうるさいので unknown を噛ませてキャスト
+      setPosts(((data || []) as unknown) as Post[]);
     } finally {
       setLoading(false);
     }
@@ -186,7 +186,8 @@ export default function PostsManagementPage() {
         ) : (
           <div className="space-y-4">
             {posts.map((post) => {
-              const profile = post.user_profiles ?? null;
+              // リレーション結果は配列なので、先頭だけ使う
+              const profile = post.user_profiles?.[0] ?? null;
 
               return (
                 <div
