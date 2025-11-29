@@ -16,30 +16,41 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: '販売日を指定してください' }, { status: 400 });
       }
 
-      const { data, error } = await supabaseAdmin
+      // まずフォルダを取得
+      const { data: collections, error: collectionError } = await supabaseAdmin
         .from('product_collections')
-        .select(`
-          id,
-          name,
-          start_date,
-          end_date,
-          products(
-            id,
-            name,
-            cost_price,
-            selling_price,
-            image_url
-          )
-        `)
+        .select('id, name, start_date, end_date')
         .is('deleted_at', null)
         .lte('start_date', saleDate)
         .gte('end_date', saleDate);
 
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      if (collectionError) {
+        return NextResponse.json({ error: collectionError.message }, { status: 500 });
       }
 
-      return NextResponse.json(data || []);
+      if (!collections || collections.length === 0) {
+        return NextResponse.json([]);
+      }
+
+      // 各フォルダに紐付く商品を取得
+      const collectionIds = collections.map(c => c.id);
+      const { data: products, error: productError } = await supabaseAdmin
+        .from('products')
+        .select('id, name, cost_price, selling_price, image_url, collection_id')
+        .in('collection_id', collectionIds)
+        .is('deleted_at', null);
+
+      if (productError) {
+        return NextResponse.json({ error: productError.message }, { status: 500 });
+      }
+
+      // フォルダに商品を紐付け
+      const result = collections.map(collection => ({
+        ...collection,
+        products: (products || []).filter(p => p.collection_id === collection.id)
+      }));
+
+      return NextResponse.json(result);
     }
 
     // 日別売上サマリー取得
