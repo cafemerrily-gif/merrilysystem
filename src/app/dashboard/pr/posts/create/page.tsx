@@ -134,38 +134,46 @@ export default function CreatePostPage() {
       }
       // ------------------ プロフィール処理ここまで ------------------
 
-  // 画像アップロード
-  const imageUrls: string[] = [];
+      // 画像アップロード
+      const imageUrls: string[] = [];
 
-  for (const image of images) {
-    const fileExt = image.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      for (const image of images) {
+        const fileExt = image.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.${fileExt}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('post-images')
-      .upload(fileName, image);
+        console.log("UPLOADING:", fileName);
 
-    if (uploadError) {
-      console.error("UPLOAD ERROR:", uploadError);
-      alert("画像アップロードに失敗しました: " + uploadError.message);
-      continue;
-    }
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('post-images')
+          .upload(fileName, image);
 
-    // URL を取得
-    const { data: urlData } = supabase.storage
-      .from('post-images')
-      .getPublicUrl(fileName);
+        if (uploadError) {
+          console.error("UPLOAD ERROR:", uploadError);
+          alert("画像アップロードに失敗しました: " + uploadError.message);
+          continue;
+        }
 
-    if (!urlData.publicUrl) {
-      console.error("PUBLIC URL ERROR:", urlData);
-      alert("画像URL取得に失敗しました");
-      continue;
-    }
+        console.log("UPLOAD SUCCESS:", uploadData);
 
-    imageUrls.push(urlData.publicUrl);
-  }
+        // URL を取得
+        const { data: urlData } = supabase.storage
+          .from('post-images')
+          .getPublicUrl(fileName);
 
-  console.log("UPLOAD RESULT:", imageUrls);
+        console.log("PUBLIC URL:", urlData);
+
+        if (!urlData?.publicUrl) {
+          console.error("PUBLIC URL ERROR:", urlData);
+          alert("画像URL取得に失敗しました");
+          continue;
+        }
+
+        imageUrls.push(urlData.publicUrl);
+      }
+
+      console.log("FINAL imageUrls:", imageUrls);
 
       // 投稿を作成
       const { error: insertError } = await supabase.from('posts').insert({
