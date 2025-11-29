@@ -12,7 +12,7 @@ type UserProfile = {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
-  role?: string | null; // テーブルに無いけど表示用に残しておく
+  role?: string | null; // 表示用
 };
 
 export default function AccountPage() {
@@ -43,50 +43,56 @@ export default function AccountPage() {
       return;
     }
 
-    // user_profiles.id = auth.uid() で紐付け
+    // id = auth.uid() で取得
     const { data: profileData, error } = await supabase
       .from('user_profiles')
       .select('id, display_name, avatar_url, bio')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (error && (error as any).code !== 'PGRST116') {
-      console.error('loadProfile error:', error);
-    }
+    // 「行がない」場合だけ新規作成（PGRST116）
+    if (error) {
+      const code = (error as any).code;
+      if (code === 'PGRST116') {
+        const defaultName =
+          (user.user_metadata as any)?.full_name ||
+          user.email?.split('@')[0] ||
+          'ユーザー';
 
-    // プロフィールが無ければ自動作成
-    if (!profileData) {
-      const defaultName =
-        (user.user_metadata as any)?.full_name ||
-        user.email?.split('@')[0] ||
-        'ユーザー';
+        const { data: newProfile, error: insertError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: user.id,
+            display_name: defaultName,
+            avatar_url: null,
+            bio: null,
+          })
+          .select('id, display_name, avatar_url, bio')
+          .single();
 
-      const { data: newProfile, error: insertError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: user.id,
-          display_name: defaultName,
-          avatar_url: null,
-          bio: null,
-        })
-        .select('id, display_name, avatar_url, bio')
-        .single();
+        if (insertError) {
+          console.error('create profile error:', insertError);
+          setLoading(false);
+          return;
+        }
 
-      if (insertError) {
-        console.error('create profile error:', insertError);
+        setProfile(newProfile as UserProfile);
+        setDisplayName(newProfile.display_name || '');
+        setLoading(false);
+        return;
+      } else {
+        console.error('loadProfile error:', error);
         setLoading(false);
         return;
       }
-
-      setProfile(newProfile as UserProfile);
-      setDisplayName(newProfile.display_name || '');
-      setLoading(false);
-      return;
     }
 
     // 既存プロフィールあり
-    setProfile(profileData as UserProfile);
-    setDisplayName(profileData.display_name || '');
+    if (profileData) {
+      setProfile(profileData as UserProfile);
+      setDisplayName(profileData.display_name || '');
+    }
+
     setLoading(false);
   };
 
@@ -97,7 +103,7 @@ export default function AccountPage() {
     const { error } = await supabase
       .from('user_profiles')
       .update({ display_name: displayName })
-      .eq('id', profile.id); // user_id ではなく id
+      .eq('id', profile.id); // id で更新
 
     if (!error) {
       alert('保存しました');
@@ -210,7 +216,7 @@ export default function AccountPage() {
 
       {/* メインコンテンツ */}
       <main className="pt-20 max-w-2xl mx-auto px-4 py-6">
-        {/* プロフィール情報 */}
+        {/* プロフィール情報カード */}
         <div
           className="border rounded-2xl overflow-hidden mb-6"
           style={{ borderColor }}
@@ -307,7 +313,7 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* 設定項目 */}
+        {/* 設定項目カード */}
         <div
           className="border rounded-2xl overflow-hidden mb-6"
           style={{ borderColor }}
@@ -317,7 +323,7 @@ export default function AccountPage() {
             className="w-full flex items-center justify-between p-4 border-b transition-opacity hover:opacity-70"
             style={{ borderColor }}
           >
-            <div className="flex itemsセンター gap-3">
+            <div className="flex items-center gap-3">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -392,7 +398,7 @@ export default function AccountPage() {
         </button>
       </main>
 
-      {/* 下部固定ナビゲーションバー */}
+      {/* 下部固定ナビゲーション */}
       <nav
         className="fixed bottom-0 left-0 right-0 border-t z-40"
         style={{ backgroundColor: bgColor, borderColor }}
@@ -496,7 +502,7 @@ export default function AccountPage() {
               </span>
             </Link>
 
-            {/* アカウント - アクティブ */}
+            {/* アカウント（アクティブ） */}
             <Link
               href="/account"
               className="flex flex-col items-center justify-center gap-1"
