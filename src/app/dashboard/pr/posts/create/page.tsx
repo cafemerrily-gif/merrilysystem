@@ -1,21 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
-import { useTheme } from '@/components/ThemeProvider';
 import Image from 'next/image';
 
 export default function CreatePostPage() {
-  const { theme } = useTheme();
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [posting, setPosting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isDark = theme === 'dark';
+  // テーマを安全に検出
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const checkDark = () => document.documentElement.classList.contains('dark') || 
+                              window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(checkDark());
+      
+      const observer = new MutationObserver(() => {
+        setIsDark(document.documentElement.classList.contains('dark'));
+      });
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
+      media.addEventListener('change', handleChange);
+      
+      return () => {
+        observer.disconnect();
+        media.removeEventListener('change', handleChange);
+      };
+    }
+  }, []);
+
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
@@ -56,12 +80,41 @@ export default function CreatePostPage() {
 
     try {
       setPosting(true);
+      setError(null);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         alert('ログインが必要です');
         router.push('/login');
         return;
+      }
+
+      // ユーザープロフィールが存在するか確認
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      // プロフィールが存在しない場合は作成
+      if (profileError || !profile) {
+        console.log('Creating user profile...');
+        const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー';
+        
+        const { error: createProfileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: user.id,
+            display_name: displayName,
+            role: 'member'
+          });
+
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          setError(`プロフィール作成エラー: ${createProfileError.message}`);
+          return;
+        }
       }
 
       // 画像をアップロード
@@ -76,6 +129,7 @@ export default function CreatePostPage() {
 
         if (uploadError) {
           console.error('Error uploading image:', uploadError);
+          // 画像アップロードエラーは警告のみ、投稿は続行
           continue;
         }
 
@@ -87,7 +141,7 @@ export default function CreatePostPage() {
       }
 
       // 投稿を作成
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('posts')
         .insert({
           user_id: user.id,
@@ -95,18 +149,29 @@ export default function CreatePostPage() {
           images: imageUrls.length > 0 ? imageUrls : null,
         });
 
-      if (error) {
-        console.error('Error creating post:', error);
-        alert('投稿の作成に失敗しました');
+      if (insertError) {
+        console.error('Error creating post:', insertError);
+        setError(`投稿エラー: ${insertError.message}`);
         return;
       }
 
       alert('投稿しました！');
       router.push('/');
+    } catch (err: any) {
+      console.error('Unexpected error:', err);
+      setError(`エラー: ${err.message}`);
     } finally {
       setPosting(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: textColor }}></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor, color: textColor }}>
@@ -135,6 +200,13 @@ export default function CreatePostPage() {
             {posting ? '投稿中...' : '投稿'}
           </button>
         </div>
+
+        {/* エラー表示 */}
+        {error && (
+          <div className="mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* 投稿フォーム */}
         <div className="space-y-4">
