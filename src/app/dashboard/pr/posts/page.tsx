@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Post {
   id: string;
@@ -21,6 +22,8 @@ interface UserProfile {
 
 export default function PostsManagementPage() {
   const supabase = createClientComponentClient();
+  const router = useRouter();
+
   const [isDark, setIsDark] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
@@ -65,16 +68,8 @@ export default function PostsManagementPage() {
 
   useEffect(() => {
     loadPosts();
-    getCurrentUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const getCurrentUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setCurrentUserId(user?.id || null);
-  };
 
   const loadProfiles = async (userIds: string[]) => {
     if (userIds.length === 0) return;
@@ -101,9 +96,28 @@ export default function PostsManagementPage() {
     try {
       setLoading(true);
 
+      // ① ログインユーザー取得
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error('auth getUser error:', userError);
+      }
+
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      setCurrentUserId(user.id);
+
+      // ② 自分の投稿だけ取得
       const { data, error } = await supabase
         .from('posts')
         .select<'*', Post>('*')
+        .eq('user_id', user.id) // ★ ここで自分の投稿に絞る
         .order('created_at', { ascending: false });
 
       console.log('LOAD POSTS data:', data, 'error:', error);
