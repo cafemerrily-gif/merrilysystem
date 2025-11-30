@@ -291,15 +291,16 @@ export default function Home() {
             </button>
 
             {/* メニュー */}
-            <button
-              className="flex-1 py-2 text-center text-sm"
+            <Link
+              href="/menu"
+              className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
               style={{
                 color: mutedColor,
                 borderColor: 'transparent',
               }}
             >
               メニュー
-            </button>
+            </Link>
 
             {/* グラフ */}
             <Link
