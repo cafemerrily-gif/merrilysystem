@@ -141,7 +141,7 @@ export default function AccountingDashboard() {
       {/* 下部固定ナビゲーションバー */}
       <nav className="fixed bottom-0 left-0 right-0 border-t z-40" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-5 h-16">
+          <div className="grid grid-cols-4 h-16">
             
             {/* 会計部 - アクティブ */}
             <Link href="/dashboard/accounting" className="flex flex-col items-center justify-center gap-1">
