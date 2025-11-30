@@ -303,7 +303,7 @@ export default function Home() {
 
             {/* グラフ */}
             <Link
-              href="/dashboard/accounting/sales-graph"
+              href="/graphs"
               className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
               style={{
                 color: mutedColor,
