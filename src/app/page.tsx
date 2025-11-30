@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useTheme } from '@/components/ThemeProvider';
+import NotificationIcon from '@/components/NotificationIcon';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 /* ===============================
    型
@@ -44,6 +46,9 @@ export default function Home() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfileRole | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // 🔔 プッシュ通知を初期化
+  usePushNotifications();
 
   /* ===============================
       ログインチェック
@@ -238,22 +243,28 @@ export default function Home() {
             <span className="text-xl font-bold">MERRILY</span>
           </Link>
 
-          {/* 右側：設定アイコン */}
-          <Link href="/account" className="p-2">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke={textColor}
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </Link>
+          {/* 右側：通知アイコン + 設定アイコン */}
+          <div className="flex items-center gap-2">
+            {/* 通知アイコン */}
+            <NotificationIcon textColor={textColor} />
+
+            {/* 設定アイコン */}
+            <Link href="/account" className="p-2">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke={textColor}
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -387,7 +398,7 @@ export default function Home() {
               投稿
             </Link>
 
-            {/* 進捗 */}
+            {/* 進捗（未実装） */}
             <button
               className="flex-1 py-2 text-center text-sm"
               style={{
@@ -398,7 +409,7 @@ export default function Home() {
               進捗
             </button>
 
-            {/* メニュー */}
+            {/* メニュー（未実装 or 別ページ） */}
             <Link
               href="/menu"
               className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
@@ -410,7 +421,7 @@ export default function Home() {
               メニュー
             </Link>
 
-            {/* グラフ */}
+            {/* グラフ（未実装 or 別ページ） */}
             <Link
               href="/graphs"
               className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
@@ -587,7 +598,7 @@ export default function Home() {
 
             {/* 売上入力（会計部） */}
             <button
-              className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
+              className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex itemsセンター justify-between hover:opacity-80"
               onClick={() => {
                 setMenuOpen(false);
                 router.push('/dashboard/accounting/menu');
