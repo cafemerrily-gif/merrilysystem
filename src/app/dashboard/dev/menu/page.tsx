@@ -116,7 +116,7 @@ export default function DevMenu() {
       <nav className="fixed md:top-16 bottom-0 md:bottom-auto left-0 right-0 border-t md:border-b z-40" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-4 h-16">
-            <Link href="/dashboard/accounting/menu" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
+            <Link href="/dashboard/accounting" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
               </svg>

@@ -279,7 +279,7 @@ export default function Home() {
           <div className="grid grid-cols-4 h-16">
             {/* 会計部 */}
             <Link
-              href="/dashboard/accounting/menu"
+              href="/dashboard/accounting"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg
