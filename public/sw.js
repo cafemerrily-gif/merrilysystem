@@ -1,48 +1,36 @@
-/* eslint-disable no-restricted-globals */
-
-// プッシュ通知受信
+// Service Worker - プッシュ通知受信
 self.addEventListener('push', function(event) {
-  console.log('Push received:', event);
+  if (!event.data) return;
 
-  let data = { title: 'MERRILY', body: '新しい通知があります' };
-  
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      console.error('Failed to parse push data:', e);
-    }
-  }
-
+  const data = event.data.json();
   const options = {
-    body: data.body,
+    body: data.body || '',
     icon: data.icon || '/icon-192x192.png',
     badge: data.badge || '/icon-192x192.png',
     data: data.data || {},
     vibrate: [200, 100, 200],
-    tag: 'merrily-notification',
+    tag: data.tag || 'merrily-notification',
     requireInteraction: false,
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title || 'MERRILY', options)
   );
 });
 
-// 通知クリック
+// 通知クリック時の処理
 self.addEventListener('notificationclick', function(event) {
-  console.log('Notification clicked:', event);
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  const urlToOpen = event.notification.data.url || '/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(function(clientList) {
-        // 既に開いているタブがあればフォーカス
+        // 既に開いているタブがあれば、そこにフォーカス
         for (let i = 0; i < clientList.length; i++) {
           const client = clientList[i];
-          if (client.url === urlToOpen && 'focus' in client) {
+          if (client.url.includes(urlToOpen.split('?')[0]) && 'focus' in client) {
             return client.focus();
           }
         }
@@ -54,19 +42,11 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-// バックグラウンド同期
-self.addEventListener('sync', function(event) {
-  console.log('Background sync:', event);
-  if (event.tag === 'sync-notifications') {
-    event.waitUntil(syncNotifications());
-  }
+// Service Worker インストール
+self.addEventListener('install', function(event) {
+  self.skipWaiting();
 });
 
-async function syncNotifications() {
-  try {
-    // バックグラウンドで通知を同期する処理
-    console.log('Syncing notifications...');
-  } catch (error) {
-    console.error('Sync failed:', error);
-  }
-}
+self.addEventListener('activate', function(event) {
+  event.waitUntil(clients.claim());
+});
