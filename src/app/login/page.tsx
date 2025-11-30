@@ -29,7 +29,9 @@ export default function LoginPage() {
   const logoSrc = isDark ? '/white.png' : '/black.png';
 
   // リダイレクト先
-  const redirectedFrom = searchParams.get('redirectedFrom') || '/dashboard/accounting/menu';
+  // 🔥 ← ホーム画面に固定
+  const redirectedFrom = searchParams.get('redirectedFrom') || '/';
+
 
   useEffect(() => {
     setMounted(true);
