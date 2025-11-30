@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useTheme } from '@/components/ThemeProvider';
 
 type HourlySales = {
   hour: number;
@@ -26,20 +27,32 @@ type ProductSales = {
   total_sales: number;
 };
 
+type WeeklySales = {
+  week: string;
+  total_sales: number;
+  item_count: number;
+};
+
+type MonthlySales = {
+  month: string;
+  total_sales: number;
+  gross_profit: number;
+};
+
 export default function SalesGraphPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [themeState, setThemeState] = useState<'light' | 'dark'>('light');
 
   // 表示モード
-  const [viewMode, setViewMode] = useState<'hourly' | 'daily' | 'product'>('hourly');
+  const [viewMode, setViewMode] = useState<'hourly' | 'daily' | 'weekly' | 'monthly' | 'product' | 'comparison'>('daily');
   
   // 日付範囲
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(date.getDate() - 7);
+    date.setDate(date.getDate() - 30);
     return date.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => {
@@ -54,29 +67,11 @@ export default function SalesGraphPage() {
   // データ
   const [hourlySales, setHourlySales] = useState<HourlySales[]>([]);
   const [dailySales, setDailySales] = useState<DailySales[]>([]);
+  const [weeklySales, setWeeklySales] = useState<WeeklySales[]>([]);
+  const [monthlySales, setMonthlySales] = useState<MonthlySales[]>([]);
   const [productSales, setProductSales] = useState<ProductSales[]>([]);
 
-  // テーマを安全に取得
-  useEffect(() => {
-    setMounted(true);
-    // クライアントサイドでテーマを検出
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark') || 
-                     window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(isDark ? 'dark' : 'light');
-      
-      // テーマ変更を監視
-      const observer = new MutationObserver(() => {
-        const isDarkNow = document.documentElement.classList.contains('dark');
-        setThemeState(isDarkNow ? 'dark' : 'light');
-      });
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-      
-      return () => observer.disconnect();
-    }
-  }, []);
-
-  const isDark = themeState === 'dark';
+  const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
   const borderColor = isDark ? '#262626' : '#dbdbdb';
@@ -85,15 +80,15 @@ export default function SalesGraphPage() {
   const inputBg = isDark ? '#1a1a1a' : '#ffffff';
   const accentColor = '#22c55e';
   const secondaryColor = '#3b82f6';
+  const warningColor = '#f59e0b';
 
   // 営業時間 11:00-16:00
   const businessHours = [11, 12, 13, 14, 15, 16];
 
   useEffect(() => {
-    if (mounted) {
-      checkUser();
-    }
-  }, [mounted]);
+    setMounted(true);
+    checkUser();
+  }, []);
 
   useEffect(() => {
     if (mounted && !loading) {
@@ -101,7 +96,11 @@ export default function SalesGraphPage() {
         fetchHourlySales();
       } else if (viewMode === 'daily') {
         fetchDailySales();
-      } else {
+      } else if (viewMode === 'weekly') {
+        fetchWeeklySales();
+      } else if (viewMode === 'monthly') {
+        fetchMonthlySales();
+      } else if (viewMode === 'product') {
         fetchProductSales();
       }
     }
@@ -116,24 +115,14 @@ export default function SalesGraphPage() {
     setLoading(false);
   };
 
-  // 時間帯別売上を取得（ダミーデータ生成 - 実際はAPIから）
+  // 時間帯別売上を取得（ダミーデータ）
   const fetchHourlySales = async () => {
-    try {
-      // 実際のAPIが実装されたら置き換え
-      // const res = await fetch(`/api/sales/analytics?type=hourly&date=${selectedDate}`);
-      // const data = await res.json();
-      
-      // ダミーデータ（営業時間11:00-16:00）
-      const dummyData: HourlySales[] = businessHours.map(hour => ({
-        hour,
-        sales: Math.floor(Math.random() * 15000) + 5000,
-        count: Math.floor(Math.random() * 30) + 10
-      }));
-      
-      setHourlySales(dummyData);
-    } catch (err) {
-      console.error('時間帯別売上取得エラー:', err);
-    }
+    const dummyData: HourlySales[] = businessHours.map(hour => ({
+      hour,
+      sales: Math.floor(Math.random() * 15000) + 5000,
+      count: Math.floor(Math.random() * 30) + 10
+    }));
+    setHourlySales(dummyData);
   };
 
   // 日別売上を取得
@@ -153,7 +142,39 @@ export default function SalesGraphPage() {
       }
     } catch (err) {
       console.error('日別売上取得エラー:', err);
+      // ダミーデータ
+      const days = getDaysBetween(new Date(startDate), new Date(endDate));
+      const dummyData = days.map(date => ({
+        date: date.toISOString().split('T')[0],
+        total_sales: Math.floor(Math.random() * 30000) + 10000,
+        total_cost: Math.floor(Math.random() * 15000) + 5000,
+        item_count: Math.floor(Math.random() * 50) + 20,
+        gross_profit: Math.floor(Math.random() * 15000) + 5000
+      }));
+      setDailySales(dummyData);
     }
+  };
+
+  // 週別売上を取得（ダミーデータ）
+  const fetchWeeklySales = async () => {
+    const weeks = getWeeksBetween(new Date(startDate), new Date(endDate));
+    const dummyData: WeeklySales[] = weeks.map((week, index) => ({
+      week: `第${index + 1}週 (${week.start} 〜 ${week.end})`,
+      total_sales: Math.floor(Math.random() * 100000) + 50000,
+      item_count: Math.floor(Math.random() * 200) + 100
+    }));
+    setWeeklySales(dummyData);
+  };
+
+  // 月別売上を取得（ダミーデータ）
+  const fetchMonthlySales = async () => {
+    const months = getMonthsBetween(new Date(startDate), new Date(endDate));
+    const dummyData: MonthlySales[] = months.map(month => ({
+      month: `${month}月`,
+      total_sales: Math.floor(Math.random() * 400000) + 200000,
+      gross_profit: Math.floor(Math.random() * 200000) + 100000
+    }));
+    setMonthlySales(dummyData);
   };
 
   // 商品別売上を取得
@@ -163,7 +184,6 @@ export default function SalesGraphPage() {
       const data = await res.json();
       
       if (Array.isArray(data)) {
-        // 商品ごとに集計
         const productMap = new Map<number, ProductSales>();
         data.forEach((d: any) => {
           const productId = d.product_id;
@@ -187,34 +207,121 @@ export default function SalesGraphPage() {
       }
     } catch (err) {
       console.error('商品別売上取得エラー:', err);
+      // ダミーデータ
+      const products = ['コーヒー', '紅茶', 'ケーキ', 'サンドイッチ', 'クッキー', 'マフィン', 'スムージー', 'ジュース'];
+      const dummyData: ProductSales[] = products.map((name, index) => ({
+        product_id: index + 1,
+        product_name: name,
+        quantity_sold: Math.floor(Math.random() * 100) + 20,
+        total_sales: Math.floor(Math.random() * 50000) + 10000
+      })).sort((a, b) => b.total_sales - a.total_sales);
+      setProductSales(dummyData);
     }
   };
 
+  // ヘルパー関数
+  const getDaysBetween = (start: Date, end: Date): Date[] => {
+    const dates: Date[] = [];
+    const current = new Date(start);
+    while (current <= end) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  };
+
+  const getWeeksBetween = (start: Date, end: Date) => {
+    const weeks: { start: string; end: string }[] = [];
+    const current = new Date(start);
+    
+    while (current <= end) {
+      const weekStart = new Date(current);
+      const weekEnd = new Date(current);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      
+      weeks.push({
+        start: weekStart.toISOString().split('T')[0],
+        end: (weekEnd > end ? end : weekEnd).toISOString().split('T')[0]
+      });
+      
+      current.setDate(current.getDate() + 7);
+    }
+    return weeks;
+  };
+
+  const getMonthsBetween = (start: Date, end: Date): number[] => {
+    const months: number[] = [];
+    const current = new Date(start);
+    
+    while (current <= end) {
+      months.push(current.getMonth() + 1);
+      current.setMonth(current.getMonth() + 1);
+    }
+    return [...new Set(months)];
+  };
+
   // グラフの最大値を計算
-  const hourlyMax = useMemo(() => {
-    return Math.max(...hourlySales.map(h => h.sales), 1);
-  }, [hourlySales]);
-
-  const dailyMax = useMemo(() => {
-    return Math.max(...dailySales.map(d => d.total_sales), 1);
-  }, [dailySales]);
-
-  const productMax = useMemo(() => {
-    return Math.max(...productSales.map(p => p.total_sales), 1);
-  }, [productSales]);
+  const hourlyMax = useMemo(() => Math.max(...hourlySales.map(h => h.sales), 1), [hourlySales]);
+  const dailyMax = useMemo(() => Math.max(...dailySales.map(d => d.total_sales), 1), [dailySales]);
+  const weeklyMax = useMemo(() => Math.max(...weeklySales.map(w => w.total_sales), 1), [weeklySales]);
+  const monthlyMax = useMemo(() => Math.max(...monthlySales.map(m => m.total_sales), 1), [monthlySales]);
+  const productMax = useMemo(() => Math.max(...productSales.map(p => p.total_sales), 1), [productSales]);
 
   // 合計計算
-  const hourlyTotal = useMemo(() => {
-    return hourlySales.reduce((sum, h) => sum + h.sales, 0);
-  }, [hourlySales]);
+  const getTotal = () => {
+    switch (viewMode) {
+      case 'hourly': return hourlySales.reduce((sum, h) => sum + h.sales, 0);
+      case 'daily': return dailySales.reduce((sum, d) => sum + d.total_sales, 0);
+      case 'weekly': return weeklySales.reduce((sum, w) => sum + w.total_sales, 0);
+      case 'monthly': return monthlySales.reduce((sum, m) => sum + m.total_sales, 0);
+      case 'product': return productSales.reduce((sum, p) => sum + p.total_sales, 0);
+      default: return 0;
+    }
+  };
 
-  const dailyTotal = useMemo(() => {
-    return dailySales.reduce((sum, d) => sum + d.total_sales, 0);
-  }, [dailySales]);
+  // CSVエクスポート
+  const exportToCSV = () => {
+    let csvContent = '';
+    let fileName = '';
 
-  const productTotal = useMemo(() => {
-    return productSales.reduce((sum, p) => sum + p.total_sales, 0);
-  }, [productSales]);
+    switch (viewMode) {
+      case 'hourly':
+        csvContent = '時間帯,売上,件数\n' + hourlySales.map(h => `${h.hour}:00,${h.sales},${h.count}`).join('\n');
+        fileName = `時間帯別売上_${selectedDate}.csv`;
+        break;
+      case 'daily':
+        csvContent = '日付,売上,原価,販売個数,粗利\n' + dailySales.map(d => 
+          `${d.date},${d.total_sales},${d.total_cost},${d.item_count},${d.gross_profit}`
+        ).join('\n');
+        fileName = `日別売上_${startDate}_${endDate}.csv`;
+        break;
+      case 'weekly':
+        csvContent = '週,売上,販売個数\n' + weeklySales.map(w => `${w.week},${w.total_sales},${w.item_count}`).join('\n');
+        fileName = `週別売上_${startDate}_${endDate}.csv`;
+        break;
+      case 'monthly':
+        csvContent = '月,売上,粗利\n' + monthlySales.map(m => `${m.month},${m.total_sales},${m.gross_profit}`).join('\n');
+        fileName = `月別売上_${startDate}_${endDate}.csv`;
+        break;
+      case 'product':
+        csvContent = '商品名,販売個数,売上\n' + productSales.map(p => 
+          `${p.product_name},${p.quantity_sold},${p.total_sales}`
+        ).join('\n');
+        fileName = `商品別売上_${startDate}_${endDate}.csv`;
+        break;
+    }
+
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (!mounted || loading) {
     return (
@@ -228,13 +335,22 @@ export default function SalesGraphPage() {
     <div className="min-h-screen pb-20" style={{ backgroundColor: bgColor, color: textColor }}>
       {/* ヘッダー */}
       <header className="sticky top-0 z-50 border-b" style={{ backgroundColor: bgColor, borderColor }}>
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/dashboard/accounting/menu" className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </Link>
-          <h1 className="text-xl font-bold">売上グラフ</h1>
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/accounting/menu" className="p-2 -ml-2 rounded-lg hover:opacity-70">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </Link>
+            <h1 className="text-xl font-bold">売上グラフ</h1>
+          </div>
+          <button
+            onClick={exportToCSV}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold"
+            style={{ backgroundColor: accentColor, color: '#ffffff' }}
+          >
+            CSV
+          </button>
         </div>
       </header>
 
@@ -243,9 +359,12 @@ export default function SalesGraphPage() {
         {/* 表示モード切替 */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {[
-            { id: 'hourly', label: '時間帯別' },
-            { id: 'daily', label: '日別' },
-            { id: 'product', label: '商品別' }
+            { id: 'hourly', label: '時間帯別', icon: '🕐' },
+            { id: 'daily', label: '日別', icon: '📅' },
+            { id: 'weekly', label: '週別', icon: '📊' },
+            { id: 'monthly', label: '月別', icon: '📈' },
+            { id: 'product', label: '商品別', icon: '🏆' },
+            { id: 'comparison', label: '比較', icon: '⚖️' }
           ].map((mode) => (
             <button
               key={mode.id}
@@ -257,7 +376,7 @@ export default function SalesGraphPage() {
                 color: viewMode === mode.id ? '#ffffff' : textColor
               }}
             >
-              {mode.label}
+              {mode.icon} {mode.label}
             </button>
           ))}
         </div>
@@ -308,7 +427,7 @@ export default function SalesGraphPage() {
               {viewMode === 'hourly' ? '日計売上' : '期間合計売上'}
             </span>
             <span className="text-2xl font-bold" style={{ color: accentColor }}>
-              ¥{(viewMode === 'hourly' ? hourlyTotal : viewMode === 'daily' ? dailyTotal : productTotal).toLocaleString()}
+              ¥{getTotal().toLocaleString()}
             </span>
           </div>
         </div>
@@ -318,112 +437,176 @@ export default function SalesGraphPage() {
           <div className="space-y-3">
             <h2 className="text-lg font-semibold mb-4">時間帯別売上（{selectedDate}）</h2>
             <p className="text-sm mb-4" style={{ color: mutedColor }}>営業時間: 11:00 〜 16:00</p>
-            {hourlySales.length === 0 ? (
-              <div className="text-center py-12" style={{ color: mutedColor }}>
-                データがありません
-              </div>
-            ) : (
-              hourlySales.map((item) => (
-                <div key={item.hour} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
-                    <div className="text-right">
-                      <span className="font-semibold">¥{item.sales.toLocaleString()}</span>
-                      <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
-                    </div>
-                  </div>
-                  <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(item.sales / hourlyMax) * 100}%`,
-                        backgroundColor: accentColor
-                      }}
-                    />
+            {hourlySales.map((item) => (
+              <div key={item.hour} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
+                  <div className="text-right">
+                    <span className="font-semibold">¥{item.sales.toLocaleString()}</span>
+                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
                   </div>
                 </div>
-              ))
-            )}
+                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.sales / hourlyMax) * 100}%`, backgroundColor: accentColor }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {viewMode === 'daily' && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold mb-4">日別売上推移</h2>
-            {dailySales.length === 0 ? (
-              <div className="text-center py-12" style={{ color: mutedColor }}>
-                データがありません
-              </div>
-            ) : (
-              dailySales.map((item) => (
-                <div key={item.date} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <span className="font-medium">{item.date}</span>
-                      <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                      <span className="text-sm ml-2" style={{ color: accentColor }}>
-                        利益 ¥{item.gross_profit.toLocaleString()}
-                      </span>
-                    </div>
+            {dailySales.map((item) => (
+              <div key={item.date} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <span className="font-medium">{item.date}</span>
+                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
                   </div>
-                  <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(item.total_sales / dailyMax) * 100}%`,
-                        backgroundColor: secondaryColor
-                      }}
-                    />
+                  <div className="text-right">
+                    <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-sm ml-2" style={{ color: accentColor }}>
+                      利益 ¥{item.gross_profit.toLocaleString()}
+                    </span>
                   </div>
                 </div>
-              ))
-            )}
+                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.total_sales / dailyMax) * 100}%`, backgroundColor: secondaryColor }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'weekly' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold mb-4">週別売上推移</h2>
+            {weeklySales.map((item, index) => (
+              <div key={index} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <span className="font-medium">{item.week}</span>
+                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
+                  </div>
+                  <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                </div>
+                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.total_sales / weeklyMax) * 100}%`, backgroundColor: warningColor }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'monthly' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold mb-4">月別売上推移</h2>
+            {monthlySales.map((item) => (
+              <div key={item.month} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-lg">{item.month}</span>
+                  <div className="text-right">
+                    <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-sm ml-2" style={{ color: accentColor }}>
+                      利益 ¥{item.gross_profit.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="h-8 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.total_sales / monthlyMax) * 100}%`, backgroundColor: '#8b5cf6' }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {viewMode === 'product' && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold mb-4">商品別売上ランキング</h2>
-            {productSales.length === 0 ? (
-              <div className="text-center py-12" style={{ color: mutedColor }}>
-                データがありません
-              </div>
-            ) : (
-              productSales.map((item, index) => (
-                <div key={item.product_id} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                        style={{
-                          backgroundColor: index < 3 ? accentColor : borderColor,
-                          color: index < 3 ? '#ffffff' : textColor
-                        }}
-                      >
-                        {index + 1}
-                      </span>
-                      <div>
-                        <span className="font-medium">{item.product_name}</span>
-                        <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.quantity_sold}個)</span>
-                      </div>
-                    </div>
-                    <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                  </div>
-                  <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
+            {productSales.map((item, index) => (
+              <div key={item.product_id} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
                       style={{
-                        width: `${(item.total_sales / productMax) * 100}%`,
-                        backgroundColor: index < 3 ? accentColor : secondaryColor
+                        backgroundColor: index < 3 ? accentColor : borderColor,
+                        color: index < 3 ? '#ffffff' : textColor
                       }}
-                    />
+                    >
+                      {index + 1}
+                    </span>
+                    <div>
+                      <span className="font-medium">{item.product_name}</span>
+                      <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.quantity_sold}個)</span>
+                    </div>
                   </div>
+                  <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
                 </div>
-              ))
-            )}
+                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.total_sales / productMax) * 100}%`, backgroundColor: index < 3 ? accentColor : secondaryColor }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'comparison' && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-semibold mb-4">期間比較</h2>
+            
+            {/* 売上 vs 利益 */}
+            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <h3 className="font-semibold mb-4">売上 vs 粗利</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span style={{ color: mutedColor }}>売上</span>
+                    <span className="font-semibold">¥{dailySales.reduce((s, d) => s + d.total_sales, 0).toLocaleString()}</span>
+                  </div>
+                  <div className="h-6 rounded-full" style={{ backgroundColor: secondaryColor }} />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span style={{ color: mutedColor }}>粗利</span>
+                    <span className="font-semibold">¥{dailySales.reduce((s, d) => s + d.gross_profit, 0).toLocaleString()}</span>
+                  </div>
+                  <div className="h-6 rounded-full" style={{ backgroundColor: accentColor }} />
+                </div>
+              </div>
+            </div>
+
+            {/* トップ3商品 */}
+            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <h3 className="font-semibold mb-4">🏆 売上トップ3</h3>
+              <div className="space-y-2">
+                {productSales.slice(0, 3).map((item, index) => (
+                  <div key={item.product_id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{['🥇', '🥈', '🥉'][index]}</span>
+                      <span className="font-medium">{item.product_name}</span>
+                    </div>
+                    <span style={{ color: mutedColor }}>¥{item.total_sales.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </main>
