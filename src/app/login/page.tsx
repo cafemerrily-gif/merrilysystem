@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 
@@ -17,6 +17,7 @@ const DEPARTMENTS = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
   
   const [isSignUp, setIsSignUp] = useState(false);
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // テーマ
@@ -39,6 +41,13 @@ export default function LoginPage() {
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, []);
+
+  // メール確認完了メッセージ
+  useEffect(() => {
+    if (searchParams.get('confirmed') === 'true') {
+      setSuccessMessage('メール確認が完了しました！ログインしてください。');
+    }
+  }, [searchParams]);
 
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
@@ -69,6 +78,7 @@ export default function LoginPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
@@ -77,7 +87,12 @@ export default function LoginPage() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('メールアドレスがまだ確認されていません。受信トレイを確認してください。');
+        }
+        throw error;
+      }
 
       router.push('/');
       router.refresh();
@@ -92,6 +107,7 @@ export default function LoginPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
@@ -119,16 +135,14 @@ export default function LoginPage() {
         throw new Error(data.error || 'サインアップに失敗しました');
       }
 
-      // サインアップ成功 → 自動ログイン
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      router.push('/');
-      router.refresh();
+      // サインアップ成功 → メール確認メッセージを表示
+      setSuccessMessage(data.message || '確認メールを送信しました。メールを確認してください。');
+      setIsSignUp(false); // ログイン画面に切り替え
+      
+      // フォームをクリア
+      setPassword('');
+      setDisplayName('');
+      setSelectedDepartments([]);
     } catch (error: any) {
       console.error('サインアップエラー:', error);
       setError(error.message || 'サインアップに失敗しました');
@@ -161,6 +175,14 @@ export default function LoginPage() {
 
         {/* フォーム */}
         <div className="rounded-2xl p-6 border" style={{ backgroundColor: bgColor, borderColor }}>
+          {/* 成功メッセージ */}
+          {successMessage && (
+            <div className="mb-4 p-3 rounded-lg bg-green-500 bg-opacity-10 border border-green-500">
+              <p className="text-sm text-green-500">{successMessage}</p>
+            </div>
+          )}
+
+          {/* エラーメッセージ */}
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500 bg-opacity-10 border border-red-500">
               <p className="text-sm text-red-500">{error}</p>
@@ -299,6 +321,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError('');
+                setSuccessMessage('');
               }}
               className="text-sm transition-opacity hover:opacity-70"
               style={{ color: textColor }}

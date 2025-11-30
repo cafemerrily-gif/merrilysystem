@@ -26,13 +26,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // ユーザー登録
+    // 部署名を変換（日本語 → 英語キー）
+    const departmentMap: { [key: string]: string } = {
+      '会計部': 'accounting',
+      '開発部': 'dev',
+      'エンジニア部': 'engineer',
+      '広報部': 'pr',
+      'マネジメント部': 'management',
+      '職員': 'employee',
+      'スタッフ': 'staff',
+    };
+
+    const mappedDepartments = (departments || []).map(
+      (dept: string) => departmentMap[dept] || dept
+    );
+
+    // ユーザー登録（確認メール送信あり）
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
         data: {
           display_name,
+          departments: departments || [],
+          departments_mapped: mappedDepartments,
+          email,
         },
       },
     });
@@ -52,55 +71,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // user_profilesテーブルにプロフィールを作成
-    // is_adminカラムが存在しない場合に備えて動的に構築
-    const profileData: any = {
-      id: authData.user.id,
-      display_name,
-      departments: departments || [],
-    };
-
-    // is_adminカラムが存在する場合のみ追加
-    try {
-      profileData.is_admin = false;
-    } catch (e) {
-      // is_adminが存在しない場合はスキップ
-    }
-
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert(profileData);
-
-    if (profileError) {
-      console.error('プロフィール作成エラー:', profileError);
-      
-      // プロフィール作成に失敗した場合でも登録は成功
-      // 後で手動で修正可能
-      return NextResponse.json({
-        success: true,
-        message: 'アカウントは作成されましたが、プロフィールの設定が完了していません。管理者に連絡してください。',
-        user: authData.user,
-      });
-    }
-
-    // ウェルカム通知を送信
-    try {
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: authData.user.id,
-          type: 'welcome',
-          title: 'MERRILYへようこそ！',
-          message: 'アカウントの作成が完了しました。早速投稿を見てみましょう！',
-          link: '/',
-        });
-    } catch (error) {
-      console.error('ウェルカム通知エラー:', error);
-    }
-
+    // メール確認が必要な場合は、ここでプロフィール作成はしない
+    // 確認後にトリガーで自動作成する
+    
     return NextResponse.json({
       success: true,
-      message: 'アカウントが作成されました',
+      message: '確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。',
+      email: email,
       user: authData.user,
     });
   } catch (error: any) {
