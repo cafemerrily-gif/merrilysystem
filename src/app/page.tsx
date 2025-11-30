@@ -268,7 +268,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex">
             {/* 投稿（現在の画面） */}
-            <button
+            <Link
+              href="/"
               className="flex-1 py-2 text-center text-sm font-semibold border-b-2"
               style={{
                 borderColor: textColor,
@@ -276,7 +277,7 @@ export default function Home() {
               }}
             >
               投稿
-            </button>
+            </Link>
 
             {/* 進捗 */}
             <button
@@ -301,15 +302,16 @@ export default function Home() {
             </button>
 
             {/* グラフ */}
-            <button
-              className="flex-1 py-2 text-center text-sm"
+            <Link
+              href="/dashboard/accounting/sales-graph"
+              className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
               style={{
                 color: mutedColor,
                 borderColor: 'transparent',
               }}
             >
               グラフ
-            </button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -438,7 +440,7 @@ export default function Home() {
           <div className="grid grid-cols-4 h-16">
             {/* 会計部 */}
             <Link
-              href="/dashboard/accounting"
+              href="/dashboard/accounting/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
             >
               <svg
