@@ -106,9 +106,7 @@ export default function MenuPage() {
           selling_price,
           cost_price,
           category_id,
-          collection_id,
-          categories:category_id (name),
-          product_collections:collection_id (name)
+          collection_id
         `)
         .in('collection_id', collectionIds)
         .is('deleted_at', null)
@@ -118,20 +116,44 @@ export default function MenuPage() {
       console.log('商品取得エラー:', error);
 
       if (error) {
-        console.error('商品取得エラー:', error);
+        console.error('商品取得エラー詳細:', error);
         setProducts([]);
         return;
       }
 
-      const formattedProducts: Product[] = (productsData || []).map((p: any) => ({
+      if (!productsData || productsData.length === 0) {
+        console.log('商品が見つかりませんでした');
+        setProducts([]);
+        return;
+      }
+
+      // カテゴリ名を別途取得
+      const categoryIds = [...new Set(productsData.map(p => p.category_id).filter(Boolean))];
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('id, name')
+        .in('id', categoryIds);
+
+      const categoryMap: Record<number, string> = {};
+      (categoriesData || []).forEach(cat => {
+        categoryMap[cat.id] = cat.name;
+      });
+
+      // 商品フォルダ名をマップ化
+      const collectionMap: Record<number, string> = {};
+      validCollections.forEach(coll => {
+        collectionMap[coll.id] = coll.name;
+      });
+
+      const formattedProducts: Product[] = productsData.map((p: any) => ({
         id: p.id,
         name: p.name,
         description: p.description,
         image_url: p.image_url,
         selling_price: p.selling_price || 0,
         cost_price: p.cost_price || 0,
-        category_name: p.categories?.name || null,
-        collection_name: p.product_collections?.name || null,
+        category_name: p.category_id ? categoryMap[p.category_id] : null,
+        collection_name: p.collection_id ? collectionMap[p.collection_id] : null,
       }));
 
       console.log('整形後の商品:', formattedProducts);
