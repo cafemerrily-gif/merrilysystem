@@ -430,7 +430,7 @@ export default function AccountPage() {
         style={{ backgroundColor: bgColor, borderColor }}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-5 h-16">
+          <div className="grid grid-cols-4 h-16">
             <Link
               href="/dashboard/accounting"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -521,31 +521,6 @@ export default function AccountPage() {
               </svg>
               <span className="text-xs" style={{ color: textColor }}>
                 スタッフ
-              </span>
-            </Link>
-
-            <Link
-              href="/account"
-              className="flex flex-col items-center justify-center gap-1"
-            >
-              <svg
-                className="w-6 h-6"
-                fill={textColor}
-                stroke={textColor}
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <span
-                className="text-xs font-semibold"
-                style={{ color: textColor }}
-              >
-                設定
               </span>
             </Link>
           </div>
