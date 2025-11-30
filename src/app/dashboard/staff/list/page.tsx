@@ -12,30 +12,31 @@ interface StaffMember {
   display_name: string;
   email: string;
   department: string;
-  hourly_rate: number;
   is_active: boolean;
   created_at: string;
 }
 
-interface Profile {
-  role: string;
+interface AuthUser {
+  id: string;
+  email: string;
 }
 
-export default function StaffListPage() {
+export default function MemberListPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [memberList, setMemberList] = useState<StaffMember[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<AuthUser[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
   const [formData, setFormData] = useState({
+    user_id: '',
     display_name: '',
     email: '',
     department: 'staff',
-    hourly_rate: 1000,
   });
   const [formLoading, setFormLoading] = useState(false);
 
@@ -52,103 +53,87 @@ export default function StaffListPage() {
     }
 
     // ユーザーの権限をチェック
-    // profilesテーブルがある場合
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
+    const { data: staffInfo } = await supabase
+      .from('staff_info')
+      .select('is_admin')
+      .eq('user_id', user.id)
       .single();
+    
+    setIsAdmin(staffInfo?.is_admin || false);
 
-    // profilesテーブルがない場合はstaff_infoのis_adminを使用
-    if (!profile) {
-      const { data: staffInfo } = await supabase
-        .from('staff_info')
-        .select('is_admin')
-        .eq('user_id', user.id)
-        .single();
-      
-      setIsAdmin(staffInfo?.is_admin || false);
-    } else {
-      const adminRole = profile?.role === 'admin' || profile?.role === 'manager';
-      setIsAdmin(adminRole);
-    }
-
-    await fetchStaffList();
+    await fetchMemberList();
+    await fetchAvailableUsers();
     setLoading(false);
   };
 
-  const fetchStaffList = async () => {
+  const fetchMemberList = async () => {
     const { data, error } = await supabase
       .from('staff_info')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('スタッフ一覧取得エラー:', error);
+      console.error('メンバー一覧取得エラー:', error);
       return;
     }
 
-    setStaffList(data || []);
+    setMemberList(data || []);
   };
 
-  const handleAddStaff = async (e: React.FormEvent) => {
+  const fetchAvailableUsers = async () => {
+    // 既にstaff_infoに登録されているuser_idを取得
+    const { data: existingMembers } = await supabase
+      .from('staff_info')
+      .select('user_id');
+
+    const existingUserIds = existingMembers?.map(m => m.user_id) || [];
+
+    // auth.usersから全ユーザーを取得（RPC関数を使用する必要があるかもしれません）
+    // クライアント側では制限があるため、ここでは簡易的に処理
+    // 実際の実装では、バックエンドAPIを作成することを推奨
+    
+    setAvailableUsers([]);
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formLoading || !isAdmin) return;
     setFormLoading(true);
 
-    // まず、ユーザーを検索（メールアドレスで）
-    const { data: existingUser } = await supabase
-      .from('staff_info')
-      .select('email')
-      .eq('email', formData.email)
-      .single();
-
-    if (existingUser) {
-      alert('このメールアドレスは既に登録されています');
-      setFormLoading(false);
-      return;
-    }
-
-    // auth.usersテーブルからユーザーIDを取得する必要がありますが、
-    // クライアント側からは直接アクセスできないため、
-    // ここでは仮のユーザーIDとして新規UUIDを生成します
-    // 実際の運用では、サーバーサイドAPIを経由するか、
-    // ユーザーが事前にサインアップ済みである必要があります
-
     const { data, error } = await supabase
       .from('staff_info')
       .insert({
-        user_id: crypto.randomUUID(), // 本来はauth.usersのIDを使用
+        user_id: formData.user_id,
         display_name: formData.display_name,
         email: formData.email,
         department: formData.department,
-        hourly_rate: formData.hourly_rate,
         is_active: true,
+        is_admin: false,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('スタッフ追加エラー:', error);
-      alert('スタッフの追加に失敗しました');
+      console.error('メンバー追加エラー:', error);
+      alert('メンバーの追加に失敗しました');
     } else {
-      alert('スタッフを追加しました');
+      alert('メンバーを追加しました');
       setShowAddModal(false);
       setFormData({
+        user_id: '',
         display_name: '',
         email: '',
         department: 'staff',
-        hourly_rate: 1000,
       });
-      await fetchStaffList();
+      await fetchMemberList();
     }
 
     setFormLoading(false);
   };
 
-  const handleUpdateStaff = async (e: React.FormEvent) => {
+  const handleUpdateMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formLoading || !isAdmin || !editingStaff) return;
+    if (formLoading || !isAdmin || !editingMember) return;
     setFormLoading(true);
 
     const { error } = await supabase
@@ -156,54 +141,53 @@ export default function StaffListPage() {
       .update({
         display_name: formData.display_name,
         department: formData.department,
-        hourly_rate: formData.hourly_rate,
       })
-      .eq('id', editingStaff.id);
+      .eq('id', editingMember.id);
 
     if (error) {
-      console.error('スタッフ更新エラー:', error);
-      alert('スタッフ情報の更新に失敗しました');
+      console.error('メンバー更新エラー:', error);
+      alert('メンバー情報の更新に失敗しました');
     } else {
-      alert('スタッフ情報を更新しました');
-      setEditingStaff(null);
+      alert('メンバー情報を更新しました');
+      setEditingMember(null);
       setFormData({
+        user_id: '',
         display_name: '',
         email: '',
         department: 'staff',
-        hourly_rate: 1000,
       });
-      await fetchStaffList();
+      await fetchMemberList();
     }
 
     setFormLoading(false);
   };
 
-  const handleDeleteStaff = async (staffId: string) => {
+  const handleDeleteMember = async (memberId: string) => {
     if (!isAdmin) return;
     
-    if (!confirm('本当にこのスタッフを削除しますか?')) return;
+    if (!confirm('本当にこのメンバーを削除しますか?')) return;
 
     const { error } = await supabase
       .from('staff_info')
       .delete()
-      .eq('id', staffId);
+      .eq('id', memberId);
 
     if (error) {
-      console.error('スタッフ削除エラー:', error);
-      alert('スタッフの削除に失敗しました');
+      console.error('メンバー削除エラー:', error);
+      alert('メンバーの削除に失敗しました');
     } else {
-      alert('スタッフを削除しました');
-      await fetchStaffList();
+      alert('メンバーを削除しました');
+      await fetchMemberList();
     }
   };
 
-  const openEditModal = (staff: StaffMember) => {
-    setEditingStaff(staff);
+  const openEditModal = (member: StaffMember) => {
+    setEditingMember(member);
     setFormData({
-      display_name: staff.display_name,
-      email: staff.email,
-      department: staff.department,
-      hourly_rate: staff.hourly_rate,
+      user_id: member.user_id,
+      display_name: member.display_name,
+      email: member.email,
+      department: member.department,
     });
   };
 
@@ -213,6 +197,9 @@ export default function StaffListPage() {
       case 'dev': return '開発部';
       case 'engineer': return 'エンジニア部';
       case 'pr': return '広報部';
+      case 'management': return 'マネジメント部';
+      case 'employee': return '職員';
+      case 'staff': return 'スタッフ';
       default: return 'スタッフ';
     }
   };
@@ -243,7 +230,7 @@ export default function StaffListPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-lg font-semibold">スタッフ一覧</h1>
+              <h1 className="text-lg font-semibold">メンバー一覧</h1>
             </div>
             {isAdmin && (
               <button
@@ -259,40 +246,44 @@ export default function StaffListPage() {
       </header>
 
       <main className="pt-20 max-w-4xl mx-auto px-4 py-6 space-y-4">
-        {staffList.length === 0 ? (
+        {memberList.length === 0 ? (
           <div className="p-8 text-center border rounded-2xl" style={{ borderColor }}>
-            <p style={{ color: mutedColor }}>スタッフが登録されていません</p>
+            <p style={{ color: mutedColor }}>メンバーが登録されていません</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {staffList.map((staff) => (
+            {memberList.map((member) => (
               <div
-                key={staff.id}
+                key={member.id}
                 className="p-4 border rounded-xl"
                 style={{ borderColor, backgroundColor: cardBgColor }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{staff.display_name}</h3>
+                      <h3 className="text-lg font-semibold">{member.display_name}</h3>
                       <span 
                         className="text-xs px-2 py-1 rounded-full"
                         style={{ 
-                          backgroundColor: staff.department === 'accounting' ? (isDark ? '#1e3a8a' : '#dbeafe') :
-                                         staff.department === 'dev' ? (isDark ? '#065f46' : '#d1fae5') :
-                                         staff.department === 'engineer' ? (isDark ? '#1e1b4b' : '#e0e7ff') :
-                                         staff.department === 'pr' ? (isDark ? '#7c2d12' : '#fed7aa') :
+                          backgroundColor: member.department === 'accounting' ? (isDark ? '#1e3a8a' : '#dbeafe') :
+                                         member.department === 'dev' ? (isDark ? '#065f46' : '#d1fae5') :
+                                         member.department === 'engineer' ? (isDark ? '#1e1b4b' : '#e0e7ff') :
+                                         member.department === 'pr' ? (isDark ? '#7c2d12' : '#fed7aa') :
+                                         member.department === 'management' ? (isDark ? '#831843' : '#fce7f3') :
+                                         member.department === 'employee' ? (isDark ? '#713f12' : '#fef3c7') :
                                          (isDark ? '#4c1d95' : '#e9d5ff'),
-                          color: staff.department === 'accounting' ? (isDark ? '#93c5fd' : '#1e40af') :
-                                staff.department === 'dev' ? (isDark ? '#6ee7b7' : '#059669') :
-                                staff.department === 'engineer' ? (isDark ? '#818cf8' : '#4338ca') :
-                                staff.department === 'pr' ? (isDark ? '#fdba74' : '#c2410c') :
+                          color: member.department === 'accounting' ? (isDark ? '#93c5fd' : '#1e40af') :
+                                member.department === 'dev' ? (isDark ? '#6ee7b7' : '#059669') :
+                                member.department === 'engineer' ? (isDark ? '#818cf8' : '#4338ca') :
+                                member.department === 'pr' ? (isDark ? '#fdba74' : '#c2410c') :
+                                member.department === 'management' ? (isDark ? '#f9a8d4' : '#9f1239') :
+                                member.department === 'employee' ? (isDark ? '#fde047' : '#a16207') :
                                 (isDark ? '#c4b5fd' : '#6b21a8')
                         }}
                       >
-                        {getDepartmentName(staff.department)}
+                        {getDepartmentName(member.department)}
                       </span>
-                      {!staff.is_active && (
+                      {!member.is_active && (
                         <span 
                           className="text-xs px-2 py-1 rounded-full"
                           style={{ backgroundColor: isDark ? '#7f1d1d' : '#fee2e2', color: isDark ? '#fca5a5' : '#991b1b' }}
@@ -302,14 +293,13 @@ export default function StaffListPage() {
                       )}
                     </div>
                     <div className="space-y-1 text-sm">
-                      <p style={{ color: mutedColor }}>メール: {staff.email}</p>
-                      <p style={{ color: mutedColor }}>時給: ¥{staff.hourly_rate.toLocaleString()}</p>
+                      <p style={{ color: mutedColor }}>メール: {member.email}</p>
                     </div>
                   </div>
                   {isAdmin && (
                     <div className="flex gap-2 ml-4">
                       <button
-                        onClick={() => openEditModal(staff)}
+                        onClick={() => openEditModal(member)}
                         className="p-2 rounded-lg border transition-opacity hover:opacity-70"
                         style={{ borderColor }}
                       >
@@ -318,7 +308,7 @@ export default function StaffListPage() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDeleteStaff(staff.id)}
+                        onClick={() => handleDeleteMember(member.id)}
                         className="p-2 rounded-lg border transition-opacity hover:opacity-70"
                         style={{ borderColor, color: '#ef4444' }}
                       >
@@ -335,12 +325,27 @@ export default function StaffListPage() {
         )}
       </main>
 
-      {/* スタッフ追加モーダル */}
+      {/* メンバー追加モーダル */}
       {showAddModal && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="w-full max-w-md p-6 rounded-2xl" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }}>
-            <h2 className="text-xl font-bold mb-4">スタッフを追加</h2>
-            <form onSubmit={handleAddStaff} className="space-y-4">
+            <h2 className="text-xl font-bold mb-4">メンバーを追加</h2>
+            <form onSubmit={handleAddMember} className="space-y-4">
+              <div>
+                <label className="block text-sm mb-1" style={{ color: mutedColor }}>ユーザーID（UUID）</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="auth.usersのユーザーID"
+                  value={formData.user_id}
+                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border"
+                  style={{ borderColor, backgroundColor: cardBgColor, color: textColor }}
+                />
+                <p className="text-xs mt-1" style={{ color: mutedColor }}>
+                  ※ AuthenticationのUsersから取得してください
+                </p>
+              </div>
               <div>
                 <label className="block text-sm mb-1" style={{ color: mutedColor }}>名前</label>
                 <input
@@ -376,27 +381,16 @@ export default function StaffListPage() {
                   <option value="dev">開発部</option>
                   <option value="engineer">エンジニア部</option>
                   <option value="pr">広報部</option>
+                  <option value="management">マネジメント部</option>
+                  <option value="employee">職員</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: mutedColor }}>時給（円）</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="10"
-                  value={formData.hourly_rate}
-                  onChange={(e) => setFormData({ ...formData, hourly_rate: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor, backgroundColor: cardBgColor, color: textColor }}
-                />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddModal(false);
-                    setFormData({ display_name: '', email: '', department: 'staff', hourly_rate: 1000 });
+                    setFormData({ user_id: '', display_name: '', email: '', department: 'staff' });
                   }}
                   className="flex-1 py-2 rounded-lg border"
                   style={{ borderColor }}
@@ -417,12 +411,12 @@ export default function StaffListPage() {
         </div>
       )}
 
-      {/* スタッフ編集モーダル */}
-      {editingStaff && isAdmin && (
+      {/* メンバー編集モーダル */}
+      {editingMember && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="w-full max-w-md p-6 rounded-2xl" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }}>
-            <h2 className="text-xl font-bold mb-4">スタッフ情報を編集</h2>
-            <form onSubmit={handleUpdateStaff} className="space-y-4">
+            <h2 className="text-xl font-bold mb-4">メンバー情報を編集</h2>
+            <form onSubmit={handleUpdateMember} className="space-y-4">
               <div>
                 <label className="block text-sm mb-1" style={{ color: mutedColor }}>名前</label>
                 <input
@@ -458,27 +452,16 @@ export default function StaffListPage() {
                   <option value="dev">開発部</option>
                   <option value="engineer">エンジニア部</option>
                   <option value="pr">広報部</option>
+                  <option value="management">マネジメント部</option>
+                  <option value="employee">職員</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: mutedColor }}>時給（円）</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="10"
-                  value={formData.hourly_rate}
-                  onChange={(e) => setFormData({ ...formData, hourly_rate: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor, backgroundColor: cardBgColor, color: textColor }}
-                />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setEditingStaff(null);
-                    setFormData({ display_name: '', email: '', department: 'staff', hourly_rate: 1000 });
+                    setEditingMember(null);
+                    setFormData({ user_id: '', display_name: '', email: '', department: 'staff' });
                   }}
                   className="flex-1 py-2 rounded-lg border"
                   style={{ borderColor }}

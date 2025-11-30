@@ -232,7 +232,10 @@ export default function AttendancePage() {
               所属: {staffInfo.department === 'accounting' ? '会計部' : 
                      staffInfo.department === 'dev' ? '開発部' : 
                      staffInfo.department === 'engineer' ? 'エンジニア部' :
-                     staffInfo.department === 'pr' ? '広報部' : 'スタッフ'}
+                     staffInfo.department === 'pr' ? '広報部' :
+                     staffInfo.department === 'management' ? 'マネジメント部' :
+                     staffInfo.department === 'employee' ? '職員' :
+                     'スタッフ'}
             </p>
           </div>
         )}

@@ -65,8 +65,8 @@ export default function StaffMenu() {
       color: isDark ? '#4ade80' : '#16a34a',
     },
     {
-      title: 'スタッフ一覧',
-      description: 'メンバー情報',
+      title: 'メンバー一覧',
+      description: 'チームメンバー情報',
       href: '/dashboard/staff/list',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -99,7 +99,7 @@ export default function StaffMenu() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-lg font-semibold">スタッフ管理</h1>
+              <h1 className="text-lg font-semibold">カフェ企画管理</h1>
             </div>
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function StaffMenu() {
               <svg className="w-6 h-6" fill={textColor} stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
               </svg>
-              <span className="text-xs font-semibold" style={{ color: textColor }}>スタッフ</span>
+              <span className="text-xs font-semibold" style={{ color: textColor }}>企画</span>
             </Link>
             <Link href="/account" className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70">
               <svg className="w-6 h-6" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={1.5}>
