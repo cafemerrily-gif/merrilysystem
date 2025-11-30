@@ -327,15 +327,18 @@ export default function SalesGraphPage() {
   };
 
   // 棒グラフコンポーネント
-  const BarChart = ({ value, max, color, height = 'h-32' }: { value: number; max: number; color: string; height?: string }) => {
-    const percentage = (value / max) * 100;
+  const BarChart = ({ value, max, color, height = '128px' }: { value: number; max: number; color: string; height?: string }) => {
+    const percentage = Math.max((value / max) * 100, 2); // 最低2%は表示
     return (
-      <div className={`${height} flex items-end`}>
+      <div style={{ height, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
         <div
-          className="w-full rounded-t-lg transition-all duration-500"
           style={{ 
             height: `${percentage}%`,
+            width: '100%',
             backgroundColor: color,
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
+            transition: 'height 0.5s ease',
             minHeight: '4px'
           }}
         />
@@ -487,7 +490,7 @@ export default function SalesGraphPage() {
             <div className="grid grid-cols-6 gap-2 sm:gap-3">
               {hourlySales.map((item) => (
                 <div key={item.hour} className="flex flex-col items-center">
-                  <BarChart value={item.sales} max={hourlyMax} color={accentColor} height="h-32 sm:h-40" />
+                  <BarChart value={item.sales} max={hourlyMax} color={accentColor} height="160px" />
                   <div className="mt-2 text-center">
                     <div className="text-xs sm:text-sm font-medium">{item.hour}時</div>
                     <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.sales / 1000).toFixed(0)}k</div>
@@ -502,26 +505,100 @@ export default function SalesGraphPage() {
         )}
 
         {viewMode === 'hourly' && chartType === 'line' && (
-          <div className="space-y-3">
+          <div className="space-y-6">
             <h2 className="text-base sm:text-lg font-semibold mb-4">時間帯別売上（{selectedDate}）</h2>
             <p className="text-xs sm:text-sm mb-4" style={{ color: mutedColor }}>営業時間: 11:00 〜 16:00</p>
-            {hourlySales.map((item) => (
-              <div key={item.hour} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm sm:text-base font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
+            
+            {/* SVG折れ線グラフ */}
+            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <svg viewBox="0 0 600 300" className="w-full" style={{ maxHeight: '300px' }}>
+                {/* 背景グリッド */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <line
+                    key={i}
+                    x1="50"
+                    y1={50 + i * 50}
+                    x2="580"
+                    y2={50 + i * 50}
+                    stroke={isDark ? '#333' : '#e5e7eb'}
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* 折れ線 */}
+                <polyline
+                  points={hourlySales.map((item, i) => {
+                    const x = 80 + (i * 90);
+                    const y = 250 - ((item.sales / hourlyMax) * 200);
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke={accentColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                
+                {/* データポイント */}
+                {hourlySales.map((item, i) => {
+                  const x = 80 + (i * 90);
+                  const y = 250 - ((item.sales / hourlyMax) * 200);
+                  return (
+                    <g key={item.hour}>
+                      <circle cx={x} cy={y} r="6" fill={accentColor} />
+                      <circle cx={x} cy={y} r="3" fill={bgColor} />
+                    </g>
+                  );
+                })}
+                
+                {/* X軸ラベル */}
+                {hourlySales.map((item, i) => {
+                  const x = 80 + (i * 90);
+                  return (
+                    <text
+                      key={item.hour}
+                      x={x}
+                      y="280"
+                      textAnchor="middle"
+                      fontSize="12"
+                      fill={mutedColor}
+                    >
+                      {item.hour}時
+                    </text>
+                  );
+                })}
+                
+                {/* Y軸ラベル */}
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const value = hourlyMax - (i * hourlyMax / 4);
+                  return (
+                    <text
+                      key={i}
+                      x="40"
+                      y={55 + i * 50}
+                      textAnchor="end"
+                      fontSize="10"
+                      fill={mutedColor}
+                    >
+                      {(value / 1000).toFixed(0)}k
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* データ詳細 */}
+            <div className="space-y-2">
+              {hourlySales.map((item) => (
+                <div key={item.hour} className="p-3 rounded-xl border flex justify-between items-center" style={{ backgroundColor: cardBg, borderColor }}>
+                  <span className="text-sm font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
                   <div className="text-right">
-                    <span className="text-sm sm:text-base font-semibold">¥{item.sales.toLocaleString()}</span>
-                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
+                    <span className="text-sm font-semibold">¥{item.sales.toLocaleString()}</span>
+                    <span className="text-xs ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
                   </div>
                 </div>
-                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${(item.sales / hourlyMax) * 100}%`, backgroundColor: accentColor }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -532,7 +609,7 @@ export default function SalesGraphPage() {
               <div className="flex gap-2 sm:gap-3 min-w-max">
                 {dailySales.map((item) => (
                   <div key={item.date} className="flex flex-col items-center min-w-[60px] sm:min-w-[80px]">
-                    <BarChart value={item.total_sales} max={dailyMax} color={secondaryColor} height="h-32 sm:h-40" />
+                    <BarChart value={item.total_sales} max={dailyMax} color={secondaryColor} height="160px" />
                     <div className="mt-2 text-center">
                       <div className="text-xs font-medium">{item.date.split('-')[2]}日</div>
                       <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
@@ -545,30 +622,105 @@ export default function SalesGraphPage() {
         )}
 
         {viewMode === 'daily' && chartType === 'line' && (
-          <div className="space-y-3">
+          <div className="space-y-6">
             <h2 className="text-base sm:text-lg font-semibold mb-4">日別売上推移</h2>
-            {dailySales.map((item) => (
-              <div key={item.date} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                <div className="flex items-center justify-between mb-2">
+            
+            {/* SVG折れ線グラフ */}
+            <div className="p-4 rounded-xl border overflow-x-auto" style={{ backgroundColor: cardBg, borderColor }}>
+              <svg viewBox="0 0 800 300" className="w-full min-w-[600px]" style={{ maxHeight: '300px' }}>
+                {/* 背景グリッド */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <line
+                    key={i}
+                    x1="50"
+                    y1={50 + i * 50}
+                    x2="750"
+                    y2={50 + i * 50}
+                    stroke={isDark ? '#333' : '#e5e7eb'}
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* 折れ線 */}
+                <polyline
+                  points={dailySales.map((item, i) => {
+                    const x = 80 + (i * (650 / Math.max(dailySales.length - 1, 1)));
+                    const y = 250 - ((item.total_sales / dailyMax) * 200);
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke={secondaryColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                
+                {/* データポイント */}
+                {dailySales.map((item, i) => {
+                  const x = 80 + (i * (650 / Math.max(dailySales.length - 1, 1)));
+                  const y = 250 - ((item.total_sales / dailyMax) * 200);
+                  return (
+                    <g key={item.date}>
+                      <circle cx={x} cy={y} r="5" fill={secondaryColor} />
+                      <circle cx={x} cy={y} r="2" fill={bgColor} />
+                    </g>
+                  );
+                })}
+                
+                {/* X軸ラベル（5日ごと） */}
+                {dailySales.map((item, i) => {
+                  if (i % 5 !== 0 && i !== dailySales.length - 1) return null;
+                  const x = 80 + (i * (650 / Math.max(dailySales.length - 1, 1)));
+                  return (
+                    <text
+                      key={item.date}
+                      x={x}
+                      y="280"
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill={mutedColor}
+                    >
+                      {item.date.split('-')[1]}/{item.date.split('-')[2]}
+                    </text>
+                  );
+                })}
+                
+                {/* Y軸ラベル */}
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const value = dailyMax - (i * dailyMax / 4);
+                  return (
+                    <text
+                      key={i}
+                      x="40"
+                      y={55 + i * 50}
+                      textAnchor="end"
+                      fontSize="10"
+                      fill={mutedColor}
+                    >
+                      {(value / 1000).toFixed(0)}k
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* データ詳細 */}
+            <div className="space-y-2">
+              {dailySales.map((item) => (
+                <div key={item.date} className="p-3 rounded-xl border flex justify-between items-center" style={{ backgroundColor: cardBg, borderColor }}>
                   <div>
-                    <span className="text-sm sm:text-base font-medium">{item.date}</span>
-                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
+                    <span className="text-sm font-medium">{item.date}</span>
+                    <span className="text-xs ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                    <span className="text-xs sm:text-sm ml-2" style={{ color: accentColor }}>
+                    <span className="text-sm font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-xs ml-2" style={{ color: accentColor }}>
                       利益 ¥{item.gross_profit.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${(item.total_sales / dailyMax) * 100}%`, backgroundColor: secondaryColor }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -578,7 +730,7 @@ export default function SalesGraphPage() {
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
               {weeklySales.map((item, index) => (
                 <div key={index} className="flex flex-col items-center">
-                  <BarChart value={item.total_sales} max={weeklyMax} color={warningColor} height="h-32 sm:h-40" />
+                  <BarChart value={item.total_sales} max={weeklyMax} color={warningColor} height="160px" />
                   <div className="mt-2 text-center">
                     <div className="text-xs sm:text-sm font-medium">{item.week}</div>
                     <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
@@ -590,25 +742,99 @@ export default function SalesGraphPage() {
         )}
 
         {viewMode === 'weekly' && chartType === 'line' && (
-          <div className="space-y-3">
+          <div className="space-y-6">
             <h2 className="text-base sm:text-lg font-semibold mb-4">週別売上推移</h2>
-            {weeklySales.map((item, index) => (
-              <div key={index} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="text-sm sm:text-base font-medium">{item.week}</span>
-                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
-                  </div>
-                  <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                </div>
-                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${(item.total_sales / weeklyMax) * 100}%`, backgroundColor: warningColor }}
+            
+            {/* SVG折れ線グラフ */}
+            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <svg viewBox="0 0 700 300" className="w-full" style={{ maxHeight: '300px' }}>
+                {/* 背景グリッド */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <line
+                    key={i}
+                    x1="50"
+                    y1={50 + i * 50}
+                    x2="650"
+                    y2={50 + i * 50}
+                    stroke={isDark ? '#333' : '#e5e7eb'}
+                    strokeWidth="1"
                   />
+                ))}
+                
+                {/* 折れ線 */}
+                <polyline
+                  points={weeklySales.map((item, i) => {
+                    const x = 100 + (i * (500 / Math.max(weeklySales.length - 1, 1)));
+                    const y = 250 - ((item.total_sales / weeklyMax) * 200);
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke={warningColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                
+                {/* データポイント */}
+                {weeklySales.map((item, i) => {
+                  const x = 100 + (i * (500 / Math.max(weeklySales.length - 1, 1)));
+                  const y = 250 - ((item.total_sales / weeklyMax) * 200);
+                  return (
+                    <g key={i}>
+                      <circle cx={x} cy={y} r="6" fill={warningColor} />
+                      <circle cx={x} cy={y} r="3" fill={bgColor} />
+                    </g>
+                  );
+                })}
+                
+                {/* X軸ラベル */}
+                {weeklySales.map((item, i) => {
+                  const x = 100 + (i * (500 / Math.max(weeklySales.length - 1, 1)));
+                  return (
+                    <text
+                      key={i}
+                      x={x}
+                      y="280"
+                      textAnchor="middle"
+                      fontSize="11"
+                      fill={mutedColor}
+                    >
+                      {item.week}
+                    </text>
+                  );
+                })}
+                
+                {/* Y軸ラベル */}
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const value = weeklyMax - (i * weeklyMax / 4);
+                  return (
+                    <text
+                      key={i}
+                      x="40"
+                      y={55 + i * 50}
+                      textAnchor="end"
+                      fontSize="10"
+                      fill={mutedColor}
+                    >
+                      {(value / 1000).toFixed(0)}k
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* データ詳細 */}
+            <div className="space-y-2">
+              {weeklySales.map((item, index) => (
+                <div key={index} className="p-3 rounded-xl border flex justify-between items-center" style={{ backgroundColor: cardBg, borderColor }}>
+                  <div>
+                    <span className="text-sm font-medium">{item.week}</span>
+                    <span className="text-xs ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
+                  </div>
+                  <span className="text-sm font-semibold">¥{item.total_sales.toLocaleString()}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -618,7 +844,7 @@ export default function SalesGraphPage() {
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
               {monthlySales.map((item) => (
                 <div key={item.month} className="flex flex-col items-center">
-                  <BarChart value={item.total_sales} max={monthlyMax} color="#8b5cf6" height="h-32 sm:h-40" />
+                  <BarChart value={item.total_sales} max={monthlyMax} color="#8b5cf6" height="160px" />
                   <div className="mt-2 text-center">
                     <div className="text-xs sm:text-sm font-medium">{item.month}</div>
                     <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
@@ -630,27 +856,101 @@ export default function SalesGraphPage() {
         )}
 
         {viewMode === 'monthly' && chartType === 'line' && (
-          <div className="space-y-3">
+          <div className="space-y-6">
             <h2 className="text-base sm:text-lg font-semibold mb-4">月別売上推移</h2>
-            {monthlySales.map((item) => (
-              <div key={item.month} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm sm:text-base font-medium text-lg">{item.month}</span>
+            
+            {/* SVG折れ線グラフ */}
+            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <svg viewBox="0 0 700 300" className="w-full" style={{ maxHeight: '300px' }}>
+                {/* 背景グリッド */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <line
+                    key={i}
+                    x1="50"
+                    y1={50 + i * 50}
+                    x2="650"
+                    y2={50 + i * 50}
+                    stroke={isDark ? '#333' : '#e5e7eb'}
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* 折れ線 */}
+                <polyline
+                  points={monthlySales.map((item, i) => {
+                    const x = 100 + (i * (500 / Math.max(monthlySales.length - 1, 1)));
+                    const y = 250 - ((item.total_sales / monthlyMax) * 200);
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#8b5cf6"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                
+                {/* データポイント */}
+                {monthlySales.map((item, i) => {
+                  const x = 100 + (i * (500 / Math.max(monthlySales.length - 1, 1)));
+                  const y = 250 - ((item.total_sales / monthlyMax) * 200);
+                  return (
+                    <g key={item.month}>
+                      <circle cx={x} cy={y} r="7" fill="#8b5cf6" />
+                      <circle cx={x} cy={y} r="3" fill={bgColor} />
+                    </g>
+                  );
+                })}
+                
+                {/* X軸ラベル */}
+                {monthlySales.map((item, i) => {
+                  const x = 100 + (i * (500 / Math.max(monthlySales.length - 1, 1)));
+                  return (
+                    <text
+                      key={item.month}
+                      x={x}
+                      y="280"
+                      textAnchor="middle"
+                      fontSize="12"
+                      fill={mutedColor}
+                    >
+                      {item.month}
+                    </text>
+                  );
+                })}
+                
+                {/* Y軸ラベル */}
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const value = monthlyMax - (i * monthlyMax / 4);
+                  return (
+                    <text
+                      key={i}
+                      x="40"
+                      y={55 + i * 50}
+                      textAnchor="end"
+                      fontSize="10"
+                      fill={mutedColor}
+                    >
+                      {(value / 1000).toFixed(0)}k
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* データ詳細 */}
+            <div className="space-y-2">
+              {monthlySales.map((item) => (
+                <div key={item.month} className="p-3 rounded-xl border flex justify-between items-center" style={{ backgroundColor: cardBg, borderColor }}>
+                  <span className="text-sm font-medium">{item.month}</span>
                   <div className="text-right">
-                    <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                    <span className="text-xs sm:text-sm ml-2" style={{ color: accentColor }}>
+                    <span className="text-sm font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-xs ml-2" style={{ color: accentColor }}>
                       利益 ¥{item.gross_profit.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                <div className="h-6 sm:h-8 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${(item.total_sales / monthlyMax) * 100}%`, backgroundColor: '#8b5cf6' }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
