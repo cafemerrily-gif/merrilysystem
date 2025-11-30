@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import NotificationPanel from './NotificationPanel';
+import Link from 'next/link';
 
 export default function NotificationIcon({ textColor }: { textColor: string }) {
   const supabase = createClientComponentClient();
-  const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -44,36 +43,31 @@ export default function NotificationIcon({ textColor }: { textColor: string }) {
   };
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setShowPanel(!showPanel)}
-        className="p-2 rounded-lg transition-opacity hover:opacity-70 relative"
+    <Link href="/notifications" className="relative p-2">
+      {/* ベルアイコン */}
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke={textColor}
+        viewBox="0 0 24 24"
+        strokeWidth={2}
       >
-        {/* インスタ風ハートアイコン */}
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke={textColor}
-          viewBox="0 0 24 24"
-          strokeWidth={2}
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+        />
+      </svg>
+
+      {/* 未読バッジ（赤丸） */}
+      {unreadCount > 0 && (
+        <div 
+          className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white"
+          style={{ backgroundColor: '#ef4444' }}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-          />
-        </svg>
-
-        {/* 未読バッジ */}
-        {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-xs font-bold text-white bg-red-500">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </div>
-        )}
-      </button>
-
-      {/* 通知パネル */}
-      {showPanel && <NotificationPanel onClose={() => setShowPanel(false)} />}
-    </div>
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </div>
+      )}
+    </Link>
   );
 }
