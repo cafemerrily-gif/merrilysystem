@@ -49,6 +49,9 @@ export default function SalesGraphPage() {
   // 表示モード
   const [viewMode, setViewMode] = useState<'hourly' | 'daily' | 'weekly' | 'monthly' | 'product' | 'comparison'>('daily');
   
+  // グラフタイプ
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
+  
   // 日付範囲
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -159,7 +162,7 @@ export default function SalesGraphPage() {
   const fetchWeeklySales = async () => {
     const weeks = getWeeksBetween(new Date(startDate), new Date(endDate));
     const dummyData: WeeklySales[] = weeks.map((week, index) => ({
-      week: `第${index + 1}週 (${week.start} 〜 ${week.end})`,
+      week: `第${index + 1}週`,
       total_sales: Math.floor(Math.random() * 100000) + 50000,
       item_count: Math.floor(Math.random() * 200) + 100
     }));
@@ -323,6 +326,23 @@ export default function SalesGraphPage() {
     document.body.removeChild(link);
   };
 
+  // 棒グラフコンポーネント
+  const BarChart = ({ value, max, color, height = 'h-32' }: { value: number; max: number; color: string; height?: string }) => {
+    const percentage = (value / max) * 100;
+    return (
+      <div className={`${height} flex items-end`}>
+        <div
+          className="w-full rounded-t-lg transition-all duration-500"
+          style={{ 
+            height: `${percentage}%`,
+            backgroundColor: color,
+            minHeight: '4px'
+          }}
+        />
+      </div>
+    );
+  };
+
   if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor }}>
@@ -336,17 +356,17 @@ export default function SalesGraphPage() {
       {/* ヘッダー */}
       <header className="sticky top-0 z-50 border-b" style={{ backgroundColor: bgColor, borderColor }}>
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dashboard/accounting/menu" className="p-2 -ml-2 rounded-lg hover:opacity-70">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
             </Link>
-            <h1 className="text-xl font-bold">売上グラフ</h1>
+            <h1 className="text-lg sm:text-xl font-bold">売上グラフ</h1>
           </div>
           <button
             onClick={exportToCSV}
-            className="px-3 py-1.5 rounded-lg text-sm font-semibold"
+            className="px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             style={{ backgroundColor: accentColor, color: '#ffffff' }}
           >
             CSV
@@ -357,62 +377,90 @@ export default function SalesGraphPage() {
       {/* メインコンテンツ */}
       <main className="max-w-4xl mx-auto px-4 py-6">
         {/* 表示モード切替 */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
           {[
-            { id: 'hourly', label: '時間帯別', icon: '🕐' },
+            { id: 'hourly', label: '時間', icon: '🕐' },
             { id: 'daily', label: '日別', icon: '📅' },
             { id: 'weekly', label: '週別', icon: '📊' },
             { id: 'monthly', label: '月別', icon: '📈' },
-            { id: 'product', label: '商品別', icon: '🏆' },
+            { id: 'product', label: '商品', icon: '🏆' },
             { id: 'comparison', label: '比較', icon: '⚖️' }
           ].map((mode) => (
             <button
               key={mode.id}
               onClick={() => setViewMode(mode.id as typeof viewMode)}
-              className="px-4 py-2 rounded-xl border whitespace-nowrap transition-all"
+              className="px-3 sm:px-4 py-2 rounded-xl border whitespace-nowrap transition-all text-sm"
               style={{
                 backgroundColor: viewMode === mode.id ? accentColor : cardBg,
                 borderColor: viewMode === mode.id ? accentColor : borderColor,
                 color: viewMode === mode.id ? '#ffffff' : textColor
               }}
             >
-              {mode.icon} {mode.label}
+              <span className="hidden sm:inline">{mode.icon} </span>{mode.label}
             </button>
           ))}
         </div>
 
-        {/* 日付選択 */}
-        <div className="mb-6 p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+        {/* グラフタイプ切替 */}
+        {viewMode !== 'comparison' && viewMode !== 'product' && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setChartType('bar')}
+              className="flex-1 sm:flex-none sm:px-6 py-2 rounded-xl border transition-all text-sm"
+              style={{
+                backgroundColor: chartType === 'bar' ? secondaryColor : cardBg,
+                borderColor: chartType === 'bar' ? secondaryColor : borderColor,
+                color: chartType === 'bar' ? '#ffffff' : textColor
+              }}
+            >
+              📊 棒グラフ
+            </button>
+            <button
+              onClick={() => setChartType('line')}
+              className="flex-1 sm:flex-none sm:px-6 py-2 rounded-xl border transition-all text-sm"
+              style={{
+                backgroundColor: chartType === 'line' ? secondaryColor : cardBg,
+                borderColor: chartType === 'line' ? secondaryColor : borderColor,
+                color: chartType === 'line' ? '#ffffff' : textColor
+              }}
+            >
+              📈 折れ線
+            </button>
+          </div>
+        )}
+
+        {/* 日付選択 - スマホ対応 */}
+        <div className="mb-6 p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
           {viewMode === 'hourly' ? (
             <div>
-              <label className="block text-sm mb-2" style={{ color: mutedColor }}>日付選択</label>
+              <label className="block text-xs sm:text-sm mb-2" style={{ color: mutedColor }}>日付選択</label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base"
                 style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textColor }}
               />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
               <div>
-                <label className="block text-sm mb-2" style={{ color: mutedColor }}>開始日</label>
+                <label className="block text-xs sm:text-sm mb-2" style={{ color: mutedColor }}>開始日</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base"
                   style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textColor }}
                 />
               </div>
               <div>
-                <label className="block text-sm mb-2" style={{ color: mutedColor }}>終了日</label>
+                <label className="block text-xs sm:text-sm mb-2" style={{ color: mutedColor }}>終了日</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base"
                   style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textColor }}
                 />
               </div>
@@ -421,32 +469,52 @@ export default function SalesGraphPage() {
         </div>
 
         {/* 合計表示 */}
-        <div className="mb-6 p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+        <div className="mb-6 p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
           <div className="flex justify-between items-center">
-            <span style={{ color: mutedColor }}>
+            <span className="text-sm sm:text-base" style={{ color: mutedColor }}>
               {viewMode === 'hourly' ? '日計売上' : '期間合計売上'}
             </span>
-            <span className="text-2xl font-bold" style={{ color: accentColor }}>
+            <span className="text-xl sm:text-2xl font-bold" style={{ color: accentColor }}>
               ¥{getTotal().toLocaleString()}
             </span>
           </div>
         </div>
 
         {/* グラフ表示 */}
-        {viewMode === 'hourly' && (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold mb-4">時間帯別売上（{selectedDate}）</h2>
-            <p className="text-sm mb-4" style={{ color: mutedColor }}>営業時間: 11:00 〜 16:00</p>
-            {hourlySales.map((item) => (
-              <div key={item.hour} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
-                  <div className="text-right">
-                    <span className="font-semibold">¥{item.sales.toLocaleString()}</span>
-                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
+        {viewMode === 'hourly' && chartType === 'bar' && (
+          <div className="space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">時間帯別売上（{selectedDate}）</h2>
+            <div className="grid grid-cols-6 gap-2 sm:gap-3">
+              {hourlySales.map((item) => (
+                <div key={item.hour} className="flex flex-col items-center">
+                  <BarChart value={item.sales} max={hourlyMax} color={accentColor} height="h-32 sm:h-40" />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs sm:text-sm font-medium">{item.hour}時</div>
+                    <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.sales / 1000).toFixed(0)}k</div>
                   </div>
                 </div>
-                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+              ))}
+            </div>
+            <div className="mt-6 p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <div className="text-xs sm:text-sm" style={{ color: mutedColor }}>営業時間: 11:00 〜 16:00</div>
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'hourly' && chartType === 'line' && (
+          <div className="space-y-3">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">時間帯別売上（{selectedDate}）</h2>
+            <p className="text-xs sm:text-sm mb-4" style={{ color: mutedColor }}>営業時間: 11:00 〜 16:00</p>
+            {hourlySales.map((item) => (
+              <div key={item.hour} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm sm:text-base font-medium">{item.hour}:00 〜 {item.hour + 1}:00</span>
+                  <div className="text-right">
+                    <span className="text-sm sm:text-base font-semibold">¥{item.sales.toLocaleString()}</span>
+                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.count}件)</span>
+                  </div>
+                </div>
+                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${(item.sales / hourlyMax) * 100}%`, backgroundColor: accentColor }}
@@ -457,24 +525,43 @@ export default function SalesGraphPage() {
           </div>
         )}
 
-        {viewMode === 'daily' && (
+        {viewMode === 'daily' && chartType === 'bar' && (
+          <div className="space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">日別売上推移</h2>
+            <div className="overflow-x-auto pb-4">
+              <div className="flex gap-2 sm:gap-3 min-w-max">
+                {dailySales.map((item) => (
+                  <div key={item.date} className="flex flex-col items-center min-w-[60px] sm:min-w-[80px]">
+                    <BarChart value={item.total_sales} max={dailyMax} color={secondaryColor} height="h-32 sm:h-40" />
+                    <div className="mt-2 text-center">
+                      <div className="text-xs font-medium">{item.date.split('-')[2]}日</div>
+                      <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'daily' && chartType === 'line' && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold mb-4">日別売上推移</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-4">日別売上推移</h2>
             {dailySales.map((item) => (
-              <div key={item.date} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <div key={item.date} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <span className="font-medium">{item.date}</span>
-                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
+                    <span className="text-sm sm:text-base font-medium">{item.date}</span>
+                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                    <span className="text-sm ml-2" style={{ color: accentColor }}>
+                    <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-xs sm:text-sm ml-2" style={{ color: accentColor }}>
                       利益 ¥{item.gross_profit.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${(item.total_sales / dailyMax) * 100}%`, backgroundColor: secondaryColor }}
@@ -485,19 +572,36 @@ export default function SalesGraphPage() {
           </div>
         )}
 
-        {viewMode === 'weekly' && (
+        {viewMode === 'weekly' && chartType === 'bar' && (
+          <div className="space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">週別売上推移</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
+              {weeklySales.map((item, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  <BarChart value={item.total_sales} max={weeklyMax} color={warningColor} height="h-32 sm:h-40" />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs sm:text-sm font-medium">{item.week}</div>
+                    <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'weekly' && chartType === 'line' && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold mb-4">週別売上推移</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-4">週別売上推移</h2>
             {weeklySales.map((item, index) => (
-              <div key={index} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <div key={index} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <span className="font-medium">{item.week}</span>
-                    <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
+                    <span className="text-sm sm:text-base font-medium">{item.week}</span>
+                    <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.item_count}個)</span>
                   </div>
-                  <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                  <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
                 </div>
-                <div className="h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                <div className="h-4 sm:h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${(item.total_sales / weeklyMax) * 100}%`, backgroundColor: warningColor }}
@@ -508,21 +612,38 @@ export default function SalesGraphPage() {
           </div>
         )}
 
-        {viewMode === 'monthly' && (
+        {viewMode === 'monthly' && chartType === 'bar' && (
+          <div className="space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">月別売上推移</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+              {monthlySales.map((item) => (
+                <div key={item.month} className="flex flex-col items-center">
+                  <BarChart value={item.total_sales} max={monthlyMax} color="#8b5cf6" height="h-32 sm:h-40" />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs sm:text-sm font-medium">{item.month}</div>
+                    <div className="text-xs mt-1" style={{ color: mutedColor }}>¥{(item.total_sales / 1000).toFixed(0)}k</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'monthly' && chartType === 'line' && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold mb-4">月別売上推移</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-4">月別売上推移</h2>
             {monthlySales.map((item) => (
-              <div key={item.month} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <div key={item.month} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-lg">{item.month}</span>
+                  <span className="text-sm sm:text-base font-medium text-lg">{item.month}</span>
                   <div className="text-right">
-                    <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
-                    <span className="text-sm ml-2" style={{ color: accentColor }}>
+                    <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                    <span className="text-xs sm:text-sm ml-2" style={{ color: accentColor }}>
                       利益 ¥{item.gross_profit.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                <div className="h-8 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                <div className="h-6 sm:h-8 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${(item.total_sales / monthlyMax) * 100}%`, backgroundColor: '#8b5cf6' }}
@@ -535,13 +656,13 @@ export default function SalesGraphPage() {
 
         {viewMode === 'product' && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold mb-4">商品別売上ランキング</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-4">商品別売上ランキング</h2>
             {productSales.map((item, index) => (
-              <div key={item.product_id} className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <div key={item.product_id} className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <span
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold"
                       style={{
                         backgroundColor: index < 3 ? accentColor : borderColor,
                         color: index < 3 ? '#ffffff' : textColor
@@ -550,13 +671,13 @@ export default function SalesGraphPage() {
                       {index + 1}
                     </span>
                     <div>
-                      <span className="font-medium">{item.product_name}</span>
-                      <span className="text-sm ml-2" style={{ color: mutedColor }}>({item.quantity_sold}個)</span>
+                      <span className="text-sm sm:text-base font-medium">{item.product_name}</span>
+                      <span className="text-xs sm:text-sm ml-2" style={{ color: mutedColor }}>({item.quantity_sold}個)</span>
                     </div>
                   </div>
-                  <span className="font-semibold">¥{item.total_sales.toLocaleString()}</span>
+                  <span className="text-sm sm:text-base font-semibold">¥{item.total_sales.toLocaleString()}</span>
                 </div>
-                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                <div className="h-3 sm:h-4 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${(item.total_sales / productMax) * 100}%`, backgroundColor: index < 3 ? accentColor : secondaryColor }}
@@ -569,37 +690,37 @@ export default function SalesGraphPage() {
 
         {viewMode === 'comparison' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold mb-4">期間比較</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-4">期間比較</h2>
             
             {/* 売上 vs 利益 */}
-            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-              <h3 className="font-semibold mb-4">売上 vs 粗利</h3>
+            <div className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <h3 className="text-sm sm:text-base font-semibold mb-4">売上 vs 粗利</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between mb-2">
+                  <div className="flex justify-between mb-2 text-sm sm:text-base">
                     <span style={{ color: mutedColor }}>売上</span>
                     <span className="font-semibold">¥{dailySales.reduce((s, d) => s + d.total_sales, 0).toLocaleString()}</span>
                   </div>
-                  <div className="h-6 rounded-full" style={{ backgroundColor: secondaryColor }} />
+                  <div className="h-5 sm:h-6 rounded-full" style={{ backgroundColor: secondaryColor }} />
                 </div>
                 <div>
-                  <div className="flex justify-between mb-2">
+                  <div className="flex justify-between mb-2 text-sm sm:text-base">
                     <span style={{ color: mutedColor }}>粗利</span>
                     <span className="font-semibold">¥{dailySales.reduce((s, d) => s + d.gross_profit, 0).toLocaleString()}</span>
                   </div>
-                  <div className="h-6 rounded-full" style={{ backgroundColor: accentColor }} />
+                  <div className="h-5 sm:h-6 rounded-full" style={{ backgroundColor: accentColor }} />
                 </div>
               </div>
             </div>
 
             {/* トップ3商品 */}
-            <div className="p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
-              <h3 className="font-semibold mb-4">🏆 売上トップ3</h3>
+            <div className="p-3 sm:p-4 rounded-xl border" style={{ backgroundColor: cardBg, borderColor }}>
+              <h3 className="text-sm sm:text-base font-semibold mb-4">🏆 売上トップ3</h3>
               <div className="space-y-2">
                 {productSales.slice(0, 3).map((item, index) => (
-                  <div key={item.product_id} className="flex items-center justify-between">
+                  <div key={item.product_id} className="flex items-center justify-between text-sm sm:text-base">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{['🥇', '🥈', '🥉'][index]}</span>
+                      <span className="text-xl sm:text-2xl">{['🥇', '🥈', '🥉'][index]}</span>
                       <span className="font-medium">{item.product_name}</span>
                     </div>
                     <span style={{ color: mutedColor }}>¥{item.total_sales.toLocaleString()}</span>
@@ -649,6 +770,16 @@ export default function SalesGraphPage() {
           </div>
         </div>
       </nav>
+
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
