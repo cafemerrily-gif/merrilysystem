@@ -13,6 +13,7 @@ interface StaffMember {
   email: string;
   department: string[];
   is_active: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -23,6 +24,7 @@ export default function MemberListPage() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [memberList, setMemberList] = useState<StaffMember[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
@@ -55,6 +57,8 @@ export default function MemberListPage() {
       router.push('/login');
       return;
     }
+
+    setCurrentUserId(user.id);
 
     const { data: staffInfo } = await supabase
       .from('staff_info')
@@ -89,6 +93,32 @@ export default function MemberListPage() {
         : [...prev.departments, dept];
       return { ...prev, departments };
     });
+  };
+
+  const handleToggleAdmin = async (memberId: string, currentIsAdmin: boolean, memberName: string, memberUserId: string) => {
+    // 自分自身の管理者権限は削除できない
+    if (memberUserId === currentUserId && currentIsAdmin) {
+      alert('自分自身の管理者権限は削除できません');
+      return;
+    }
+
+    const action = currentIsAdmin ? '削除' : '付与';
+    if (!confirm(`${memberName}の管理者権限を${action}しますか？`)) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('staff_info')
+      .update({ is_admin: !currentIsAdmin })
+      .eq('id', memberId);
+
+    if (error) {
+      console.error('管理者権限更新エラー:', error);
+      alert('管理者権限の更新に失敗しました');
+    } else {
+      alert(`管理者権限を${action}しました`);
+      await fetchMemberList();
+    }
   };
 
   const handleAddMember = async (e: React.FormEvent) => {
@@ -170,8 +200,14 @@ export default function MemberListPage() {
     setFormLoading(false);
   };
 
-  const handleDeleteMember = async (memberId: string) => {
+  const handleDeleteMember = async (memberId: string, memberUserId: string) => {
     if (!isAdmin) return;
+    
+    // 自分自身は削除できない
+    if (memberUserId === currentUserId) {
+      alert('自分自身を削除することはできません');
+      return;
+    }
     
     if (!confirm('本当にこのメンバーを削除しますか?')) return;
 
@@ -267,6 +303,8 @@ export default function MemberListPage() {
           <div className="space-y-3">
             {memberList.map((member) => {
               const departments = Array.isArray(member.department) ? member.department : [member.department];
+              const isSelf = member.user_id === currentUserId;
+              
               return (
                 <div
                   key={member.id}
@@ -277,6 +315,14 @@ export default function MemberListPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg font-semibold">{member.display_name}</h3>
+                        {isSelf && (
+                          <span 
+                            className="text-xs px-2 py-1 rounded-full font-semibold"
+                            style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', color: isDark ? '#93c5fd' : '#1e40af' }}
+                          >
+                            あなた
+                          </span>
+                        )}
                         {departments.map((dept) => {
                           const color = getDepartmentColor(dept, isDark);
                           return (
@@ -297,13 +343,35 @@ export default function MemberListPage() {
                             非アクティブ
                           </span>
                         )}
+                        {member.is_admin && (
+                          <span 
+                            className="text-xs px-2 py-1 rounded-full font-semibold"
+                            style={{ backgroundColor: isDark ? '#854d0e' : '#fef3c7', color: isDark ? '#fde047' : '#a16207' }}
+                          >
+                            👑 管理者
+                          </span>
+                        )}
                       </div>
                       <div className="space-y-1 text-sm">
                         <p style={{ color: mutedColor }}>メール: {member.email}</p>
                       </div>
                     </div>
                     {isAdmin && (
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 ml-4 flex-wrap">
+                        <button
+                          onClick={() => handleToggleAdmin(member.id, member.is_admin, member.display_name, member.user_id)}
+                          className="p-2 rounded-lg border transition-opacity hover:opacity-70"
+                          style={{ 
+                            borderColor,
+                            backgroundColor: member.is_admin ? (isDark ? '#854d0e' : '#fef3c7') : 'transparent',
+                            color: member.is_admin ? (isDark ? '#fde047' : '#a16207') : textColor
+                          }}
+                          title={member.is_admin ? '管理者権限を削除' : '管理者権限を付与'}
+                        >
+                          <svg className="w-5 h-5" fill={member.is_admin ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => openEditModal(member)}
                           className="p-2 rounded-lg border transition-opacity hover:opacity-70"
@@ -314,7 +382,7 @@ export default function MemberListPage() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteMember(member.id)}
+                          onClick={() => handleDeleteMember(member.id, member.user_id)}
                           className="p-2 rounded-lg border transition-opacity hover:opacity-70"
                           style={{ borderColor, color: '#ef4444' }}
                         >
