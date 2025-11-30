@@ -35,6 +35,7 @@ export default function AdminAttendancePage() {
   const [selectedStaff, setSelectedStaff] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -226,6 +227,31 @@ export default function AdminAttendancePage() {
     return filteredAttendance.filter(a => a.clock_out).length;
   };
 
+  const handleDeleteAttendance = async (attendanceId: string, staffName: string) => {
+    if (deleteLoading) return;
+    
+    if (!confirm(`${staffName}の勤怠記録を削除しますか？\nこの操作は取り消せません。`)) {
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('id', attendanceId);
+
+    if (error) {
+      console.error('勤怠削除エラー:', error);
+      alert('勤怠記録の削除に失敗しました');
+    } else {
+      alert('勤怠記録を削除しました');
+      await fetchAllAttendance();
+    }
+
+    setDeleteLoading(false);
+  };
+
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
@@ -369,15 +395,28 @@ export default function AdminAttendancePage() {
                   style={{ borderColor, backgroundColor: cardBgColor }}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold">{record.staff_name}</p>
                       <p className="text-sm" style={{ color: mutedColor }}>{formatDate(record.clock_in)}</p>
                     </div>
-                    {record.work_hours && (
-                      <span className="text-sm px-3 py-1 rounded-full" style={{ backgroundColor: isDark ? '#065f46' : '#d1fae5', color: isDark ? '#34d399' : '#059669' }}>
-                        {record.work_hours.toFixed(2)}時間
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {record.work_hours && (
+                        <span className="text-sm px-3 py-1 rounded-full" style={{ backgroundColor: isDark ? '#065f46' : '#d1fae5', color: isDark ? '#34d399' : '#059669' }}>
+                          {record.work_hours.toFixed(2)}時間
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDeleteAttendance(record.id, record.staff_name)}
+                        disabled={deleteLoading}
+                        className="p-2 rounded-lg border transition-opacity hover:opacity-70 disabled:opacity-50"
+                        style={{ borderColor, color: '#ef4444' }}
+                        title="削除"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
