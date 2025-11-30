@@ -57,20 +57,43 @@ export default function MenuPage() {
 
   const fetchProducts = async () => {
     try {
-      // 選択日に該当する商品フォルダを取得
-      const { data: collections } = await supabase
+      // すべての商品フォルダを取得
+      const { data: allCollections, error: collError } = await supabase
         .from('product_collections')
-        .select('id')
-        .lte('start_date', selectedDate)
-        .gte('end_date', selectedDate)
+        .select('id, name, start_date, end_date')
         .is('deleted_at', null);
 
-      if (!collections || collections.length === 0) {
+      console.log('全商品フォルダ:', allCollections);
+
+      if (!allCollections || allCollections.length === 0) {
+        console.log('商品フォルダが存在しません');
         setProducts([]);
         return;
       }
 
-      const collectionIds = collections.map(c => c.id);
+      // JavaScriptで日付範囲をフィルタ
+      const validCollections = allCollections.filter(c => {
+        // start_dateとend_dateの両方が設定されている場合のみチェック
+        if (!c.start_date || !c.end_date) {
+          console.log(`フォルダ "${c.name}" は日付が未設定`);
+          return false;
+        }
+        
+        const isValid = c.start_date <= selectedDate && selectedDate <= c.end_date;
+        console.log(`フォルダ "${c.name}": ${c.start_date} <= ${selectedDate} <= ${c.end_date} = ${isValid}`);
+        return isValid;
+      });
+
+      console.log('該当する商品フォルダ:', validCollections);
+
+      if (validCollections.length === 0) {
+        console.log('選択日に該当する商品フォルダがありません');
+        setProducts([]);
+        return;
+      }
+
+      const collectionIds = validCollections.map(c => c.id);
+      console.log('商品フォルダID:', collectionIds);
 
       // 該当フォルダの商品を取得
       const { data: productsData, error } = await supabase
@@ -91,6 +114,9 @@ export default function MenuPage() {
         .is('deleted_at', null)
         .order('name');
 
+      console.log('取得した商品:', productsData);
+      console.log('商品取得エラー:', error);
+
       if (error) {
         console.error('商品取得エラー:', error);
         setProducts([]);
@@ -108,6 +134,7 @@ export default function MenuPage() {
         collection_name: p.product_collections?.name || null,
       }));
 
+      console.log('整形後の商品:', formattedProducts);
       setProducts(formattedProducts);
     } catch (err) {
       console.error('fetchProducts エラー:', err);
