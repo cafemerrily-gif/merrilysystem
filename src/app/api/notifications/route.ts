@@ -15,15 +15,15 @@ export async function GET(request: Request) {
 
     // 未読件数取得
     if (action === 'unread_count') {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('notifications')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('is_read', false);
 
       if (error) throw error;
 
-      return NextResponse.json({ count: data || 0 });
+      return NextResponse.json({ count: count || 0 });
     }
 
     // 通知一覧取得
