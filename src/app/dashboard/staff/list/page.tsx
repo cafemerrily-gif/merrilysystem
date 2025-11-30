@@ -200,30 +200,42 @@ export default function MemberListPage() {
     setFormLoading(false);
   };
 
-  const handleDeleteMember = async (memberId: string, memberUserId: string) => {
-    if (!isAdmin) return;
-    
-    // 自分自身は削除できない
-    if (memberUserId === currentUserId) {
-      alert('自分自身を削除することはできません');
-      return;
+const handleDeleteMember = async (memberId: string, memberUserId: string) => {
+  if (!isAdmin) return;
+  
+  // 自分自身は削除できない
+  if (memberUserId === currentUserId) {
+    alert('自分自身を削除することはできません');
+    return;
+  }
+  
+  if (!confirm('本当にこのメンバーを削除しますか? この操作は取り消せません。')) return;
+
+  try {
+    // 新しいAPIエンドポイントを使用
+    const res = await fetch(`/api/users/delete?user_id=${memberUserId}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete');
     }
+
+    const data = await res.json();
     
-    if (!confirm('本当にこのメンバーを削除しますか?')) return;
-
-    const { error } = await supabase
-      .from('staff_info')
-      .delete()
-      .eq('id', memberId);
-
-    if (error) {
-      console.error('メンバー削除エラー:', error);
-      alert('メンバーの削除に失敗しました');
+    if (data.warning) {
+      alert(data.message + '\n\n⚠️ ' + data.warning);
     } else {
-      alert('メンバーを削除しました');
-      await fetchMemberList();
+      alert(data.message || 'メンバーを削除しました');
     }
-  };
+    
+    await fetchMemberList();
+  } catch (error: any) {
+    console.error('削除エラー:', error);
+    alert(error.message || 'メンバーの削除に失敗しました');
+  }
+};
 
   const openEditModal = (member: StaffMember) => {
     setEditingMember(member);
