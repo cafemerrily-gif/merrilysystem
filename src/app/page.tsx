@@ -32,6 +32,8 @@ type UserProfileRole = {
   role: string | null;
 };
 
+import HomeHeader from '@/components/HomeHeader';
+
 /* ===============================
    ホーム画面
 ================================ */
