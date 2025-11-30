@@ -11,14 +11,9 @@ interface StaffMember {
   user_id: string;
   display_name: string;
   email: string;
-  department: string;
+  department: string[];
   is_active: boolean;
   created_at: string;
-}
-
-interface AuthUser {
-  id: string;
-  email: string;
 }
 
 export default function MemberListPage() {
@@ -28,7 +23,6 @@ export default function MemberListPage() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [memberList, setMemberList] = useState<StaffMember[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<AuthUser[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
@@ -36,9 +30,19 @@ export default function MemberListPage() {
     user_id: '',
     display_name: '',
     email: '',
-    department: 'staff',
+    departments: [] as string[],
   });
   const [formLoading, setFormLoading] = useState(false);
+
+  const departmentOptions = [
+    { value: 'accounting', label: '会計部' },
+    { value: 'dev', label: '開発部' },
+    { value: 'engineer', label: 'エンジニア部' },
+    { value: 'pr', label: '広報部' },
+    { value: 'management', label: 'マネジメント部' },
+    { value: 'employee', label: '職員' },
+    { value: 'staff', label: 'スタッフ' },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -52,7 +56,6 @@ export default function MemberListPage() {
       return;
     }
 
-    // ユーザーの権限をチェック
     const { data: staffInfo } = await supabase
       .from('staff_info')
       .select('is_admin')
@@ -62,7 +65,6 @@ export default function MemberListPage() {
     setIsAdmin(staffInfo?.is_admin || false);
 
     await fetchMemberList();
-    await fetchAvailableUsers();
     setLoading(false);
   };
 
@@ -80,24 +82,24 @@ export default function MemberListPage() {
     setMemberList(data || []);
   };
 
-  const fetchAvailableUsers = async () => {
-    // 既にstaff_infoに登録されているuser_idを取得
-    const { data: existingMembers } = await supabase
-      .from('staff_info')
-      .select('user_id');
-
-    const existingUserIds = existingMembers?.map(m => m.user_id) || [];
-
-    // auth.usersから全ユーザーを取得（RPC関数を使用する必要があるかもしれません）
-    // クライアント側では制限があるため、ここでは簡易的に処理
-    // 実際の実装では、バックエンドAPIを作成することを推奨
-    
-    setAvailableUsers([]);
+  const handleDepartmentToggle = (dept: string) => {
+    setFormData(prev => {
+      const departments = prev.departments.includes(dept)
+        ? prev.departments.filter(d => d !== dept)
+        : [...prev.departments, dept];
+      return { ...prev, departments };
+    });
   };
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formLoading || !isAdmin) return;
+    
+    if (formData.departments.length === 0) {
+      alert('少なくとも1つの部署を選択してください');
+      return;
+    }
+    
     setFormLoading(true);
 
     const { data, error } = await supabase
@@ -106,7 +108,7 @@ export default function MemberListPage() {
         user_id: formData.user_id,
         display_name: formData.display_name,
         email: formData.email,
-        department: formData.department,
+        department: formData.departments,
         is_active: true,
         is_admin: false,
       })
@@ -123,7 +125,7 @@ export default function MemberListPage() {
         user_id: '',
         display_name: '',
         email: '',
-        department: 'staff',
+        departments: [],
       });
       await fetchMemberList();
     }
@@ -134,13 +136,19 @@ export default function MemberListPage() {
   const handleUpdateMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formLoading || !isAdmin || !editingMember) return;
+    
+    if (formData.departments.length === 0) {
+      alert('少なくとも1つの部署を選択してください');
+      return;
+    }
+    
     setFormLoading(true);
 
     const { error } = await supabase
       .from('staff_info')
       .update({
         display_name: formData.display_name,
-        department: formData.department,
+        department: formData.departments,
       })
       .eq('id', editingMember.id);
 
@@ -154,7 +162,7 @@ export default function MemberListPage() {
         user_id: '',
         display_name: '',
         email: '',
-        department: 'staff',
+        departments: [],
       });
       await fetchMemberList();
     }
@@ -187,21 +195,26 @@ export default function MemberListPage() {
       user_id: member.user_id,
       display_name: member.display_name,
       email: member.email,
-      department: member.department,
+      departments: Array.isArray(member.department) ? member.department : [member.department],
     });
   };
 
   const getDepartmentName = (dept: string) => {
-    switch (dept) {
-      case 'accounting': return '会計部';
-      case 'dev': return '開発部';
-      case 'engineer': return 'エンジニア部';
-      case 'pr': return '広報部';
-      case 'management': return 'マネジメント部';
-      case 'employee': return '職員';
-      case 'staff': return 'スタッフ';
-      default: return 'スタッフ';
-    }
+    const found = departmentOptions.find(d => d.value === dept);
+    return found ? found.label : dept;
+  };
+
+  const getDepartmentColor = (dept: string, isDark: boolean) => {
+    const colors: { [key: string]: { bg: string; text: string } } = {
+      accounting: { bg: isDark ? '#1e3a8a' : '#dbeafe', text: isDark ? '#93c5fd' : '#1e40af' },
+      dev: { bg: isDark ? '#065f46' : '#d1fae5', text: isDark ? '#6ee7b7' : '#059669' },
+      engineer: { bg: isDark ? '#1e1b4b' : '#e0e7ff', text: isDark ? '#818cf8' : '#4338ca' },
+      pr: { bg: isDark ? '#7c2d12' : '#fed7aa', text: isDark ? '#fdba74' : '#c2410c' },
+      management: { bg: isDark ? '#831843' : '#fce7f3', text: isDark ? '#f9a8d4' : '#9f1239' },
+      employee: { bg: isDark ? '#713f12' : '#fef3c7', text: isDark ? '#fde047' : '#a16207' },
+      staff: { bg: isDark ? '#4c1d95' : '#e9d5ff', text: isDark ? '#c4b5fd' : '#6b21a8' },
+    };
+    return colors[dept] || colors.staff;
   };
 
   const isDark = theme === 'dark';
@@ -252,83 +265,77 @@ export default function MemberListPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {memberList.map((member) => (
-              <div
-                key={member.id}
-                className="p-4 border rounded-xl"
-                style={{ borderColor, backgroundColor: cardBgColor }}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{member.display_name}</h3>
-                      <span 
-                        className="text-xs px-2 py-1 rounded-full"
-                        style={{ 
-                          backgroundColor: member.department === 'accounting' ? (isDark ? '#1e3a8a' : '#dbeafe') :
-                                         member.department === 'dev' ? (isDark ? '#065f46' : '#d1fae5') :
-                                         member.department === 'engineer' ? (isDark ? '#1e1b4b' : '#e0e7ff') :
-                                         member.department === 'pr' ? (isDark ? '#7c2d12' : '#fed7aa') :
-                                         member.department === 'management' ? (isDark ? '#831843' : '#fce7f3') :
-                                         member.department === 'employee' ? (isDark ? '#713f12' : '#fef3c7') :
-                                         (isDark ? '#4c1d95' : '#e9d5ff'),
-                          color: member.department === 'accounting' ? (isDark ? '#93c5fd' : '#1e40af') :
-                                member.department === 'dev' ? (isDark ? '#6ee7b7' : '#059669') :
-                                member.department === 'engineer' ? (isDark ? '#818cf8' : '#4338ca') :
-                                member.department === 'pr' ? (isDark ? '#fdba74' : '#c2410c') :
-                                member.department === 'management' ? (isDark ? '#f9a8d4' : '#9f1239') :
-                                member.department === 'employee' ? (isDark ? '#fde047' : '#a16207') :
-                                (isDark ? '#c4b5fd' : '#6b21a8')
-                        }}
-                      >
-                        {getDepartmentName(member.department)}
-                      </span>
-                      {!member.is_active && (
-                        <span 
-                          className="text-xs px-2 py-1 rounded-full"
-                          style={{ backgroundColor: isDark ? '#7f1d1d' : '#fee2e2', color: isDark ? '#fca5a5' : '#991b1b' }}
+            {memberList.map((member) => {
+              const departments = Array.isArray(member.department) ? member.department : [member.department];
+              return (
+                <div
+                  key={member.id}
+                  className="p-4 border rounded-xl"
+                  style={{ borderColor, backgroundColor: cardBgColor }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <h3 className="text-lg font-semibold">{member.display_name}</h3>
+                        {departments.map((dept) => {
+                          const color = getDepartmentColor(dept, isDark);
+                          return (
+                            <span
+                              key={dept}
+                              className="text-xs px-2 py-1 rounded-full"
+                              style={{ backgroundColor: color.bg, color: color.text }}
+                            >
+                              {getDepartmentName(dept)}
+                            </span>
+                          );
+                        })}
+                        {!member.is_active && (
+                          <span 
+                            className="text-xs px-2 py-1 rounded-full"
+                            style={{ backgroundColor: isDark ? '#7f1d1d' : '#fee2e2', color: isDark ? '#fca5a5' : '#991b1b' }}
+                          >
+                            非アクティブ
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p style={{ color: mutedColor }}>メール: {member.email}</p>
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => openEditModal(member)}
+                          className="p-2 rounded-lg border transition-opacity hover:opacity-70"
+                          style={{ borderColor }}
                         >
-                          非アクティブ
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <p style={{ color: mutedColor }}>メール: {member.email}</p>
-                    </div>
+                          <svg className="w-5 h-5" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMember(member.id)}
+                          className="p-2 rounded-lg border transition-opacity hover:opacity-70"
+                          style={{ borderColor, color: '#ef4444' }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {isAdmin && (
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => openEditModal(member)}
-                        className="p-2 rounded-lg border transition-opacity hover:opacity-70"
-                        style={{ borderColor }}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMember(member.id)}
-                        className="p-2 rounded-lg border transition-opacity hover:opacity-70"
-                        style={{ borderColor, color: '#ef4444' }}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
 
       {/* メンバー追加モーダル */}
       {showAddModal && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md p-6 rounded-2xl" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowAddModal(false)}>
+          <div className="w-full max-w-md p-6 rounded-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }} onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4">メンバーを追加</h2>
             <form onSubmit={handleAddMember} className="space-y-4">
               <div>
@@ -369,28 +376,31 @@ export default function MemberListPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1" style={{ color: mutedColor }}>所属部署</label>
-                <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor, backgroundColor: cardBgColor, color: textColor }}
-                >
-                  <option value="staff">スタッフ</option>
-                  <option value="accounting">会計部</option>
-                  <option value="dev">開発部</option>
-                  <option value="engineer">エンジニア部</option>
-                  <option value="pr">広報部</option>
-                  <option value="management">マネジメント部</option>
-                  <option value="employee">職員</option>
-                </select>
+                <label className="block text-sm mb-2" style={{ color: mutedColor }}>所属部署（複数選択可）</label>
+                <div className="space-y-2">
+                  {departmentOptions.map((dept) => (
+                    <label
+                      key={dept.value}
+                      className="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-opacity-50"
+                      style={{ borderColor, backgroundColor: formData.departments.includes(dept.value) ? `${borderColor}40` : 'transparent' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.departments.includes(dept.value)}
+                        onChange={() => handleDepartmentToggle(dept.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{dept.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddModal(false);
-                    setFormData({ user_id: '', display_name: '', email: '', department: 'staff' });
+                    setFormData({ user_id: '', display_name: '', email: '', departments: [] });
                   }}
                   className="flex-1 py-2 rounded-lg border"
                   style={{ borderColor }}
@@ -413,8 +423,8 @@ export default function MemberListPage() {
 
       {/* メンバー編集モーダル */}
       {editingMember && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md p-6 rounded-2xl" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setEditingMember(null)}>
+          <div className="w-full max-w-md p-6 rounded-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: bgColor, border: `1px solid ${borderColor}` }} onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4">メンバー情報を編集</h2>
             <form onSubmit={handleUpdateMember} className="space-y-4">
               <div>
@@ -440,28 +450,31 @@ export default function MemberListPage() {
                 <p className="text-xs mt-1" style={{ color: mutedColor }}>※メールアドレスは変更できません</p>
               </div>
               <div>
-                <label className="block text-sm mb-1" style={{ color: mutedColor }}>所属部署</label>
-                <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor, backgroundColor: cardBgColor, color: textColor }}
-                >
-                  <option value="staff">スタッフ</option>
-                  <option value="accounting">会計部</option>
-                  <option value="dev">開発部</option>
-                  <option value="engineer">エンジニア部</option>
-                  <option value="pr">広報部</option>
-                  <option value="management">マネジメント部</option>
-                  <option value="employee">職員</option>
-                </select>
+                <label className="block text-sm mb-2" style={{ color: mutedColor }}>所属部署（複数選択可）</label>
+                <div className="space-y-2">
+                  {departmentOptions.map((dept) => (
+                    <label
+                      key={dept.value}
+                      className="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-opacity-50"
+                      style={{ borderColor, backgroundColor: formData.departments.includes(dept.value) ? `${borderColor}40` : 'transparent' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.departments.includes(dept.value)}
+                        onChange={() => handleDepartmentToggle(dept.value)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{dept.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setEditingMember(null);
-                    setFormData({ user_id: '', display_name: '', email: '', department: 'staff' });
+                    setFormData({ user_id: '', display_name: '', email: '', departments: [] });
                   }}
                   className="flex-1 py-2 rounded-lg border"
                   style={{ borderColor }}

@@ -17,7 +17,7 @@ interface AttendanceRecord {
 
 interface StaffInfo {
   display_name: string;
-  department: string;
+  department: string[];
 }
 
 export default function AttendancePage() {
@@ -190,6 +190,19 @@ export default function AttendancePage() {
     }).format(date);
   };
 
+  const getDepartmentName = (dept: string) => {
+    const deptMap: { [key: string]: string } = {
+      accounting: '会計部',
+      dev: '開発部',
+      engineer: 'エンジニア部',
+      pr: '広報部',
+      management: 'マネジメント部',
+      employee: '職員',
+      staff: 'スタッフ',
+    };
+    return deptMap[dept] || dept;
+  };
+
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#000000' : '#ffffff';
   const textColor = isDark ? '#ffffff' : '#000000';
@@ -229,13 +242,9 @@ export default function AttendancePage() {
             <h2 className="text-sm font-semibold mb-2" style={{ color: mutedColor }}>スタッフ情報</h2>
             <p className="text-lg font-semibold">{staffInfo.display_name}</p>
             <p className="text-sm mt-1" style={{ color: mutedColor }}>
-              所属: {staffInfo.department === 'accounting' ? '会計部' : 
-                     staffInfo.department === 'dev' ? '開発部' : 
-                     staffInfo.department === 'engineer' ? 'エンジニア部' :
-                     staffInfo.department === 'pr' ? '広報部' :
-                     staffInfo.department === 'management' ? 'マネジメント部' :
-                     staffInfo.department === 'employee' ? '職員' :
-                     'スタッフ'}
+              所属: {Array.isArray(staffInfo.department) 
+                ? staffInfo.department.map(d => getDepartmentName(d)).join('、')
+                : getDepartmentName(staffInfo.department)}
             </p>
           </div>
         )}
