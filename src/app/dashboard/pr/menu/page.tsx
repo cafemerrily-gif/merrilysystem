@@ -56,7 +56,7 @@ export default function PRMenu() {
     {
       title: '新規投稿',
       description: '新しい投稿を作成',
-      href: '/dashboard/pr/menu',
+      href: '/dashboard/pr/posts/create',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
