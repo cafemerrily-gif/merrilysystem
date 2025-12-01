@@ -197,7 +197,7 @@ export default function NotificationsPage() {
       </header>
 
       {/* コンテンツ */}
-      <div className="pt-20 max-w-2xl mx-auto px-4">
+      <div className="pt-28 max-w-2xl mx-auto px-4">
         {/* フィルタとアクション */}
         <div className="py-3">
           <div className="flex items-center justify-between mb-3">
