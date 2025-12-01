@@ -199,7 +199,7 @@ export default function NotificationsPage() {
       {/* コンテンツ */}
       <div className="pt-16 max-w-2xl mx-auto px-4">
         {/* フィルタとアクション */}
-        <div className="sticky top-16 z-40 py-3 -mx-4 px-4" style={{ backgroundColor: bgColor }}>
+        <div className="py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex gap-2">
               <button
