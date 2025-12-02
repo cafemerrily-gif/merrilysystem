@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'MERRILY - Cafe Management System',
-  description: 'バーとログがひと目でわかるダッシュボード',
+  description: 'バイトログがひと目でわかるダッシュボード',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.svg',

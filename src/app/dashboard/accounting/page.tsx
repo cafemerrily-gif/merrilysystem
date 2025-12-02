@@ -88,6 +88,18 @@ export default function AccountingDashboard() {
       ),
       color: isDark ? '#a78bfa' : '#7c3aed',
     },
+    {
+      title: '在庫管理',
+      description: '在庫の入出庫・しきい値管理',
+      href: '/dashboard/accounting/inventory',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5l7.5-3 7.5 3M3.75 7.5v9l7.5 3 7.5-3v-9" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12l7.5 3 7.5-3" />
+        </svg>
+      ),
+      color: isDark ? '#34d399' : '#059669',
+    },
   ];
 
   return (

@@ -9,9 +9,6 @@ import { useTheme } from '@/components/ThemeProvider';
 import NotificationIcon from '@/components/NotificationIcon';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
-/* ===============================
-   型
-================================ */
 type Post = {
   id: string;
   user_id: string;
@@ -32,11 +29,6 @@ type UserProfileRole = {
   role: string | null;
 };
 
-import HomeHeader from '@/components/HomeHeader';
-
-/* ===============================
-   ホーム画面
-================================ */
 export default function Home() {
   const router = useRouter();
   const supabase = createClientComponentClient();
@@ -52,9 +44,7 @@ export default function Home() {
   // 🔔 プッシュ通知を初期化
   usePushNotifications();
 
-  /* ===============================
-      ログインチェック
-  ================================ */
+  // ログインチェック
   const checkUser = async () => {
     const {
       data: { user },
@@ -77,9 +67,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  /* ===============================
-      投稿読み込み
-  ================================ */
+  // 投稿読み込み
   const loadPosts = async () => {
     try {
       const {
@@ -161,13 +149,11 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    checkUser();
-    loadPosts();
+    void checkUser();
+    void loadPosts();
   }, []);
 
-  /* ===============================
-      いいね処理
-  ================================ */
+  // いいね処理
   const handleLike = async (postId: string) => {
     if (!currentUserId) return;
 
@@ -203,9 +189,7 @@ export default function Home() {
     }
   };
 
-  /* ===============================
-      UI 用変数
-  ================================ */
+  // UI 用変数
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#000' : '#fff';
   const textColor = isDark ? '#fff' : '#000';
@@ -224,17 +208,12 @@ export default function Home() {
     );
   }
 
-  /* ===============================
-      メイン JSX
-  ================================ */
   return (
     <div
       className="min-h-screen pb-16"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
-      {/* -------------------------
-          ヘッダー
-      ------------------------- */}
+      {/* ヘッダー */}
       <header
         className="fixed top-0 left-0 right-0 z-40 border-b"
         style={{ backgroundColor: bgColor, borderColor }}
@@ -245,12 +224,8 @@ export default function Home() {
             <span className="text-xl font-bold">MERRILY</span>
           </Link>
 
-          {/* 右側：通知アイコン + 設定アイコン */}
           <div className="flex items-center gap-2">
-            {/* 通知アイコン */}
             <NotificationIcon textColor={textColor} />
-
-            {/* 設定アイコン */}
             <Link href="/account" className="p-2">
               <svg
                 className="w-6 h-6"
@@ -270,16 +245,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* -------------------------
-          部署ナビゲーション（PC: ヘッダー下、Mobile: 下部固定）
-      ------------------------- */}
+      {/* 部署ナビゲーション PC: ヘッダー下、Mobile: 下部固定 */}
       <nav
         className="fixed md:top-16 bottom-0 md:bottom-auto left-0 right-0 border-t md:border-b z-40"
         style={{ backgroundColor: bgColor, borderColor }}
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-4 h-16">
-            {/* 会計部 */}
             <Link
               href="/dashboard/accounting"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -302,7 +274,6 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 開発部 */}
             <Link
               href="/dashboard/dev/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -330,7 +301,6 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* 広報部 */}
             <Link
               href="/dashboard/pr/menu"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -353,7 +323,6 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* スタッフ */}
             <Link
               href="/dashboard/staff"
               className="flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-70"
@@ -379,16 +348,13 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* -------------------------
-          ヘッダー直下のタブナビ（PC: 部署ナビの下、Mobile: ヘッダーの下）
-      ------------------------- */}
+      {/* ヘッダー直下タブナビ */}
       <nav
         className="fixed top-16 md:top-32 left-0 right-0 z-30 border-b"
         style={{ backgroundColor: bgColor, borderColor }}
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex">
-            {/* 投稿（現在の画面） */}
             <Link
               href="/"
               className="flex-1 py-2 text-center text-sm font-semibold border-b-2"
@@ -399,38 +365,17 @@ export default function Home() {
             >
               投稿
             </Link>
-
-            {/* 進捗（未実装） */}
-            <button
-              className="flex-1 py-2 text-center text-sm"
-              style={{
-                color: mutedColor,
-                borderColor: 'transparent',
-              }}
-            >
-              進捗
-            </button>
-
-            {/* メニュー（未実装 or 別ページ） */}
             <Link
               href="/menu"
               className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
-              style={{
-                color: mutedColor,
-                borderColor: 'transparent',
-              }}
+              style={{ color: mutedColor }}
             >
               メニュー
             </Link>
-
-            {/* グラフ（未実装 or 別ページ） */}
             <Link
               href="/graphs"
               className="flex-1 py-2 text-center text-sm transition-opacity hover:opacity-70"
-              style={{
-                color: mutedColor,
-                borderColor: 'transparent',
-              }}
+              style={{ color: mutedColor }}
             >
               グラフ
             </Link>
@@ -438,10 +383,8 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* -------------------------
-          投稿一覧（PC: pt-48、Mobile: pt-28）
-      ------------------------- */}
-      <main className="pt-28 md:pt-48 max-w-2xl mx-auto">
+      {/* 投稿一覧 */}
+      <main className="pt-28 md:pt-48 max-w-2xl mx-auto px-4">
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <p style={{ color: mutedColor }}>まだ投稿がありません</p>
@@ -481,19 +424,19 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* タイトル（画像の上） */}
+                {/* タイトル */}
                 {post.title && (
                   <div className="px-4 pt-4">
                     <h2 className="text-lg font-bold">{post.title}</h2>
                   </div>
                 )}
 
-                {/* 画像（スワイプ） */}
+                {/* 画像 */}
                 {post.images && post.images.length > 0 && (
                   <ImageSlider images={post.images} isDark={isDark} />
                 )}
 
-                {/* 本文（画像の下） */}
+                {/* 本文 */}
                 {post.content && (
                   <div className="px-4 py-3">
                     <p className="whitespace-pre-wrap">{post.content}</p>
@@ -505,7 +448,6 @@ export default function Home() {
                   className="px-4 py-3 flex items-center gap-4 border-t"
                   style={{ borderColor }}
                 >
-                  {/* いいね */}
                   <button
                     onClick={() => handleLike(post.id)}
                     className="flex items-center gap-1"
@@ -526,7 +468,6 @@ export default function Home() {
                     <span>{post.likes_count}</span>
                   </button>
 
-                  {/* コメント数表示 */}
                   <div className="flex items-center gap-1">
                     <svg
                       className="w-6 h-6"
@@ -550,9 +491,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* -------------------------
-          +ボタン（PC: 右下固定、Mobile: 下部ナビの上）
-      ------------------------- */}
+      {/* +ボタン & メニュー */}
       <div className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-50">
         <button
           type="button"
@@ -567,13 +506,11 @@ export default function Home() {
           <span className="text-4xl md:text-5xl leading-none">+</span>
         </button>
 
-        {/* ＋メニュー */}
         {menuOpen && (
           <div
-            className="absolute bottom-16 md:bottom-20 right-0 w-60 rounded-2xl shadow-lg border p-3 space-y-2"
+            className="absolute bottom-16 md:bottom-20 right-0 w-64 rounded-2xl shadow-lg border p-3 space-y-2"
             style={{ backgroundColor: bgColor, borderColor }}
           >
-            {/* 新規投稿 */}
             <button
               className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
               onClick={() => {
@@ -590,17 +527,12 @@ export default function Home() {
                 strokeWidth={1.5}
               >
                 <rect x="4" y="4" width="16" height="16" rx="4" ry="4" />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v8M8 12h8"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v8M8 12h8" />
               </svg>
             </button>
 
-            {/* 売上入力（会計部） */}
             <button
-              className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex itemsセンター justify-between hover:opacity-80"
+              className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
               onClick={() => {
                 setMenuOpen(false);
                 router.push('/dashboard/accounting/menu');
@@ -614,14 +546,33 @@ export default function Home() {
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
               >
+                <rect x="4" y="4" width="16" height="16" rx="4" ry="4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v8M8 12h8" />
+              </svg>
+            </button>
+
+            <button
+              className="w-full px-4 py-2 rounded-xl text-sm font-semibold flex items-center justify-between hover:opacity-80"
+              onClick={() => {
+                setMenuOpen(false);
+                router.push('/dashboard/accounting/inventory');
+              }}
+            >
+              <span>在庫管理（会計部）</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke={textColor}
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5l7.5-3 7.5 3" />
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M4 19h16"
+                  d="M3.75 7.5v9l7.5 3 7.5-3v-9"
                 />
-                <rect x="6" y="10" width="2.5" height="6" rx="0.5" />
-                <rect x="10.75" y="7" width="2.5" height="9" rx="0.5" />
-                <rect x="15.5" y="12" width="2.5" height="4" rx="0.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12l7.5 3 7.5-3" />
               </svg>
             </button>
           </div>
@@ -631,9 +582,7 @@ export default function Home() {
   );
 }
 
-/* ===============================
-    画像スライダー（スワイプ対応）
-================================ */
+/* 画像スライダー（スワイプ対応） */
 function ImageSlider({
   images,
   isDark,
@@ -691,7 +640,6 @@ function ImageSlider({
         ))}
       </div>
 
-      {/* インジケーター */}
       <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
         {images.map((_, i) => (
           <div

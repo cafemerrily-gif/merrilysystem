@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
@@ -9,7 +9,7 @@ const DEPARTMENTS = [
   '会計部',
   '開発部',
   'エンジニア部',
-  '広報部',
+  '庶務部',
   'マネジメント部',
   '職員',
   'スタッフ',
@@ -19,7 +19,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
-  
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,15 +29,32 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // テーマ
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDark(media.matches);
-    
-    const listener = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const stored = window.localStorage.getItem('ui-is-dark');
+
+    const currentIsDark = isMobile
+      ? media.matches
+      : stored === 'true'
+        ? true
+        : stored === 'false'
+          ? false
+          : media.matches;
+
+    setIsDark(currentIsDark);
+
+    const listener = (e: MediaQueryListEvent) => {
+      const isMob = window.matchMedia('(max-width: 768px)').matches;
+      const str = window.localStorage.getItem('ui-is-dark');
+      if (isMob || str === null) {
+        setIsDark(e.matches);
+      }
+    };
+
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, []);
@@ -45,7 +62,7 @@ export default function LoginPage() {
   // メール確認完了メッセージ
   useEffect(() => {
     if (searchParams.get('confirmed') === 'true') {
-      setSuccessMessage('メール確認が完了しました！ログインしてください。');
+      setSuccessMessage('メール確認が完了しました。ログインしてください。');
     }
   }, [searchParams]);
 
@@ -57,21 +74,21 @@ export default function LoginPage() {
 
   // 既にログインしているかチェック
   useEffect(() => {
-    checkUser();
+    void checkUser();
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       router.push('/');
     }
   };
 
   const handleDepartmentToggle = (dept: string) => {
-    setSelectedDepartments(prev => 
-      prev.includes(dept)
-        ? prev.filter(d => d !== dept)
-        : [...prev, dept]
+    setSelectedDepartments((prev) =>
+      prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept],
     );
   };
 
@@ -96,9 +113,9 @@ export default function LoginPage() {
 
       router.push('/');
       router.refresh();
-    } catch (error: any) {
-      console.error('ログインエラー:', error);
-      setError(error.message || 'ログインに失敗しました');
+    } catch (err: any) {
+      console.error('ログインエラー:', err);
+      setError(err?.message || 'ログインに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -112,12 +129,12 @@ export default function LoginPage() {
 
     try {
       // パスワード検証（クライアント側）
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$/;
       if (!passwordRegex.test(password)) {
-        throw new Error('パスワードは英数字を含む8文字以上である必要があります');
+        throw new Error('パスワードは英数字を含む8文字以上で入力してください。');
       }
 
-      // サインアップAPIを呼び出し
+      // サインアップ API を呼び出し
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,23 +153,28 @@ export default function LoginPage() {
       }
 
       // サインアップ成功 → メール確認メッセージを表示
-      setSuccessMessage(data.message || '確認メールを送信しました。メールを確認してください。');
+      setSuccessMessage(
+        data.message || '確認メールを送信しました。メールを確認してください。',
+      );
       setIsSignUp(false); // ログイン画面に切り替え
-      
+
       // フォームをクリア
       setPassword('');
       setDisplayName('');
       setSelectedDepartments([]);
-    } catch (error: any) {
-      console.error('サインアップエラー:', error);
-      setError(error.message || 'サインアップに失敗しました');
+    } catch (err: any) {
+      console.error('サインアップエラー:', err);
+      setError(err?.message || 'サインアップに失敗しました');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: bgColor }}>
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: bgColor }}
+    >
       <div className="w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-8">
@@ -163,6 +185,7 @@ export default function LoginPage() {
               width={180}
               height={60}
               priority
+              style={{ height: 'auto', width: 'auto' }}
             />
           </div>
           <h1 className="text-2xl font-bold mb-2" style={{ color: textColor }}>
@@ -174,7 +197,10 @@ export default function LoginPage() {
         </div>
 
         {/* フォーム */}
-        <div className="rounded-2xl p-6 border" style={{ backgroundColor: bgColor, borderColor }}>
+        <div
+          className="rounded-2xl p-6 border"
+          style={{ backgroundColor: bgColor, borderColor }}
+        >
           {/* 成功メッセージ */}
           {successMessage && (
             <div className="mb-4 p-3 rounded-lg bg-green-500 bg-opacity-10 border border-green-500">
@@ -193,7 +219,10 @@ export default function LoginPage() {
             {/* ユーザー名（サインアップのみ） */}
             {isSignUp && (
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: textColor }}
+                >
                   ユーザー名 *
                 </label>
                 <input
@@ -201,10 +230,10 @@ export default function LoginPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border outline-none transition-colors"
-                  style={{ 
-                    backgroundColor: inputBg, 
-                    borderColor, 
-                    color: textColor 
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textColor,
                   }}
                   placeholder="山田太郎"
                   required
@@ -214,7 +243,10 @@ export default function LoginPage() {
 
             {/* メールアドレス */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: textColor }}
+              >
                 メールアドレス *
               </label>
               <input
@@ -222,10 +254,10 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border outline-none transition-colors"
-                style={{ 
-                  backgroundColor: inputBg, 
-                  borderColor, 
-                  color: textColor 
+                style={{
+                  backgroundColor: inputBg,
+                  borderColor,
+                  color: textColor,
                 }}
                 placeholder="example@merrily.cafe"
                 required
@@ -234,7 +266,10 @@ export default function LoginPage() {
 
             {/* パスワード */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: textColor }}
+              >
                 パスワード *
               </label>
               <div className="relative">
@@ -243,12 +278,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border outline-none transition-colors pr-12"
-                  style={{ 
-                    backgroundColor: inputBg, 
-                    borderColor, 
-                    color: textColor 
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textColor,
                   }}
-                  placeholder={isSignUp ? '英数字8文字以上' : '••••••••'}
+                  placeholder={
+                    isSignUp ? '英数字を含む8文字以上' : '••••••••'
+                  }
                   required
                 />
                 <button
@@ -256,11 +293,25 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke={mutedColor} viewBox="0 0 24 24" strokeWidth={2}>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke={mutedColor}
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                  >
                     {showPassword ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                      />
                     ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     )}
                   </svg>
                 </button>
@@ -275,7 +326,10 @@ export default function LoginPage() {
             {/* 部署選択（サインアップのみ） */}
             {isSignUp && (
               <div className="mb-6">
-                <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: textColor }}
+                >
                   所属部署（複数選択可）
                 </label>
                 <div className="grid grid-cols-2 gap-2">
